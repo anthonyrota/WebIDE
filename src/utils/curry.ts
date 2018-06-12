@@ -1,6 +1,4 @@
-interface ICurriedFunction1<T1, TR> {
-  (value: T1): TR
-}
+type ICurriedFunction1<T1, TR> = (value: T1) => TR
 
 interface ICurriedFunction2<T1, T2, TR> {
   (first: T1): ICurriedFunction1<T2, TR>

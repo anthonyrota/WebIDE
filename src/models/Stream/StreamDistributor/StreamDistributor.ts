@@ -9,13 +9,20 @@ import { createActiveSubscription } from 'src/models/Stream/StreamSubscription/c
 import { createInactiveSubscription } from 'src/models/Stream/StreamSubscription/createInactiveStreamSubscription'
 import { ISubscription } from 'src/models/Stream/StreamSubscription/ISubscription'
 import { ISubscriptionMap } from 'src/models/Stream/StreamSubscription/ISubscriptionMap'
-import { IStreamListeners } from 'src/models/Stream/StreamSubscription/StreamListeners'
+import {
+  IStreamListeners,
+  OnCompleteListener,
+  OnErrorListener,
+  OnNextValueListener
+} from 'src/models/Stream/StreamSubscription/StreamListeners'
+import { call } from 'src/utils/call'
 import { callEachOnArgument } from 'src/utils/callEachOnArgument'
-import { callMethodIfExists } from 'src/utils/callMethodIfExists'
-import { callMethodWithArgumentIfExists } from 'src/utils/callMethodWithArgumentIfExists'
+import { callWithArgument } from 'src/utils/callWithArgument'
 import { compose2 } from 'src/utils/compose'
 import { forEachObject } from 'src/utils/forEachObject'
+import { ifExists } from 'src/utils/ifExists'
 import { pluck } from 'src/utils/pluck'
+import { pluck2 } from 'src/utils/pluck2'
 
 export class StreamDistributor<T> implements IDisposable {
   private __listenersMap = MutableMaybe.some({} as ISubscriptionMap<T>)
@@ -61,8 +68,8 @@ export class StreamDistributor<T> implements IDisposable {
       none: warnWhenOnNextValueCalledAfterStreamCompleted,
       some: forEachObject(
         compose2(
-          callMethodWithArgumentIfExists('onNextValue', value),
-          pluck('listeners')
+          ifExists(callWithArgument(value)),
+          pluck2('listeners', 'onNextValue')
         )
       )
     })
@@ -73,9 +80,9 @@ export class StreamDistributor<T> implements IDisposable {
       none: warnWhenOnErrorCalledAfterStreamCompleted,
       some: forEachObject(
         compose2(
-          callEachOnArgument(
-            callMethodWithArgumentIfExists('onError', error),
-            callMethodIfExists('onFinish')
+          callEachOnArgument<IStreamListeners<T>>(
+            compose2(ifExists(callWithArgument(error)), pluck('onError')),
+            compose2(ifExists(call), pluck('onComplete'))
           ),
           pluck('listeners')
         )
@@ -89,9 +96,9 @@ export class StreamDistributor<T> implements IDisposable {
       none: warnWhenOnErrorCalledAfterStreamCompleted,
       some: forEachObject(
         compose2(
-          callEachOnArgument(
-            callMethodIfExists('onComplete'),
-            callMethodIfExists('onFinish')
+          callEachOnArgument<IStreamListeners<T>>(
+            compose2(ifExists(call), pluck('onComplete')),
+            compose2(ifExists(call), pluck('onFinish'))
           ),
           pluck('listeners')
         )
@@ -114,7 +121,7 @@ export class StreamDistributor<T> implements IDisposable {
     this.__listenersMap.match({
       none: warnWhenDisposeCalledAfterStreamCompleted,
       some: forEachObject(
-        compose2(callMethodIfExists('onFinish'), pluck('listeners'))
+        compose2(ifExists(call), pluck2('listeners', 'onFinish'))
       )
     })
   }
