@@ -1,0 +1,37 @@
+{
+  "name": "codeeditor",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "dependencies": {
+    "prettier-eslint": "^8.8.1",
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0",
+    "react-scripts-ts": "^2.16.0",
+    "svg2ttf": "^4.1.0",
+    "tslint-config-prettier": "^1.13.0"
+  },
+  "scripts": {
+    "start": "react-scripts-ts start",
+    "build": "react-scripts-ts build",
+    "serve": "react-scripts-ts serve",
+    "test": "react-scripts-ts test --env=jsdom",
+    "eject": "react-scripts-ts eject"
+  },
+  "devDependencies": {
+    "@types/jest": "^22.1.3",
+    "@types/node": "^9.4.6",
+    "@types/react": "16.0.38",
+    "@types/react-dom": "16.0.4",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "^2.12.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.8.0",
+    "eslint-plugin-react": "^7.9.1",
+    "eslint-plugin-standard": "^3.1.0",
+    "tslint-config-standard": "^7.0.0",
+    "typescript": "^2.9.1"
+  },
+  "keywords": [],
+  "description": ""
+}

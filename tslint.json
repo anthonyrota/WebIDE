@@ -1,0 +1,18 @@
+{
+  "extends": [
+    "tslint:latest",
+    "tslint-react",
+    "tslint-config-standard",
+    "tslint-config-prettier"
+  ],
+  "rules": {
+    "variable-name": false,
+    "max-classes-per-file": false,
+    "no-console": false,
+    "no-object-literal-type-assertion": false,
+    "no-implicit-dependencies": false,
+    "no-submodule-imports": false,
+    "ban-types": false,
+    "prefer-for-of": false
+  }
+}
