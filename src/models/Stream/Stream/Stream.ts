@@ -28,12 +28,12 @@ export class Stream<T> implements IDisposable {
   constructor(
     subscribeFunction: (
       source: StreamSource<T>
-    ) => () => void | IDisposable | void
+    ) => (() => void) | IDisposable | void
   )
   constructor(
     sourceOrSubscribeFunction:
       | StreamSource<T>
-      | ((source: StreamSource<T>) => (() => void | IDisposable | void)),
+      | ((source: StreamSource<T>) => (() => void) | IDisposable | void),
     distributor?: StreamDistributor<T>
   ) {
     this.__state = isStreamSource(sourceOrSubscribeFunction)
@@ -49,7 +49,7 @@ export class Stream<T> implements IDisposable {
   }
 
   public subscribeToSourceWithOnNextValueListener(
-    source: StreamSource<T>,
+    source: StreamSource<any>,
     onNextValue: OnNextValueListener<T>
   ): ISubscription {
     return this.subscribe({
@@ -59,6 +59,14 @@ export class Stream<T> implements IDisposable {
     })
   }
 
+  public subscribeToSourceWithListeners(
+    source: StreamSource<any>,
+    listeners: IStreamListeners<T> & { onNextValue: (value: T) => void }
+  ): ISubscription
+  public subscribeToSourceWithListeners(
+    source: StreamSource<T>,
+    listeners: IStreamListeners<T>
+  ): ISubscription
   public subscribeToSourceWithListeners(
     source: StreamSource<T>,
     listeners: IStreamListeners<T>
@@ -77,6 +85,28 @@ export class Stream<T> implements IDisposable {
       onError: source.error,
       onNextValue: source.next
     })
+  }
+
+  public subscribeWithOnNextValueListener(
+    onNextValue: (value: T) => void
+  ): ISubscription {
+    return this.subscribe({ onNextValue })
+  }
+
+  public subscribeWithOnErrorListener(
+    onError: (value: T) => void
+  ): ISubscription {
+    return this.subscribe({ onError })
+  }
+
+  public subscribeWithOnCompleteListener(
+    onComplete: () => void
+  ): ISubscription {
+    return this.subscribe({ onComplete })
+  }
+
+  public subscribeWithOnFinishListener(onFinish: () => void): ISubscription {
+    return this.subscribe({ onFinish })
   }
 
   public subscribe(listeners: IStreamListeners<T>): ISubscription {

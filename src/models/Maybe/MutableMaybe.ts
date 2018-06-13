@@ -1,3 +1,5 @@
+import { bind } from 'src/decorators/bind'
+
 export class MutableMaybe<T> {
   private __state: { hasValue: true; value: T } | { hasValue: false }
 
@@ -71,22 +73,22 @@ export class MutableMaybe<T> {
 
   public copy(other: MutableMaybe<T>): this {
     other.match({
-      none: this.empty.bind(this),
-      some: this.setValue.bind(this)
+      none: this.__boundEmpty,
+      some: this.__boundSetValue
     })
     return this
   }
 
   public copyIfEmpty(other: MutableMaybe<T>): this {
     if (this.__state.hasValue) {
-      other.withValue(this.setValue.bind(this))
+      other.withValue(this.__boundSetValue)
     }
     return this
   }
 
   public copyComputedIfEmpty(getOther: () => MutableMaybe<T>): this {
     if (this.__state.hasValue) {
-      getOther().withValue(this.setValue.bind(this))
+      getOther().withValue(this.__boundSetValue)
     }
     return this
   }
@@ -100,9 +102,7 @@ export class MutableMaybe<T> {
   }
 
   public empty(): this {
-    this.__state = {
-      hasValue: false
-    }
+    this.__state = { hasValue: false }
     return this
   }
 
@@ -153,5 +153,15 @@ export class MutableMaybe<T> {
       throw getError()
     }
     return this.__state.value
+  }
+
+  @bind
+  private __boundEmpty(): void {
+    this.__state = { hasValue: false }
+  }
+
+  @bind
+  private __boundSetValue(value: T): void {
+    this.__state = { hasValue: true, value }
   }
 }

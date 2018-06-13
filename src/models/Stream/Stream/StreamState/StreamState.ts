@@ -11,5 +11,5 @@ export interface IStreamActivatedState<T> {
 
 export interface IStreamInactivatedState<T> {
   isActivated: false
-  initiate: (source: StreamSource<T>) => () => void | IDisposable | void
+  initiate: (source: StreamSource<T>) => (() => void) | IDisposable | void
 }

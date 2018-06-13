@@ -1,6 +1,3 @@
-import { IDisposable } from 'src/models/Disposable/IDisposable'
+import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
 
-export interface ISubscription extends IDisposable {
-  dispose(): void
-  isActive(): boolean
-}
+export type ISubscription = IConsciousDisposable

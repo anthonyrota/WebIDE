@@ -9,12 +9,7 @@ import { createActiveSubscription } from 'src/models/Stream/StreamSubscription/c
 import { createInactiveSubscription } from 'src/models/Stream/StreamSubscription/createInactiveStreamSubscription'
 import { ISubscription } from 'src/models/Stream/StreamSubscription/ISubscription'
 import { ISubscriptionMap } from 'src/models/Stream/StreamSubscription/ISubscriptionMap'
-import {
-  IStreamListeners,
-  OnCompleteListener,
-  OnErrorListener,
-  OnNextValueListener
-} from 'src/models/Stream/StreamSubscription/StreamListeners'
+import { IStreamListeners } from 'src/models/Stream/StreamSubscription/StreamListeners'
 import { call } from 'src/utils/call'
 import { callEachOnArgument } from 'src/utils/callEachOnArgument'
 import { callWithArgument } from 'src/utils/callWithArgument'
