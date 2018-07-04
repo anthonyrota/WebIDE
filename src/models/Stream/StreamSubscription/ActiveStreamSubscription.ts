@@ -31,4 +31,10 @@ export class ActiveSubscription<T> implements ISubscription {
   public isActive(): boolean {
     return this.__isActive
   }
+
+  public toString(): string {
+    return `ActiveStreamSubscription(id=${this.__id}, isActive=${
+      this.__isActive
+    })`
+  }
 }

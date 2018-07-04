@@ -155,6 +155,12 @@ export class MutableMaybe<T> {
     return this.__state.value
   }
 
+  public toString(): string {
+    return this.__state.hasValue
+      ? `MutableMaybe.Some(${this.__state.value})`
+      : `MutableMaybe.None()`
+  }
+
   @bind
   private __boundEmpty(): void {
     this.__state = { hasValue: false }

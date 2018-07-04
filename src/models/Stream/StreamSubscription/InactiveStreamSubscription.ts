@@ -8,4 +8,8 @@ export class InactiveSubscription implements ISubscription {
   public isActive(): boolean {
     return false
   }
+
+  public toString(): string {
+    return `InactiveStreamSubscription()`
+  }
 }

@@ -114,6 +114,10 @@ class Some<T> extends Maybe<T> {
   public getOrThrowComputedError(getError: () => any): T {
     return this.__value
   }
+
+  public toString(): string {
+    return `Maybe.Some(${this.__value})`
+  }
 }
 
 class None<T> extends Maybe<T> {
@@ -179,5 +183,9 @@ class None<T> extends Maybe<T> {
 
   public getOrThrowComputedError(getError: () => any): T {
     throw getError()
+  }
+
+  public toString(): string {
+    return `Maybe.None()`
   }
 }

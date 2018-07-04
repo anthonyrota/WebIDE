@@ -12,55 +12,20 @@ export interface ILineRange {
   readonly endIndex: number
 }
 
-export interface ITokenizationResult {
-  readonly tokens: ReadonlyArray<IToken>
+export interface IContentChangeEvent {
+  deletedLineRange: ILineRange
+  numberOfLinesInserted: number
 }
-
-export const enum ContentChangeEventType {
-  Insert = 'ContentChangeEventType/Insert',
-  Delete = 'ContentChangeEventType/Delete',
-  LinesChanged = 'ContentChangeEventType/LinesChanged'
-}
-
-export interface IInsertEvent {
-  readonly type: ContentChangeEventType.Insert
-  readonly lineIndex: number
-  readonly numberOfLinesInserted: number
-}
-
-export interface IDeleteEvent {
-  readonly type: ContentChangeEventType.Delete
-  readonly lineRange: ILineRange
-}
-
-export interface ILinesChangedEvent {
-  readonly type: ContentChangeEventType.LinesChanged
-  readonly lineRange: ILineRange
-}
-
-export type ContentChangeEvent =
-  | IInsertEvent
-  | IDeleteEvent
-  | ILinesChangedEvent
 
 export interface ITokenizationLineModel {
   getLineContent(lineIndex: number): string
   getLineCount(): number
-  getContentChangeStream(): Stream<ContentChangeEvent>
-}
-
-export const enum TokenizationEventType {
-  TokenizationResult = 'TokenizationEventType/TokenizationResult'
-}
-
-export interface ITokenizationEvent {
-  type: TokenizationEventType.TokenizationResult
-  lineTokens: ITokenizationResult[]
+  getContentChangeStream(): Stream<IContentChangeEvent>
 }
 
 export interface ITokenizationProvider extends IDisposable {
   initialize(): void
-  getTokenizerStream(): Stream<ITokenizationEvent>
+  getTokensAtLine(index: number): ReadonlyArray<IToken> | null
 }
 
 export interface IConstructableTokenizationProvider {

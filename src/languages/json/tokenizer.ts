@@ -1,93 +1,62 @@
-import { bind } from 'src/decorators/bind'
 import {
-  ContentChangeEvent,
-  ContentChangeEventType,
-  ILineRange,
-  ITokenizationEvent,
+  IContentChangeEvent,
+  IToken,
   ITokenizationLineModel,
-  ITokenizationProvider,
-  ITokenizationResult,
-  TokenizationEventType
+  ITokenizationProvider
 } from 'src/languages/interfaces/tokenizer'
-import { IdleCallbackScheduler } from 'src/models/Scheduler/IdleCallbackScheduler'
 import {
   IScheduler,
   ISchedulerReturnMessage,
   ISchedulerTask,
   SchedulerReturnMessageCommand
 } from 'src/models/Scheduler/IScheduler'
+import { IdleCallbackScheduler } from 'src/models/Scheduler/Scheduler/IdleCallbackScheduler'
 import { Stream } from 'src/models/Stream/Stream/Stream'
 import { ISubscription } from 'src/models/Stream/StreamSubscription/ISubscription'
 
-export class ImmutableStack<T> {
-  private __depth: number
-  private __value: T
-  private __parent: ImmutableStack<T> | null
-
-  private constructor(
-    depth: number,
-    value: T,
-    parent: ImmutableStack<T> | null
-  ) {
-    this.__depth = depth
-    this.__value = value
-    this.__parent = parent
-  }
-
-  public getSize(): number {
-    return this.__depth
-  }
-
-  public getLastValue(): T {
-    return this.__value
-  }
-
-  public push(value: T): ImmutableStack<T> {
-    return new ImmutableStack(this.__depth + 1, value, this)
-  }
-
-  public pop(): ImmutableStack<T> {
-    return this.__parent === null ? this : this.__parent
-  }
-
-  public toString(): string {
-    return this.__parent === null
-      ? `Stack.Head(${this.__value})`
-      : `Stack.Tail(${this.__parent}, ${this.__value})`
-  }
+interface ILineTokens<TState> {
+  tokens: IToken[]
+  endState: TState
+  isValid: boolean
 }
 
-export abstract class LanguageTokenizationProvider<TState>
+export interface ITokenizeLineResult<TState> {
+  tokens: IToken[]
+  endState: TState
+}
+
+export interface ITokenizationProviderInput<TState> {
+  tokenize(line: string, state: TState): ITokenizeLineResult<TState>
+  areStatesEqual(firstState: TState, secondState: TState): boolean
+}
+
+export abstract class TokenizationProvider<TState>
   implements ITokenizationProvider {
   private __lineModel: ITokenizationLineModel
-  private __lineTokens: ITokenizationResult[]
-  private __linesToTokenize: ILineRange[]
-  private __endOfLineStates: Array<ImmutableStack<TState>>
+  private __lineTokens: Array<ILineTokens<TState> | null>
+  private __firstInvalidIndex: number
   private __scheduler: IScheduler
-  private __tokenizeLineTask: ISchedulerTask<ITokenizationEvent>
-  private __contentChangeStream: Stream<ContentChangeEvent>
+  private __tokenizeLineTask: ISchedulerTask<TState> | null
+  private __contentChangeStream: Stream<IContentChangeEvent>
   private __contentChangeStreamSubscription: ISubscription
+  private __input: ITokenizationProviderInput<TState>
 
-  constructor(lineModel: ITokenizationLineModel) {
-    this.__lineModel = lineModel
+  constructor(input: ITokenizationProviderInput<TState>) {
+    this.__input = input
     this.__lineTokens = []
-    this.__endOfLineStates = []
-    this.__linesToTokenize = []
+    this.__firstInvalidIndex = -1
     this.__scheduler = new IdleCallbackScheduler()
   }
 
-  public initialize(): void {
+  public initialize(lineModel: ITokenizationLineModel): void {
+    this.__lineModel = lineModel
     this.__contentChangeStream = this.__lineModel.getContentChangeStream()
     this.__contentChangeStreamSubscription = this.__contentChangeStream.subscribeWithOnNextValueListener(
       this.__onContentChangeCallback
     )
-    this.__tokenizeLineTask = this.__scheduler.addTask<ITokenizationEvent>(
+    this.__tokenizeLineTask = this.__scheduler.addTask(
       this.__tokenizeNextLineSchedulerCallback
     )
-  }
-
-  public getTokenizerStream(): Stream<ITokenizationEvent> {
-    return this.__tokenizeLineTask.getOutputStream()
   }
 
   public dispose(): void {
@@ -95,68 +64,51 @@ export abstract class LanguageTokenizationProvider<TState>
     this.__contentChangeStreamSubscription.dispose()
   }
 
-  public abstract tokenizeLine(
-    line: string,
-    previousState: ImmutableStack<TState>
-  ): ITokenizationEvent
+  public getTokensAtLine(lineIndex: number): ReadonlyArray<IToken> | null {
+    const tokenizationResult = this.__lineTokens[lineIndex]
 
-  private __tokenizeNextLine(): void {}
-
-  private __onTextInserted(
-    lineIndex: number,
-    numberOfLinesInserted: number
-  ): void {
-    /**
-     * @todo
-     */
+    return tokenizationResult && tokenizationResult.tokens
   }
 
-  private __onTextDeleted(lineRange: ILineRange): void {
-    /**
-     * @todo
-     */
-  }
+  protected abstract __tokenizeLine(
+    lineText: string,
+    previousState: TState | null
+  ): ITokenizeLineResult<TState>
 
-  private __onLinesChanged(lineRange: ILineRange): void {
-    /**
-     * @todo
-     */
-  }
+  private __tokenizeNextLineSchedulerCallback(): ISchedulerReturnMessage<void> {
+    const lineCount = this.__lineModel.getLineCount()
+    const lineIndex = this.__firstInvalidIndex
+    const lineTokens = this.__lineTokens
+    const input = this.__input
 
-  @bind
-  private __tokenizeNextLineSchedulerCallback(): ISchedulerReturnMessage<
-    ITokenizationEvent
-  > {
-    if (this.__linesToTokenize.length === 0) {
-      return { next: SchedulerReturnMessageCommand.PauseTask }
-    }
-
-    this.__tokenizeNextLine()
-
-    return {
-      next:
-        this.__linesToTokenize.length === 0
-          ? SchedulerReturnMessageCommand.PauseTask
-          : SchedulerReturnMessageCommand.RepeatTask,
-      value: {
-        lineTokens: this.__lineTokens,
-        type: TokenizationEventType.TokenizationResult
+    if (lineIndex === -1) {
+      return {
+        next: SchedulerReturnMessageCommand.PauseTask
       }
     }
-  }
 
-  @bind
-  private __onContentChangeCallback(event: ContentChangeEvent): void {
-    switch (event.type) {
-      case ContentChangeEventType.Insert:
-        this.__onTextInserted(event.lineIndex, event.numberOfLinesInserted)
-        break
-      case ContentChangeEventType.Delete:
-        this.__onTextDeleted(event.lineRange)
-        break
-      case ContentChangeEventType.LinesChanged:
-        this.__onLinesChanged(event.lineRange)
-        break
+    const lineText = this.__lineModel.getLineContent(lineIndex)
+    const tokenizationResultBeforeCurrentIndex =
+      lineIndex === 0 ? null : lineTokens[lineIndex - 1]
+
+    const newTokenizationResult = this.__tokenizeLine(
+      lineText,
+      tokenizationResultBeforeCurrentIndex &&
+        tokenizationResultBeforeCurrentIndex.endState
+    )
+
+    const previousTokenizationResult = lineTokens[lineIndex]
+
+    lineTokens[lineIndex] = {
+      endState: newTokenizationResult.endState,
+      isValid: true,
+      tokens: newTokenizationResult.tokens
+    }
+
+    if (lineIndex + 1 < lineCount) {
+      const nextTokenizationResult = lineTokens[lineIndex]
+
+      /** @todo */
     }
   }
 }

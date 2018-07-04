@@ -2,11 +2,11 @@ import { bind } from 'src/decorators/bind'
 import {
   IScheduler,
   ISchedulerReturnMessage,
-  ISchedulerTask,
-  SchedulerTask,
-  SchedulerTaskList,
-  SchedulerTaskListActions
+  ISchedulerTask
 } from 'src/models/Scheduler/IScheduler'
+import { SchedulerTask } from 'src/models/Scheduler/SchedulerTaskList/SchedulerTask'
+import { SchedulerTaskList } from 'src/models/Scheduler/SchedulerTaskList/SchedulerTaskList'
+import { SchedulerTaskListActions } from 'src/models/Scheduler/SchedulerTaskList/SchedulerTaskListActions'
 import {
   IDeadline,
   requestIdleCallback,
@@ -103,12 +103,12 @@ export class IdleCallbackScheduler implements IScheduler {
       tasksVisitedValues.forEach(<T>(lastValue: T, task: ISchedulerTask<T>) => {
         task.distributeValue(lastValue)
       })
-    }
+    } else {
+      while (this.__taskList.hasTasks() && deadline.timeRemaining() > 0) {
+        const task = this.__taskList.getNextTask()
 
-    while (this.__taskList.hasTasks() && deadline.timeRemaining() > 0) {
-      const task = this.__taskList.getNextTask()
-
-      task.perform()
+        task.perform()
+      }
     }
 
     this.__idleCallbackSubscription = null
