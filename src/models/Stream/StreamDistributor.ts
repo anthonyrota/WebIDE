@@ -14,8 +14,8 @@ export abstract class StreamDistributor<TInput, TOutput>
   private __onDisposeListeners: CompositeDisposable
   private __isActive: boolean
 
-  constructor(subscriber: IStreamSubscriber<TOutput>) {
-    this.destination = new StreamDestination(this, subscriber)
+  constructor(target: IStreamSubscriber<TOutput>) {
+    this.destination = new StreamDestination(this, target)
     this.__onDisposeListeners = new CompositeDisposable()
     this.__isActive = true
   }
@@ -89,21 +89,18 @@ export class MonoTypeStreamDistributor<T> extends StreamDistributor<T, T> {
 class StreamDestination<T> implements IRequiredStreamSubscriber<T> {
   private __isActive: boolean
   private __parentDistributor: IDisposable
-  private __subscriber: IStreamSubscriber<T>
+  private __target: IStreamSubscriber<T>
 
-  constructor(
-    parentDistributor: IDisposable,
-    subscriber: IStreamSubscriber<T>
-  ) {
+  constructor(parentDistributor: IDisposable, target: IStreamSubscriber<T>) {
     this.__isActive = true
     this.__parentDistributor = parentDistributor
-    this.__subscriber = subscriber
+    this.__target = target
   }
 
   public next(value: T): void {
-    if (this.__isActive && this.__subscriber.next) {
+    if (this.__isActive && this.__target.next) {
       try {
-        this.__subscriber.next(value)
+        this.__target.next(value)
       } catch (subscriberError) {
         this.__dispose()
         reportError(subscriberError)
@@ -113,9 +110,9 @@ class StreamDestination<T> implements IRequiredStreamSubscriber<T> {
 
   public error(error: any): void {
     if (this.__isActive) {
-      if (this.__subscriber.error) {
+      if (this.__target.error) {
         try {
-          this.__subscriber.error(error)
+          this.__target.error(error)
         } catch (subscriberError) {
           reportError(subscriberError)
         }
@@ -128,9 +125,9 @@ class StreamDestination<T> implements IRequiredStreamSubscriber<T> {
 
   public complete(): void {
     if (this.__isActive) {
-      if (this.__subscriber.complete) {
+      if (this.__target.complete) {
         try {
-          this.__subscriber.complete()
+          this.__target.complete()
         } catch (subscriberError) {
           reportError(subscriberError)
         }
