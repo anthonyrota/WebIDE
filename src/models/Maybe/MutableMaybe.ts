@@ -1,4 +1,4 @@
-import { bind } from 'src/decorators/bind'
+import { bound } from 'src/decorators/bound'
 
 export class MutableMaybe<T> {
   private __state: { hasValue: true; value: T } | { hasValue: false }
@@ -161,12 +161,12 @@ export class MutableMaybe<T> {
       : `MutableMaybe.None()`
   }
 
-  @bind
+  @bound
   private __boundEmpty(): void {
     this.__state = { hasValue: false }
   }
 
-  @bind
+  @bound
   private __boundSetValue(value: T): void {
     this.__state = { hasValue: true, value }
   }

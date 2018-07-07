@@ -1,4 +1,4 @@
-export function bind<T extends Function>(
+export function bound<T extends Function>(
   target: object,
   propertyKey: string,
   descriptor: TypedPropertyDescriptor<T>
@@ -25,4 +25,4 @@ export function bind<T extends Function>(
   }
 }
 
-export default bind
+export default bound
