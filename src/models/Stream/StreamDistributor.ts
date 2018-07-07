@@ -70,11 +70,11 @@ export abstract class StreamDistributor<TInput, TOutput>
   protected abstract onNextValue(value: TInput): void
 
   protected onError(error: any): void {
-    this.destination.error(error)
+    this.__destination.error(error)
   }
 
   protected onComplete(): void {
-    this.destination.complete()
+    this.__destination.complete()
   }
 
   protected recycle(): void {
