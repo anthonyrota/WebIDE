@@ -11,13 +11,15 @@ import { reportError } from 'src/utils/reportError'
 export abstract class StreamDistributor<TInput, TOutput>
   implements IConsciousDisposable, IRequiredStreamSubscriber<TInput> {
   protected destination: IRequiredStreamSubscriber<TOutput>
+  private __destination: StreamDestination<TOutput>
   private __onDisposeListeners: CompositeDisposable
   private __isActive: boolean
 
   constructor(target: IStreamSubscriber<TOutput>) {
-    this.destination = new StreamDestination(this, target)
+    this.__destination = new StreamDestination(this, target)
     this.__onDisposeListeners = new CompositeDisposable()
     this.__isActive = true
+    this.destination = this.__destination
   }
 
   public next(value: TInput): void {
@@ -76,7 +78,9 @@ export abstract class StreamDistributor<TInput, TOutput>
   }
 
   protected recycle(): void {
+    this.__destination.recycle()
     this.__onDisposeListeners.recycle()
+    this.__isActive = true
   }
 }
 
@@ -135,6 +139,10 @@ class StreamDestination<T> implements IRequiredStreamSubscriber<T> {
 
       this.__dispose()
     }
+  }
+
+  public recycle(): void {
+    this.__isActive = true
   }
 
   private __dispose(): void {
