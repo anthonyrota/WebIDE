@@ -65,7 +65,16 @@ export class DistinctUntilChangedWithCompareFunctionSubscriber<
       return
     }
 
-    if (isEqual(this.lastValue!, value)) {
+    let isValuesEqual: boolean
+
+    try {
+      isValuesEqual = isEqual(this.lastValue!, value)
+    } catch (error) {
+      this.destination.error(error)
+      return
+    }
+
+    if (isValuesEqual) {
       this.lastValue = value
       this.destination.next(value)
     }

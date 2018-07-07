@@ -90,7 +90,16 @@ export class DistinctUntilChangedWithKeySelectorAndCompareFunctionSubscriber<
       return
     }
 
-    if (isEqual(this.lastKey!, key)) {
+    let isKeysEqual: boolean
+
+    try {
+      isKeysEqual = isEqual(this.lastKey!, key)
+    } catch (error) {
+      this.destination.error(error)
+      return
+    }
+
+    if (isKeysEqual) {
       this.lastKey = key
       this.destination.next(value)
     }
