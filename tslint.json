@@ -15,6 +15,8 @@
     "ban-types": false,
     "prefer-for-of": false,
     "no-bitwise": false,
-    "no-empty": false
+    "no-empty": false,
+    "object-literal-sort-keys": false,
+    "no-this-assignment"
   }
 }

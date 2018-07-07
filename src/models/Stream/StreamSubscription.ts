@@ -2,9 +2,9 @@ import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable
 import { StreamDistributor } from 'src/models/Stream/StreamDistributor'
 
 export class StreamSubscription implements IConsciousDisposable {
-  private __distributor: StreamDistributor<any>
+  private __distributor: StreamDistributor<any, any>
 
-  constructor(distributor: StreamDistributor<any>) {
+  constructor(distributor: StreamDistributor<any, any>) {
     this.__distributor = distributor
   }
 

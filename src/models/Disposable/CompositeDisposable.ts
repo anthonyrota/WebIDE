@@ -45,14 +45,38 @@ export class CompositeDisposable implements IConsciousDisposable {
   }
 
   public dispose(): void {
-    this.__disposables.forEach(disposable => {
-      disposable.dispose()
-    })
-    this.__disposables.clear()
+    this.__disposeDisposables()
     this.__isActive = false
+  }
+
+  public recycle(): void {
+    this.__disposeDisposables()
+    this.__isActive = true
   }
 
   public isActive(): boolean {
     return this.__isActive
+  }
+
+  private __disposeDisposables(): void {
+    const disposeErrors: any[] = []
+
+    this.__disposables.forEach(disposable => {
+      try {
+        disposable.dispose()
+      } catch (error) {
+        disposeErrors.push(error)
+      }
+    })
+
+    this.__disposables.clear()
+
+    if (disposeErrors.length > 0) {
+      throw new Error(
+        `The following errors occured when disposing the composite disposable: ${disposeErrors.join(
+          ', '
+        )}`
+      )
+    }
   }
 }
