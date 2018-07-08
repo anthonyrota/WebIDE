@@ -1,8 +1,8 @@
 import { Stream } from 'src/models/Stream/Stream'
 import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
 import { IOperator } from 'src/models/Stream/IOperator'
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLIke'
-import { MonoTypeStreamDistributor } from 'src/models/Stream/StreamDistributor'
+import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
 
 export function distinct<T>(source: Stream<T>): Stream<T> {
   return source.lift(new DistinctOperator<T>())
@@ -17,7 +17,7 @@ export class DistinctOperator<T> implements IOperator<T, T> {
   }
 }
 
-export class DistinctSubscriber<T> extends MonoTypeStreamDistributor<T> {
+export class DistinctSubscriber<T> extends MonoTypeStreamValueTransmitter<T> {
   private values = new Set<T>()
 
   protected onNextValue(value: T): void {

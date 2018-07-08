@@ -1,8 +1,8 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLIke'
+import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import { StreamDistributor } from 'src/models/Stream/StreamDistributor'
+import { StreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
 import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
 import { curry2 } from 'src/utils/curry'
 
@@ -26,7 +26,7 @@ class MapOperator<T, U> implements IOperator<T, U> {
   }
 }
 
-class MapSubscriber<T, U> extends StreamDistributor<T, U> {
+class MapSubscriber<T, U> extends StreamValueTransmitter<T, U> {
   constructor(
     target: IStreamSubscriber<U>,
     private transform: (value: T) => U

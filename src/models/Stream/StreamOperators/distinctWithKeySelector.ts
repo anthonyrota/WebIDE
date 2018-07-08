@@ -2,8 +2,8 @@ import { Stream } from 'src/models/Stream/Stream'
 import { curry2 } from 'src/utils/curry'
 import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
 import { IOperator } from 'src/models/Stream/IOperator'
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLIke'
-import { MonoTypeStreamDistributor } from 'src/models/Stream/StreamDistributor'
+import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
 import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
 
 export const distinctWithKeySelector: {
@@ -45,7 +45,7 @@ export class DistinctWithKeySelectorOperator<TValue, TKey>
 export class DistinctWithKeySelectorSubscriber<
   TValue,
   TKey
-> extends MonoTypeStreamDistributor<TValue> {
+> extends MonoTypeStreamValueTransmitter<TValue> {
   private keys = new Set<TKey>()
 
   constructor(

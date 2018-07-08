@@ -1,9 +1,9 @@
 import { Stream } from 'src/models/Stream/Stream'
 import { curry2 } from 'src/utils/curry'
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLIke'
+import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
 import { IOperator } from 'src/models/Stream/IOperator'
-import { StreamDistributor } from 'src/models/Stream/StreamDistributor'
+import { StreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
 import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
 
 export const mapTo: {
@@ -26,7 +26,7 @@ class MapToOperator<T> implements IOperator<any, T> {
   }
 }
 
-class MapToSubscriber<T> extends StreamDistributor<any, T> {
+class MapToSubscriber<T> extends StreamValueTransmitter<any, T> {
   constructor(target: IStreamSubscriber<T>, private value: T) {
     super(target)
   }

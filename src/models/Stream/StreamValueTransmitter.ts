@@ -3,23 +3,36 @@ import { Disposable } from 'src/models/Disposable/Disposable'
 import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
 import {
-  IRequiredStreamSubscriber,
-  IStreamSubscriber
+  IStreamSubscriber,
+  IRecyclableRequiredStreamSubscriber
 } from 'src/models/Stream/IStreamSubscriber'
 import { reportError } from 'src/utils/reportError'
 
-export abstract class StreamDistributor<TInput, TOutput>
-  implements IConsciousDisposable, IRequiredStreamSubscriber<TInput> {
-  protected destination: IRequiredStreamSubscriber<TOutput>
-  private __destination: StreamDestination<TOutput>
+function connectTransmitters(
+  a: StreamValueTransmitter<any, any>,
+  b: StreamValueTransmitter<any, any>
+): void {
+  a.terminateDisposableWhenDisposed(b)
+  b.terminateDisposableWhenDisposed(a)
+}
+
+export abstract class StreamValueTransmitter<TInput, TOutput>
+  implements IConsciousDisposable, IRecyclableRequiredStreamSubscriber<TInput> {
+  protected destination: IRecyclableRequiredStreamSubscriber<TOutput>
   private __onDisposeListeners: CompositeDisposable
   private __isActive: boolean
 
-  constructor(target: IStreamSubscriber<TOutput>) {
-    this.__destination = new StreamDestination(this, target)
+  constructor(
+    target: IStreamSubscriber<TOutput> | StreamValueTransmitter<TOutput, any>
+  ) {
+    if (isStreamValueTransmitter(target)) {
+      connectTransmitters(this, target)
+      this.destination = target
+    } else {
+      this.destination = new StreamDestination(this, target)
+    }
     this.__onDisposeListeners = new CompositeDisposable()
     this.__isActive = true
-    this.destination = this.__destination
   }
 
   public next(value: TInput): void {
@@ -67,30 +80,41 @@ export abstract class StreamDistributor<TInput, TOutput>
     )
   }
 
-  protected abstract onNextValue(value: TInput): void
-
-  protected onError(error: any): void {
-    this.__destination.error(error)
-  }
-
-  protected onComplete(): void {
-    this.__destination.complete()
-  }
-
-  protected recycle(): void {
-    this.__destination.recycle()
+  public recycle(): void {
+    this.destination.recycle()
     this.__onDisposeListeners.recycle()
     this.__isActive = true
   }
+
+  protected abstract onNextValue(value: TInput): void
+
+  protected onError(error: any): void {
+    this.destination.error(error)
+    this.dispose()
+  }
+
+  protected onComplete(): void {
+    this.destination.complete()
+    this.dispose()
+  }
 }
 
-export class MonoTypeStreamDistributor<T> extends StreamDistributor<T, T> {
+export class MonoTypeStreamValueTransmitter<T> extends StreamValueTransmitter<
+  T,
+  T
+> {
   protected onNextValue(value: T): void {
     this.destination.next(value)
   }
 }
 
-class StreamDestination<T> implements IRequiredStreamSubscriber<T> {
+export function isStreamValueTransmitter(
+  value: any
+): value is StreamValueTransmitter<any, any> {
+  return value instanceof StreamValueTransmitter
+}
+
+class StreamDestination<T> implements IRecyclableRequiredStreamSubscriber<T> {
   private __isActive: boolean
   private __parentDistributor: IDisposable
   private __target: IStreamSubscriber<T>

@@ -1,8 +1,8 @@
 import { Stream } from 'src/models/Stream/Stream'
 import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
 import { IOperator } from 'src/models/Stream/IOperator'
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLIke'
-import { MonoTypeStreamDistributor } from 'src/models/Stream/StreamDistributor'
+import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
 import { curry2 } from 'src/utils/curry'
 import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
 
@@ -44,7 +44,7 @@ export class DistinctUntilChangedWithCompareFunctionOperator<T>
 
 export class DistinctUntilChangedWithCompareFunctionSubscriber<
   T
-> extends MonoTypeStreamDistributor<T> {
+> extends MonoTypeStreamValueTransmitter<T> {
   private lastValue?: T
   private hasLastValue: boolean = false
 

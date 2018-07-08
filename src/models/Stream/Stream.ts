@@ -1,65 +1,68 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLIke'
-import { toDisposable } from 'src/models/Disposable/toDisposable'
+import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
-import { MonoTypeStreamDistributor } from 'src/models/Stream/StreamDistributor'
+import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
 import { StreamSubscription } from 'src/models/Stream/StreamSubscription'
 import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
+import { isDisposable } from 'src/models/Disposable/isDisposable'
+import { isFunction } from 'src/utils/isFunction'
 
-export class Stream<T> {
-  private __subscribe?: (target: StreamSubscriptionTarget<T>) => IDisposableLike
-
-  constructor(
-    subscribe?: (target: StreamSubscriptionTarget<T>) => IDisposableLike
-  ) {
-    this.__subscribe = subscribe
-  }
-
+export abstract class Stream<T> {
   public lift<U>(operator: IOperator<T, U>): Stream<U> {
     return new LiftedStream<T, U>(this, operator)
   }
 
   public subscribe(targetSubscriber: IStreamSubscriber<T>): StreamSubscription {
-    const distributor = new MonoTypeStreamDistributor(targetSubscriber)
-    const target = new StreamSubscriptionTarget(distributor)
-    const subscription = new StreamSubscription(distributor)
-    const disposableMaybe = toDisposable(this.trySubscribe(target))
+    const transmitter = new MonoTypeStreamValueTransmitter(targetSubscriber)
+    const target = new StreamSubscriptionTarget(transmitter)
+    const subscription = new StreamSubscription(transmitter)
 
-    disposableMaybe.withValue(disposable => {
-      distributor.terminateDisposableWhenDisposed(disposable)
-    })
+    let disposable: IDisposableLike
+
+    try {
+      disposable = this.trySubscribe(target)
+    } catch (error) {
+      target.error(error)
+    }
+
+    if (isDisposable(disposable)) {
+      transmitter.terminateDisposableWhenDisposed(disposable)
+    } else if (isFunction(disposable)) {
+      transmitter.onDispose(disposable)
+    }
 
     return subscription
   }
 
+  protected abstract trySubscribe(
+    target: StreamSubscriptionTarget<T>
+  ): IDisposableLike
+}
+
+export class RawStream<T> extends Stream<T> {
+  private __subscribe: (target: StreamSubscriptionTarget<T>) => void
+
+  constructor(subscribe: (target: StreamSubscriptionTarget<T>) => void) {
+    super()
+    this.__subscribe = subscribe
+  }
+
   protected trySubscribe(target: StreamSubscriptionTarget<T>): IDisposableLike {
-    if (this.__subscribe) {
-      try {
-        return this.__subscribe(target)
-      } catch (error) {
-        target.error(error)
-      }
-    }
+    return this.__subscribe(target)
   }
 }
 
-class LiftedStream<IInput, IOutput> extends Stream<IOutput> {
-  private __source: Stream<IInput>
-  private __operator: IOperator<IInput, IOutput>
+export class LiftedStream<T, U> extends Stream<U> {
+  private __source: Stream<T>
+  private __operator: IOperator<T, U>
 
-  constructor(source: Stream<IInput>, operator: IOperator<IInput, IOutput>) {
+  constructor(source: Stream<T>, operator: IOperator<T, U>) {
     super()
     this.__source = source
     this.__operator = operator
   }
 
-  protected trySubscribe(
-    target: StreamSubscriptionTarget<IOutput>
-  ): IDisposableLike {
-    try {
-      return this.__operator.call(target, this.__source)
-    } catch (error) {
-      target.error(error)
-    }
+  protected trySubscribe(target: StreamSubscriptionTarget<U>): IDisposableLike {
+    return this.__operator.call(target, this.__source)
   }
 }

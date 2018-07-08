@@ -1,21 +1,21 @@
-import { MonoTypeStreamDistributor } from 'src/models/Stream/StreamDistributor'
+import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
 
 export class StreamSubscriptionTarget<T> {
-  private __distributor: MonoTypeStreamDistributor<T>
+  private __transmitter: MonoTypeStreamValueTransmitter<T>
 
-  constructor(distributor: MonoTypeStreamDistributor<T>) {
-    this.__distributor = distributor
+  constructor(transmitter: MonoTypeStreamValueTransmitter<T>) {
+    this.__transmitter = transmitter
   }
 
   public next(value: T): void {
-    this.__distributor.next(value)
+    this.__transmitter.next(value)
   }
 
   public error(error: any): void {
-    this.__distributor.error(error)
+    this.__transmitter.error(error)
   }
 
   public complete(): void {
-    this.__distributor.complete()
+    this.__transmitter.complete()
   }
 }

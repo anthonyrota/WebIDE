@@ -1,18 +1,18 @@
 import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
-import { StreamDistributor } from 'src/models/Stream/StreamDistributor'
+import { StreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
 
 export class StreamSubscription implements IConsciousDisposable {
-  private __distributor: StreamDistributor<any, any>
+  private __transmitter: StreamValueTransmitter<any, any>
 
-  constructor(distributor: StreamDistributor<any, any>) {
-    this.__distributor = distributor
+  constructor(transmitter: StreamValueTransmitter<any, any>) {
+    this.__transmitter = transmitter
   }
 
   public isActive(): boolean {
-    return this.__distributor.isActive()
+    return this.__transmitter.isActive()
   }
 
   public dispose(): void {
-    this.__distributor.dispose()
+    this.__transmitter.dispose()
   }
 }
