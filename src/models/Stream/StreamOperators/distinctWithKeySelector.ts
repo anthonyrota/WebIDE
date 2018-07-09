@@ -1,10 +1,10 @@
-import { Stream } from 'src/models/Stream/Stream'
-import { curry2 } from 'src/utils/curry'
-import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
-import { IOperator } from 'src/models/Stream/IOperator'
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
+import { Stream } from 'src/models/Stream/Stream'
+import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
+import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { curry2 } from 'src/utils/curry'
 
 export const distinctWithKeySelector: {
   <TValue, TKey>(selectKey: (value: TValue) => TKey): (
@@ -25,7 +25,7 @@ export const distinctWithKeySelector: {
   }
 )
 
-export class DistinctWithKeySelectorOperator<TValue, TKey>
+class DistinctWithKeySelectorOperator<TValue, TKey>
   implements IOperator<TValue, TValue> {
   constructor(private selectKey: (value: TValue) => TKey) {}
 
@@ -42,7 +42,7 @@ export class DistinctWithKeySelectorOperator<TValue, TKey>
   }
 }
 
-export class DistinctWithKeySelectorSubscriber<
+class DistinctWithKeySelectorSubscriber<
   TValue,
   TKey
 > extends MonoTypeStreamValueTransmitter<TValue> {

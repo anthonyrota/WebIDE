@@ -17,6 +17,8 @@
     "no-bitwise": false,
     "no-empty": false,
     "object-literal-sort-keys": false,
-    "no-this-assignment"
+    "curly": true,
+    "no-this-assignment": false,
+    "no-shadowed-variable": false
   }
 }

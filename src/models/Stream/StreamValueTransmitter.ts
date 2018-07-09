@@ -2,55 +2,54 @@ import { CompositeDisposable } from 'src/models/Disposable/CompositeDisposable'
 import { Disposable } from 'src/models/Disposable/Disposable'
 import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
+import { IRecyclable } from 'src/models/Disposable/IRecyclable'
 import {
-  IStreamSubscriber,
-  IRecyclableRequiredStreamSubscriber
+  IRequiredStreamSubscriber,
+  IStreamSubscriber
 } from 'src/models/Stream/IStreamSubscriber'
 import { reportError } from 'src/utils/reportError'
 
-function connectTransmitters(
-  a: StreamValueTransmitter<any, any>,
-  b: StreamValueTransmitter<any, any>
-): void {
-  a.terminateDisposableWhenDisposed(b)
-  b.terminateDisposableWhenDisposed(a)
-}
-
 export abstract class StreamValueTransmitter<TInput, TOutput>
-  implements IConsciousDisposable, IRecyclableRequiredStreamSubscriber<TInput> {
-  protected destination: IRecyclableRequiredStreamSubscriber<TOutput>
+  implements
+    IConsciousDisposable,
+    IRequiredStreamSubscriber<TInput>,
+    IRecyclable {
+  protected destination: IRequiredStreamSubscriber<TOutput>
   private __onDisposeListeners: CompositeDisposable
+  private __isReceivingValues: boolean
   private __isActive: boolean
 
   constructor(
     target: IStreamSubscriber<TOutput> | StreamValueTransmitter<TOutput, any>
   ) {
     if (isStreamValueTransmitter(target)) {
-      connectTransmitters(this, target)
+      target.terminateDisposableWhenDisposed(this)
       this.destination = target
     } else {
       this.destination = new StreamDestination(this, target)
     }
     this.__onDisposeListeners = new CompositeDisposable()
+    this.__isReceivingValues = true
     this.__isActive = true
   }
 
   public next(value: TInput): void {
-    if (this.__isActive) {
+    if (this.__isReceivingValues) {
       this.onNextValue(value)
     }
   }
 
   public error(error: any): void {
-    if (this.__isActive) {
-      this.__isActive = false
+    if (this.__isReceivingValues) {
+      this.__isReceivingValues = false
       this.onError(error)
     }
   }
 
   public complete(): void {
-    if (this.__isActive) {
-      this.__isActive = false
+    if (this.__isReceivingValues) {
+      this.onBeforeComplete()
+      this.__isReceivingValues = false
       this.onComplete()
     }
   }
@@ -60,7 +59,8 @@ export abstract class StreamValueTransmitter<TInput, TOutput>
   }
 
   public dispose(): void {
-    if (this.__isActive) {
+    if (this.__isReceivingValues) {
+      this.__isReceivingValues = false
       this.__isActive = false
       this.__onDisposeListeners.dispose()
     }
@@ -81,8 +81,8 @@ export abstract class StreamValueTransmitter<TInput, TOutput>
   }
 
   public recycle(): void {
-    this.destination.recycle()
     this.__onDisposeListeners.recycle()
+    this.__isReceivingValues = true
     this.__isActive = true
   }
 
@@ -97,6 +97,8 @@ export abstract class StreamValueTransmitter<TInput, TOutput>
     this.destination.complete()
     this.dispose()
   }
+
+  protected onBeforeComplete() {}
 }
 
 export class MonoTypeStreamValueTransmitter<T> extends StreamValueTransmitter<
@@ -114,19 +116,17 @@ export function isStreamValueTransmitter(
   return value instanceof StreamValueTransmitter
 }
 
-class StreamDestination<T> implements IRecyclableRequiredStreamSubscriber<T> {
-  private __isActive: boolean
+class StreamDestination<T> implements IRequiredStreamSubscriber<T> {
   private __parentDistributor: IDisposable
   private __target: IStreamSubscriber<T>
 
   constructor(parentDistributor: IDisposable, target: IStreamSubscriber<T>) {
-    this.__isActive = true
     this.__parentDistributor = parentDistributor
     this.__target = target
   }
 
   public next(value: T): void {
-    if (this.__isActive && this.__target.next) {
+    if (this.__target.next) {
       try {
         this.__target.next(value)
       } catch (subscriberError) {
@@ -137,40 +137,31 @@ class StreamDestination<T> implements IRecyclableRequiredStreamSubscriber<T> {
   }
 
   public error(error: any): void {
-    if (this.__isActive) {
-      if (this.__target.error) {
-        try {
-          this.__target.error(error)
-        } catch (subscriberError) {
-          reportError(subscriberError)
-        }
+    if (this.__target.error) {
+      try {
+        this.__target.error(error)
+      } catch (subscriberError) {
+        reportError(subscriberError)
       }
-
-      this.__dispose()
-      reportError(error)
     }
+
+    this.__dispose()
+    reportError(error)
   }
 
   public complete(): void {
-    if (this.__isActive) {
-      if (this.__target.complete) {
-        try {
-          this.__target.complete()
-        } catch (subscriberError) {
-          reportError(subscriberError)
-        }
+    if (this.__target.complete) {
+      try {
+        this.__target.complete()
+      } catch (subscriberError) {
+        reportError(subscriberError)
       }
-
-      this.__dispose()
     }
-  }
 
-  public recycle(): void {
-    this.__isActive = true
+    this.__dispose()
   }
 
   private __dispose(): void {
-    this.__isActive = false
     this.__parentDistributor.dispose()
   }
 }

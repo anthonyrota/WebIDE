@@ -1,10 +1,10 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { isDisposable } from 'src/models/Disposable/isDisposable'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
-import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
 import { StreamSubscription } from 'src/models/Stream/StreamSubscription'
 import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
-import { isDisposable } from 'src/models/Disposable/isDisposable'
+import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
 import { isFunction } from 'src/utils/isFunction'
 
 export abstract class Stream<T> {

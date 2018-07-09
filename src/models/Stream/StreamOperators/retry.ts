@@ -1,10 +1,10 @@
-import { Stream } from 'src/models/Stream/Stream'
-import { curry2 } from 'src/utils/curry'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
+import { Stream } from 'src/models/Stream/Stream'
+import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
+import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { curry2 } from 'src/utils/curry'
 
 export const retry: {
   <T>(count: number): (source: Stream<T>) => Stream<T>

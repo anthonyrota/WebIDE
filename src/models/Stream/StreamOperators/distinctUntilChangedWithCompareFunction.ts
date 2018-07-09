@@ -1,10 +1,10 @@
+import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { IOperator } from 'src/models/Stream/IOperator'
+import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
 import { curry2 } from 'src/utils/curry'
-import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
 
 export const distinctUntilChangedWithCompareFunction: {
   <T>(isEqual: (lastValue: T, newValue: T) => boolean): (
@@ -25,7 +25,7 @@ export const distinctUntilChangedWithCompareFunction: {
   }
 )
 
-export class DistinctUntilChangedWithCompareFunctionOperator<T>
+class DistinctUntilChangedWithCompareFunctionOperator<T>
   implements IOperator<T, T> {
   constructor(private isEqual: (lastValue: T, newValue: T) => boolean) {}
 
@@ -42,7 +42,7 @@ export class DistinctUntilChangedWithCompareFunctionOperator<T>
   }
 }
 
-export class DistinctUntilChangedWithCompareFunctionSubscriber<
+class DistinctUntilChangedWithCompareFunctionSubscriber<
   T
 > extends MonoTypeStreamValueTransmitter<T> {
   private lastValue?: T

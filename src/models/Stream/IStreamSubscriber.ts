@@ -18,13 +18,6 @@ export interface IRequiredStreamSubscriber<T> {
   complete: OnCompleteListener
 }
 
-export interface IRecyclableRequiredStreamSubscriber<T> {
-  next: OnNextValueListener<T>
-  error: OnErrorListener
-  complete: OnCompleteListener
-  recycle(): void
-}
-
 export interface IStreamSubscriber<T> {
   next?: OnNextValueListener<T>
   error?: OnErrorListener

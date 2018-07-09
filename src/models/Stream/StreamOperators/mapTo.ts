@@ -1,10 +1,10 @@
-import { Stream } from 'src/models/Stream/Stream'
-import { curry2 } from 'src/utils/curry'
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
 import { IOperator } from 'src/models/Stream/IOperator'
-import { StreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
 import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
+import { Stream } from 'src/models/Stream/Stream'
+import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
+import { StreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { curry2 } from 'src/utils/curry'
 
 export const mapTo: {
   <T>(value: T): (source: Stream<any>) => Stream<T>

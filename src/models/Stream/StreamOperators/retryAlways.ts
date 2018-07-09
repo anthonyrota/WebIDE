@@ -1,9 +1,9 @@
-import { Stream } from 'src/models/Stream/Stream'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
+import { Stream } from 'src/models/Stream/Stream'
+import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
+import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
 
 export function retryAlways<T>(source: Stream<T>): Stream<T> {
   return source.lift(new RetryOperator<T>())
