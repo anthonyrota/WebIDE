@@ -1,8 +1,8 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { Stream } from 'src/models/Stream/Stream'
-import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
-import { StreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
+import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function pairwise<T>(source: Stream<T>): Stream<[T, T]> {
   return source.lift(new PairwiseOperator<T>())
@@ -10,14 +10,14 @@ export function pairwise<T>(source: Stream<T>): Stream<[T, T]> {
 
 class PairwiseOperator<T> implements IOperator<T, [T, T]> {
   public call(
-    target: StreamSubscriptionTarget<[T, T]>,
+    target: SubscriptionTarget<[T, T]>,
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(new PairwiseSubscriber<T>(target))
   }
 }
 
-class PairwiseSubscriber<T> extends StreamValueTransmitter<T, [T, T]> {
+class PairwiseSubscriber<T> extends ValueTransmitter<T, [T, T]> {
   private lastValue?: T
   private hasLastValue: boolean = false
 

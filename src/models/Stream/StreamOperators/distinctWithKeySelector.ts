@@ -1,9 +1,9 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
-import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
+import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
-import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
+import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { curry2 } from 'src/utils/curry'
 
 export const distinctWithKeySelector: {
@@ -30,7 +30,7 @@ class DistinctWithKeySelectorOperator<TValue, TKey>
   constructor(private selectKey: (value: TValue) => TKey) {}
 
   public call(
-    target: StreamSubscriptionTarget<TValue>,
+    target: SubscriptionTarget<TValue>,
     source: Stream<TValue>
   ): IDisposableLike {
     return source.subscribe(
@@ -45,11 +45,11 @@ class DistinctWithKeySelectorOperator<TValue, TKey>
 class DistinctWithKeySelectorSubscriber<
   TValue,
   TKey
-> extends MonoTypeStreamValueTransmitter<TValue> {
+> extends MonoTypeValueTransmitter<TValue> {
   private keys = new Set<TKey>()
 
   constructor(
-    target: IStreamSubscriber<TValue>,
+    target: ISubscriber<TValue>,
     private selectKey: (value: TValue) => TKey
   ) {
     super(target)

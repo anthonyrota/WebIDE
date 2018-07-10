@@ -1,9 +1,9 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
-import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
+import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
-import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
+import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { curry2 } from 'src/utils/curry'
 
 export const tapError: {
@@ -19,7 +19,7 @@ class TapErrorOperator<T> implements IOperator<T, T> {
   constructor(private tapNextError: (error: any) => void) {}
 
   public call(
-    target: StreamSubscriptionTarget<T>,
+    target: SubscriptionTarget<T>,
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(
@@ -28,9 +28,9 @@ class TapErrorOperator<T> implements IOperator<T, T> {
   }
 }
 
-class TapErrorSubscriber<T> extends MonoTypeStreamValueTransmitter<T> {
+class TapErrorSubscriber<T> extends MonoTypeValueTransmitter<T> {
   constructor(
-    target: IStreamSubscriber<T>,
+    target: ISubscriber<T>,
     private tapNextError: (error: any) => void
   ) {
     super(target)

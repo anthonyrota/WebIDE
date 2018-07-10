@@ -4,29 +4,24 @@ import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable
 import { IDisposable } from 'src/models/Disposable/IDisposable'
 import { IRecyclable } from 'src/models/Disposable/IRecyclable'
 import {
-  IRequiredStreamSubscriber,
-  IStreamSubscriber
-} from 'src/models/Stream/IStreamSubscriber'
+  IRequiredSubscriber,
+  ISubscriber
+} from 'src/models/Stream/ISubscriber'
 import { reportError } from 'src/utils/reportError'
 
-export abstract class StreamValueTransmitter<TInput, TOutput>
-  implements
-    IConsciousDisposable,
-    IRequiredStreamSubscriber<TInput>,
-    IRecyclable {
-  protected destination: IRequiredStreamSubscriber<TOutput>
+export abstract class ValueTransmitter<TInput, TOutput>
+  implements IConsciousDisposable, IRequiredSubscriber<TInput>, IRecyclable {
+  protected destination: IRequiredSubscriber<TOutput>
   private __onDisposeListeners: CompositeDisposable
   private __isReceivingValues: boolean
   private __isActive: boolean
 
-  constructor(
-    target: IStreamSubscriber<TOutput> | StreamValueTransmitter<TOutput, any>
-  ) {
-    if (isStreamValueTransmitter(target)) {
+  constructor(target: ISubscriber<TOutput> | ValueTransmitter<TOutput, any>) {
+    if (isValueTransmitter(target)) {
       target.terminateDisposableWhenDisposed(this)
       this.destination = target
     } else {
-      this.destination = new StreamDestination(this, target)
+      this.destination = new Destination(this, target)
     }
     this.__onDisposeListeners = new CompositeDisposable()
     this.__isReceivingValues = true
@@ -56,6 +51,10 @@ export abstract class StreamValueTransmitter<TInput, TOutput>
 
   public isActive(): boolean {
     return this.__isActive
+  }
+
+  public isReceivingValues(): boolean {
+    return this.__isReceivingValues
   }
 
   public dispose(): void {
@@ -101,26 +100,23 @@ export abstract class StreamValueTransmitter<TInput, TOutput>
   protected onBeforeComplete() {}
 }
 
-export class MonoTypeStreamValueTransmitter<T> extends StreamValueTransmitter<
-  T,
-  T
-> {
+export class MonoTypeValueTransmitter<T> extends ValueTransmitter<T, T> {
   protected onNextValue(value: T): void {
     this.destination.next(value)
   }
 }
 
-export function isStreamValueTransmitter(
+export function isValueTransmitter(
   value: any
-): value is StreamValueTransmitter<any, any> {
-  return value instanceof StreamValueTransmitter
+): value is ValueTransmitter<any, any> {
+  return value instanceof ValueTransmitter
 }
 
-class StreamDestination<T> implements IRequiredStreamSubscriber<T> {
+class Destination<T> implements IRequiredSubscriber<T> {
   private __parentDistributor: IDisposable
-  private __target: IStreamSubscriber<T>
+  private __target: ISubscriber<T>
 
-  constructor(parentDistributor: IDisposable, target: IStreamSubscriber<T>) {
+  constructor(parentDistributor: IDisposable, target: ISubscriber<T>) {
     this.__parentDistributor = parentDistributor
     this.__target = target
   }

@@ -1,9 +1,9 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
-import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
+import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
-import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
+import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function retryAlways<T>(source: Stream<T>): Stream<T> {
   return source.lift(new RetryOperator<T>())
@@ -11,15 +11,15 @@ export function retryAlways<T>(source: Stream<T>): Stream<T> {
 
 class RetryOperator<T> implements IOperator<T, T> {
   public call(
-    target: StreamSubscriptionTarget<T>,
+    target: SubscriptionTarget<T>,
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(new RetrySubscriber<T>(target, source))
   }
 }
 
-class RetrySubscriber<T> extends MonoTypeStreamValueTransmitter<T> {
-  constructor(target: IStreamSubscriber<T>, private source: Stream<T>) {
+class RetrySubscriber<T> extends MonoTypeValueTransmitter<T> {
+  constructor(target: ISubscriber<T>, private source: Stream<T>) {
     super(target)
   }
 

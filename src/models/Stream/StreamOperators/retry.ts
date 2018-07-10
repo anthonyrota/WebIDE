@@ -1,9 +1,9 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
-import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
+import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
-import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
+import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { curry2 } from 'src/utils/curry'
 
 export const retry: {
@@ -22,16 +22,16 @@ class RetryOperator<T> implements IOperator<T, T> {
   constructor(private count: number) {}
 
   public call(
-    target: StreamSubscriptionTarget<T>,
+    target: SubscriptionTarget<T>,
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(new RetrySubscriber<T>(target, this.count, source))
   }
 }
 
-class RetrySubscriber<T> extends MonoTypeStreamValueTransmitter<T> {
+class RetrySubscriber<T> extends MonoTypeValueTransmitter<T> {
   constructor(
-    target: IStreamSubscriber<T>,
+    target: ISubscriber<T>,
     private count: number,
     private source: Stream<T>
   ) {

@@ -1,9 +1,9 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
-import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
+import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
-import { StreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
+import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { curry2 } from 'src/utils/curry'
 
 export const mapTo: {
@@ -19,15 +19,15 @@ class MapToOperator<T> implements IOperator<any, T> {
   constructor(private value: T) {}
 
   public call(
-    target: StreamSubscriptionTarget<T>,
+    target: SubscriptionTarget<T>,
     source: Stream<any>
   ): IDisposableLike {
     return source.subscribe(new MapToSubscriber<T>(target, this.value))
   }
 }
 
-class MapToSubscriber<T> extends StreamValueTransmitter<any, T> {
-  constructor(target: IStreamSubscriber<T>, private value: T) {
+class MapToSubscriber<T> extends ValueTransmitter<any, T> {
+  constructor(target: ISubscriber<T>, private value: T) {
     super(target)
   }
 

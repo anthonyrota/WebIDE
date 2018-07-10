@@ -1,10 +1,10 @@
 import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
-import { StreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export class StreamSubscription implements IConsciousDisposable {
-  private __transmitter: StreamValueTransmitter<any, any>
+export class Subscription implements IConsciousDisposable {
+  private __transmitter: ValueTransmitter<any, any>
 
-  constructor(transmitter: StreamValueTransmitter<any, any>) {
+  constructor(transmitter: ValueTransmitter<any, any>) {
     this.__transmitter = transmitter
   }
 

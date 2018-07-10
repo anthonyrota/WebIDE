@@ -1,9 +1,9 @@
-import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export class StreamSubscriptionTarget<T> {
-  private __transmitter: MonoTypeStreamValueTransmitter<T>
+export class SubscriptionTarget<T> {
+  private __transmitter: MonoTypeValueTransmitter<T>
 
-  constructor(transmitter: MonoTypeStreamValueTransmitter<T>) {
+  constructor(transmitter: MonoTypeValueTransmitter<T>) {
     this.__transmitter = transmitter
   }
 

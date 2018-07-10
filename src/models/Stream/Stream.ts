@@ -1,21 +1,21 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { isDisposable } from 'src/models/Disposable/isDisposable'
 import { IOperator } from 'src/models/Stream/IOperator'
-import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
-import { StreamSubscription } from 'src/models/Stream/StreamSubscription'
-import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
-import { MonoTypeStreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { ISubscribable, ISubscriber } from 'src/models/Stream/ISubscriber'
+import { Subscription } from 'src/models/Stream/Subscription'
+import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
+import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { isFunction } from 'src/utils/isFunction'
 
-export abstract class Stream<T> {
+export abstract class Stream<T> implements ISubscribable<T> {
   public lift<U>(operator: IOperator<T, U>): Stream<U> {
     return new LiftedStream<T, U>(this, operator)
   }
 
-  public subscribe(targetSubscriber: IStreamSubscriber<T>): StreamSubscription {
-    const transmitter = new MonoTypeStreamValueTransmitter(targetSubscriber)
-    const target = new StreamSubscriptionTarget(transmitter)
-    const subscription = new StreamSubscription(transmitter)
+  public subscribe(targetSubscriber: ISubscriber<T>): Subscription {
+    const transmitter = new MonoTypeValueTransmitter(targetSubscriber)
+    const target = new SubscriptionTarget(transmitter)
+    const subscription = new Subscription(transmitter)
 
     let disposable: IDisposableLike
 
@@ -35,24 +35,24 @@ export abstract class Stream<T> {
   }
 
   protected abstract trySubscribe(
-    target: StreamSubscriptionTarget<T>
+    target: SubscriptionTarget<T>
   ): IDisposableLike
 }
 
 export class RawStream<T> extends Stream<T> {
-  private __subscribe: (target: StreamSubscriptionTarget<T>) => void
+  private __subscribe: (target: SubscriptionTarget<T>) => void
 
-  constructor(subscribe: (target: StreamSubscriptionTarget<T>) => void) {
+  constructor(subscribe: (target: SubscriptionTarget<T>) => void) {
     super()
     this.__subscribe = subscribe
   }
 
-  protected trySubscribe(target: StreamSubscriptionTarget<T>): IDisposableLike {
+  protected trySubscribe(target: SubscriptionTarget<T>): IDisposableLike {
     return this.__subscribe(target)
   }
 }
 
-export class LiftedStream<T, U> extends Stream<U> {
+class LiftedStream<T, U> extends Stream<U> {
   private __source: Stream<T>
   private __operator: IOperator<T, U>
 
@@ -62,7 +62,7 @@ export class LiftedStream<T, U> extends Stream<U> {
     this.__operator = operator
   }
 
-  protected trySubscribe(target: StreamSubscriptionTarget<U>): IDisposableLike {
+  protected trySubscribe(target: SubscriptionTarget<U>): IDisposableLike {
     return this.__operator.call(target, this.__source)
   }
 }

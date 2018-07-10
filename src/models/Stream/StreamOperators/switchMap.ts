@@ -1,15 +1,10 @@
 import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import {
-  IDoubleStreamSubscriber,
-  subscribeStreamToDoubleStreamSubscriber
-} from 'src/models/Stream/DoubleStreamSubscriber'
+import { DoubleInputValueTransmitterWithSameOutputAndOuterTypes } from 'src/models/Stream/DoubleInputValueTransmitter'
 import { IOperator } from 'src/models/Stream/IOperator'
-import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
+import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import { StreamSubscription } from 'src/models/Stream/StreamSubscription'
-import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
-import { StreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
 import { curry2 } from 'src/utils/curry'
 
 export const switchMap: {
@@ -35,7 +30,7 @@ class SwitchMapOperator<T, U> implements IOperator<T, U> {
   ) {}
 
   public call(
-    target: StreamSubscriptionTarget<U>,
+    target: SubscriptionTarget<U>,
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(
@@ -44,27 +39,18 @@ class SwitchMapOperator<T, U> implements IOperator<T, U> {
   }
 }
 
-class SwitchMapSubscriber<T, U> extends StreamValueTransmitter<T, U>
-  implements IDoubleStreamSubscriber<U> {
+class SwitchMapSubscriber<
+  T,
+  U
+> extends DoubleInputValueTransmitterWithSameOutputAndOuterTypes<T, U> {
   private index: number = 0
-  private latestStreamSubscription?: StreamSubscription
-  private cancelTerminatingSubscriptionDisposable?: IConsciousDisposable
+  private lastStreamSubscription: IConsciousDisposable | null = null
 
   constructor(
-    target: IStreamSubscriber<U>,
+    target: ISubscriber<U>,
     private convertValueToStream: (value: T, index: number) => Stream<U>
   ) {
     super(target)
-  }
-
-  public onOuterNextValue(value: U): void {
-    this.destination.next(value)
-  }
-
-  public onOuterComplete(): void {
-    if (!this.isActive()) {
-      super.complete()
-    }
   }
 
   protected onNextValue(value: T): void {
@@ -79,29 +65,24 @@ class SwitchMapSubscriber<T, U> extends StreamValueTransmitter<T, U>
       return
     }
 
-    if (this.latestStreamSubscription) {
-      this.latestStreamSubscription.dispose()
+    if (this.lastStreamSubscription) {
+      this.lastStreamSubscription.dispose()
     }
 
-    if (this.cancelTerminatingSubscriptionDisposable) {
-      this.cancelTerminatingSubscriptionDisposable.dispose()
-    }
-
-    this.latestStreamSubscription = subscribeStreamToDoubleStreamSubscriber(
-      resultStream,
-      this
-    )
-    this.cancelTerminatingSubscriptionDisposable = this.terminateDisposableWhenDisposed(
-      this.latestStreamSubscription
-    )
+    this.lastStreamSubscription = this.subscribeStreamToSelf(resultStream)
   }
 
   protected onComplete(): void {
     if (
-      !this.latestStreamSubscription ||
-      !this.latestStreamSubscription.isActive()
+      !this.lastStreamSubscription ||
+      !this.lastStreamSubscription.isActive()
     ) {
       super.onComplete()
     }
+  }
+
+  protected onOuterComplete(): void {
+    this.lastStreamSubscription = null
+    this.destination.complete()
   }
 }

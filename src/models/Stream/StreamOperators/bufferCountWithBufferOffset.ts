@@ -1,9 +1,9 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
-import { IStreamSubscriber } from 'src/models/Stream/IStreamSubscriber'
+import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import { StreamSubscriptionTarget } from 'src/models/Stream/StreamSubscriptionTarget'
-import { StreamValueTransmitter } from 'src/models/Stream/StreamValueTransmitter'
+import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
+import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { curry3 } from 'src/utils/curry'
 
 export const bufferCountWithBufferOffset: {
@@ -30,7 +30,7 @@ class BufferCountOperatorWithBufferOffset<T> implements IOperator<T, T[]> {
   constructor(private bufferSize: number, private bufferOffset: number) {}
 
   public call(
-    target: StreamSubscriptionTarget<T[]>,
+    target: SubscriptionTarget<T[]>,
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(
@@ -43,7 +43,7 @@ class BufferCountOperatorWithBufferOffset<T> implements IOperator<T, T[]> {
   }
 }
 
-class BufferCountSubscriberWithBufferOffset<T> extends StreamValueTransmitter<
+class BufferCountSubscriberWithBufferOffset<T> extends ValueTransmitter<
   T,
   T[]
 > {
@@ -51,7 +51,7 @@ class BufferCountSubscriberWithBufferOffset<T> extends StreamValueTransmitter<
   private valueIndex: number = 0
 
   constructor(
-    target: IStreamSubscriber<T[]>,
+    target: ISubscriber<T[]>,
     private bufferSize: number,
     private bufferOffset: number
   ) {
