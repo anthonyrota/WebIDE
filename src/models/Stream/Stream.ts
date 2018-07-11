@@ -25,10 +25,12 @@ export abstract class Stream<T> implements ISubscribable<T> {
       target.error(error)
     }
 
-    if (isDisposable(disposable)) {
-      transmitter.terminateDisposableWhenDisposed(disposable)
-    } else if (isFunction(disposable)) {
-      transmitter.onDispose(disposable)
+    if (disposable) {
+      if (isDisposable(disposable)) {
+        transmitter.terminateDisposableWhenDisposed(disposable)
+      } else if (isFunction(disposable)) {
+        transmitter.onDispose(disposable)
+      }
     }
 
     return subscription

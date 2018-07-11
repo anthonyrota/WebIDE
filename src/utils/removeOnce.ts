@@ -2,7 +2,7 @@ import { curry2 } from 'src/utils/curry'
 import { indexOf } from 'src/utils/indexOf'
 import { splice } from 'src/utils/splice'
 
-export const remove: {
+export const removeOnce: {
   <T>(item: T): (array: T[]) => void
   <T>(item: T, array: T[]): void
 } = curry2(
