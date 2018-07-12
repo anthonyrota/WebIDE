@@ -5,17 +5,33 @@ import {
   ImmutableMutableMaybeView,
   MutableMaybe
 } from 'src/models/Maybe/MutableMaybe'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { DuplicateStream, Stream } from 'src/models/Stream/Stream'
 import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
 import { removeOnce } from 'src/utils/removeOnce'
 
-export class DistributiveStream<T> extends Stream<T>
-  implements IConsciousDisposable, IRequiredSubscriber<T> {
+export interface IDistributiveStream<TInput, TOutput>
+  extends Stream<TOutput>,
+    IConsciousDisposable,
+    IRequiredSubscriber<TInput> {
+  lift<TNewOutput>(
+    operator: IOperator<TOutput, TNewOutput>
+  ): IDistributiveStream<TInput, TNewOutput>
+  isStopped(): boolean
+  asStream(): Stream<TOutput>
+}
+
+export class RawDistributiveStream<T> extends Stream<T>
+  implements IDistributiveStream<T, T> {
   private __mutableThrownError: MutableMaybe<any> = MutableMaybe.none<any>()
-  private __subsciptionTargets: Array<SubscriptionTarget<T>>
+  private __subscriptionTargets: Array<SubscriptionTarget<T>>
   private __isDisposed: boolean = true
   private __isStopped: boolean = false
+
+  public lift<U>(operator: IOperator<T, U>): IDistributiveStream<T, U> {
+    return new LiftedDistributiveStream<T, T, U>(this, operator)
+  }
 
   public next(value: T): void {
     if (this.__isDisposed) {
@@ -23,7 +39,7 @@ export class DistributiveStream<T> extends Stream<T>
     }
 
     if (!this.__isStopped) {
-      const subscribers = this.__subsciptionTargets.slice()
+      const subscribers = this.__subscriptionTargets.slice()
 
       for (let i = 0; i < subscribers.length; i++) {
         subscribers[i].next(value)
@@ -40,13 +56,13 @@ export class DistributiveStream<T> extends Stream<T>
       this.__mutableThrownError.setValue(error)
       this.__isStopped = true
 
-      const subscribers = this.__subsciptionTargets.slice()
+      const subscribers = this.__subscriptionTargets.slice()
 
       for (let i = 0; i < subscribers.length; i++) {
         subscribers[i].error(error)
       }
 
-      this.__subsciptionTargets.length = 0
+      this.__subscriptionTargets.length = 0
     }
   }
 
@@ -58,20 +74,20 @@ export class DistributiveStream<T> extends Stream<T>
     if (!this.__isStopped) {
       this.__isStopped = true
 
-      const subscribers = this.__subsciptionTargets.slice()
+      const subscribers = this.__subscriptionTargets.slice()
 
       for (let i = 0; i < subscribers.length; i++) {
         subscribers[i].complete()
       }
 
-      this.__subsciptionTargets.length = 0
+      this.__subscriptionTargets.length = 0
     }
   }
 
   public dispose(): void {
     this.__isStopped = true
     this.__isDisposed = true
-    this.__subsciptionTargets.length = 0
+    this.__subscriptionTargets.length = 0
   }
 
   public isActive(): boolean {
@@ -80,6 +96,10 @@ export class DistributiveStream<T> extends Stream<T>
 
   public isStopped(): boolean {
     return this.__isStopped
+  }
+
+  public asStream(): Stream<T> {
+    return new DuplicateStream<T>(this)
   }
 
   protected getThrownError(): ImmutableMutableMaybeView<any> {
@@ -96,20 +116,96 @@ export class DistributiveStream<T> extends Stream<T>
     if (this.__isStopped) {
       target.complete()
     } else {
-      this.__subsciptionTargets.push(target)
+      this.__subscriptionTargets.push(target)
 
-      return new SubjectSubscriptionDisposable(
+      return new RawDistributiveStreamSubscriptionDisposable(
         this,
-        this.__subsciptionTargets,
+        this.__subscriptionTargets,
         target
       )
     }
   }
 }
 
-class SubjectSubscriptionDisposable<T> {
+class LiftedDistributiveStream<TStreamInput, TOperatorInput, TOperatorOutput>
+  extends Stream<TOperatorOutput>
+  implements IDistributiveStream<TStreamInput, TOperatorOutput> {
+  private __source: IDistributiveStream<TStreamInput, TOperatorInput>
+  private __operator: IOperator<TOperatorInput, TOperatorOutput>
+  private __isDisposed: boolean = false
+
   constructor(
-    private distributiveStream: DistributiveStream<T>,
+    source: IDistributiveStream<TStreamInput, TOperatorInput>,
+    operator: IOperator<TOperatorInput, TOperatorOutput>
+  ) {
+    super()
+    this.__source = source
+    this.__operator = operator
+  }
+
+  public lift<T>(
+    operator: IOperator<TOperatorOutput, T>
+  ): IDistributiveStream<TStreamInput, T> {
+    return new LiftedDistributiveStream<TStreamInput, TOperatorOutput, T>(
+      this,
+      operator
+    )
+  }
+
+  public next(value: TStreamInput): void {
+    if (this.__isDisposed || !this.__source.isActive()) {
+      throw new AlreadyDisposedError()
+    }
+
+    this.__source.next(value)
+  }
+
+  public error(error: any): void {
+    if (this.__isDisposed || !this.__source.isActive()) {
+      throw new AlreadyDisposedError()
+    }
+
+    this.__source.error(error)
+  }
+
+  public complete(): void {
+    if (this.__isDisposed || !this.__source.isActive()) {
+      throw new AlreadyDisposedError()
+    }
+
+    this.__source.complete()
+  }
+
+  public dispose(): void {
+    this.__isDisposed = true
+  }
+
+  public isActive(): boolean {
+    return !this.__isDisposed && this.__source.isActive()
+  }
+
+  public isStopped(): boolean {
+    return this.__source.isStopped()
+  }
+
+  public asStream(): Stream<TOperatorOutput> {
+    return new DuplicateStream(this)
+  }
+
+  protected trySubscribe(
+    target: SubscriptionTarget<TOperatorOutput>
+  ): IDisposableLike {
+    if (this.__isDisposed || !this.__source.isActive()) {
+      throw new AlreadyDisposedError()
+    }
+
+    return this.__operator.call(target, this.__source)
+  }
+}
+
+class RawDistributiveStreamSubscriptionDisposable<T> {
+  constructor(
+    private distributiveStream: RawDistributiveStream<T>,
     private distributiveStreamSubscriptionTargets: Array<SubscriptionTarget<T>>,
     private target: SubscriptionTarget<T>
   ) {}

@@ -1,3 +1,4 @@
+import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { isDisposable } from 'src/models/Disposable/isDisposable'
 import { IOperator } from 'src/models/Stream/IOperator'
@@ -12,7 +13,7 @@ export abstract class Stream<T> implements ISubscribable<T> {
     return new LiftedStream<T, U>(this, operator)
   }
 
-  public subscribe(targetSubscriber: ISubscriber<T>): Subscription {
+  public subscribe(targetSubscriber: ISubscriber<T>): IConsciousDisposable {
     const transmitter = new MonoTypeValueTransmitter(targetSubscriber)
     const target = new SubscriptionTarget(transmitter)
     const subscription = new Subscription(transmitter)
@@ -51,6 +52,19 @@ export class RawStream<T> extends Stream<T> {
 
   protected trySubscribe(target: SubscriptionTarget<T>): IDisposableLike {
     return this.__subscribe(target)
+  }
+}
+
+export class DuplicateStream<T> extends Stream<T> {
+  private __source: ISubscribable<T>
+
+  constructor(source: ISubscribable<T>) {
+    super()
+    this.__source = source
+  }
+
+  protected trySubscribe(target: SubscriptionTarget<T>): IDisposableLike {
+    return this.__source.subscribe(target)
   }
 }
 

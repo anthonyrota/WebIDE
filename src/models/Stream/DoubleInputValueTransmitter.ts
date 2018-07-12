@@ -3,14 +3,13 @@ import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable
 import { IDisposable } from 'src/models/Disposable/IDisposable'
 import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import { Subscription } from 'src/models/Stream/Subscription'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 class DoubleInputValueTransmitterSubscriptionTarget<T> extends Disposable
   implements IRequiredSubscriber<T> {
   private __transmitter: DoubleInputValueTransmitter<any, any, T>
   private __stream: Stream<T>
-  private __streamSubscription: Subscription
+  private __streamSubscription: IConsciousDisposable
   private __connectionDisposable: IDisposable
 
   constructor(
