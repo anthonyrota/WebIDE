@@ -1,5 +1,6 @@
 import { AlreadyDisposedError } from 'src/models/Disposable/AlreadyDisposedError'
 import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
+import { IDisposable } from 'src/models/Disposable/IDisposable'
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import {
   ImmutableMutableMaybeView,
@@ -18,16 +19,16 @@ export interface IDistributiveStream<TInput, TOutput>
   lift<TNewOutput>(
     operator: IOperator<TOutput, TNewOutput>
   ): IDistributiveStream<TInput, TNewOutput>
-  isStopped(): boolean
+  isCompleted(): boolean
   asStream(): Stream<TOutput>
 }
 
-export class RawDistributiveStream<T> extends Stream<T>
+export class DistributiveStream<T> extends Stream<T>
   implements IDistributiveStream<T, T> {
   private __mutableThrownError: MutableMaybe<any> = MutableMaybe.none<any>()
   private __subscriptionTargets: Array<SubscriptionTarget<T>>
   private __isDisposed: boolean = true
-  private __isStopped: boolean = false
+  private __isCompleted: boolean = false
 
   public lift<U>(operator: IOperator<T, U>): IDistributiveStream<T, U> {
     return new LiftedDistributiveStream<T, T, U>(this, operator)
@@ -38,7 +39,7 @@ export class RawDistributiveStream<T> extends Stream<T>
       throw new AlreadyDisposedError()
     }
 
-    if (!this.__isStopped) {
+    if (!this.__isCompleted) {
       const subscribers = this.__subscriptionTargets.slice()
 
       for (let i = 0; i < subscribers.length; i++) {
@@ -52,9 +53,9 @@ export class RawDistributiveStream<T> extends Stream<T>
       throw new AlreadyDisposedError()
     }
 
-    if (!this.__isStopped) {
+    if (!this.__isCompleted) {
       this.__mutableThrownError.setValue(error)
-      this.__isStopped = true
+      this.__isCompleted = true
 
       const subscribers = this.__subscriptionTargets.slice()
 
@@ -71,8 +72,8 @@ export class RawDistributiveStream<T> extends Stream<T>
       throw new AlreadyDisposedError()
     }
 
-    if (!this.__isStopped) {
-      this.__isStopped = true
+    if (!this.__isCompleted) {
+      this.__isCompleted = true
 
       const subscribers = this.__subscriptionTargets.slice()
 
@@ -85,7 +86,7 @@ export class RawDistributiveStream<T> extends Stream<T>
   }
 
   public dispose(): void {
-    this.__isStopped = true
+    this.__isCompleted = true
     this.__isDisposed = true
     this.__subscriptionTargets.length = 0
   }
@@ -94,8 +95,8 @@ export class RawDistributiveStream<T> extends Stream<T>
     return !this.__isDisposed
   }
 
-  public isStopped(): boolean {
-    return this.__isStopped
+  public isCompleted(): boolean {
+    return this.__isCompleted
   }
 
   public asStream(): Stream<T> {
@@ -113,7 +114,7 @@ export class RawDistributiveStream<T> extends Stream<T>
 
     this.__mutableThrownError.throwValue()
 
-    if (this.__isStopped) {
+    if (this.__isCompleted) {
       target.complete()
     } else {
       this.__subscriptionTargets.push(target)
@@ -124,6 +125,16 @@ export class RawDistributiveStream<T> extends Stream<T>
         target
       )
     }
+  }
+
+  protected pushSubscriptionTarget(target: SubscriptionTarget<T>): IDisposable {
+    this.__subscriptionTargets.push(target)
+
+    return new RawDistributiveStreamSubscriptionDisposable(
+      this,
+      this.__subscriptionTargets,
+      target
+    )
   }
 }
 
@@ -184,8 +195,8 @@ class LiftedDistributiveStream<TStreamInput, TOperatorInput, TOperatorOutput>
     return !this.__isDisposed && this.__source.isActive()
   }
 
-  public isStopped(): boolean {
-    return this.__source.isStopped()
+  public isCompleted(): boolean {
+    return this.__source.isCompleted()
   }
 
   public asStream(): Stream<TOperatorOutput> {
@@ -203,15 +214,15 @@ class LiftedDistributiveStream<TStreamInput, TOperatorInput, TOperatorOutput>
   }
 }
 
-class RawDistributiveStreamSubscriptionDisposable<T> {
+class RawDistributiveStreamSubscriptionDisposable<T> implements IDisposable {
   constructor(
-    private distributiveStream: RawDistributiveStream<T>,
+    private distributiveStream: DistributiveStream<T>,
     private distributiveStreamSubscriptionTargets: Array<SubscriptionTarget<T>>,
     private target: SubscriptionTarget<T>
   ) {}
 
   public dispose() {
-    if (!this.distributiveStream.isStopped()) {
+    if (!this.distributiveStream.isCompleted()) {
       removeOnce(this.target, this.distributiveStreamSubscriptionTargets)
     }
   }
