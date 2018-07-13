@@ -1,7 +1,8 @@
-import { IDisposable } from 'src/models/Disposable/IDisposable'
+import { Disposable } from 'src/models/Disposable/Disposable'
+import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
 import { canUseDOM } from 'src/utils/canUseDOM'
 import { createUniqueKey } from 'src/utils/createUniqueKey'
-import { now } from 'src/utils/now'
+import { getTime } from 'src/utils/getTime'
 
 // Taken from react-scheduler because the package is not stable.
 // This is a built-in polyfill for requestIdleCallback. It works by scheduling
@@ -87,7 +88,7 @@ if (!canUseDOM) {
   const frameDeadlineObject: IDeadline = {
     didTimeout: false,
     timeRemaining() {
-      const remaining = frameDeadline - now()
+      const remaining = frameDeadline - getTime()
       return remaining > 0 ? remaining : 0
     }
   }
@@ -126,7 +127,7 @@ if (!canUseDOM) {
       return
     }
 
-    const currentTime = now()
+    const currentTime = getTime()
     // TODO: this would be more efficient if deferred callbacks are stored in
     // min heap.
     // Or in a linked list with links for both timeoutTime order and insertion
@@ -196,7 +197,7 @@ if (!canUseDOM) {
     // First call anything which has timed out, until we have caught up.
     callTimedOutCallbacks()
 
-    let currentTime = now()
+    let currentTime = getTime()
     // Next, as long as we have idle time, try calling more callbacks.
     while (
       frameDeadline - currentTime > 0 &&
@@ -206,7 +207,7 @@ if (!canUseDOM) {
       frameDeadlineObject.didTimeout = false
       // callUnsafely will remove it from the head of the linked list
       callUnsafely(latestCallbackConfig, frameDeadlineObject)
-      currentTime = now()
+      currentTime = getTime()
     }
     if (headOfPendingCallbacksLinkedList !== null) {
       if (!isAnimationFrameScheduled) {
@@ -257,7 +258,7 @@ if (!canUseDOM) {
   ): ICallbackConfig => {
     let timeoutTime = -1
     if (options != null && typeof options.timeout === 'number') {
-      timeoutTime = now() + options.timeout
+      timeoutTime = getTime() + options.timeout
     }
     if (
       nextSoonestTimeoutTime === -1 ||
@@ -365,14 +366,15 @@ if (!canUseDOM) {
   }
 }
 
-export class RICSubscription implements IDisposable {
+class RICDisposable extends Disposable {
   private __config: ICallbackConfig
 
   constructor(config: ICallbackConfig) {
+    super()
     this.__config = config
   }
 
-  public dispose(): void {
+  protected _afterDisposed() {
     cancelScheduledWork(this.__config)
   }
 }
@@ -380,8 +382,8 @@ export class RICSubscription implements IDisposable {
 export function requestIdleCallback(
   callback: FrameCallback,
   options?: { timeout: number }
-): RICSubscription {
+): IConsciousDisposable {
   const config = scheduleWork(callback, options)
 
-  return new RICSubscription(config)
+  return new RICDisposable(config)
 }
