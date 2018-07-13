@@ -107,6 +107,10 @@ export class DistributiveStream<T> extends Stream<T>
     return this.__mutableThrownError.getImmutableView()
   }
 
+  protected throwError(): void {
+    this.__mutableThrownError.throwValue()
+  }
+
   protected trySubscribe(target: SubscriptionTarget<T>): IDisposableLike {
     if (this.__isDisposed) {
       throw new AlreadyDisposedError()

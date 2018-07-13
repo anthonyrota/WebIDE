@@ -39,7 +39,7 @@ export class DelayedUntilCompletionDistributiveStream<
       throw new AlreadyDisposedError()
     }
 
-    this.getThrownError().throwValue()
+    this.throwError()
 
     if (!this.isCompleted()) {
       return super.pushSubscriptionTarget(target)
