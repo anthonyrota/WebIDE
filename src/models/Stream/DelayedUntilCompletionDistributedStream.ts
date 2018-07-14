@@ -10,7 +10,7 @@ export class DelayedUntilCompletionDistributedStream<
   private __hasValue: boolean = false
 
   public next(value: T): void {
-    if (!this.isActive()) {
+    if (this.isDisposed()) {
       throw new AlreadyDisposedError()
     }
 
@@ -21,7 +21,7 @@ export class DelayedUntilCompletionDistributedStream<
   }
 
   public complete(): void {
-    if (!this.isActive()) {
+    if (this.isDisposed()) {
       throw new AlreadyDisposedError()
     }
 
@@ -35,7 +35,7 @@ export class DelayedUntilCompletionDistributedStream<
   }
 
   public trySubscribe(target: MonoTypeValueTransmitter<T>): IDisposableLike {
-    if (!this.isActive()) {
+    if (this.isDisposed()) {
       throw new AlreadyDisposedError()
     }
 

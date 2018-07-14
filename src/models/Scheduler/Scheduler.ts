@@ -1,4 +1,4 @@
-import { Subscription } from 'src/models/Disposable/Subscription'
+import { ISubscription } from 'src/models/Disposable/Subscription'
 import { getTime } from 'src/utils/getTime'
 
 interface ISchedulerAction {
@@ -10,7 +10,7 @@ interface ISchedulerAction {
    * @returns A {@link Subscription}[subscription], which when disposed will cancel
    *   the action from beging scheduled, or rescheduled
    */
-  schedule(task: (action: ISchedulerAction) => void): Subscription
+  schedule(task: (action: ISchedulerAction) => void): ISubscription
   /**
    * Schedules the action to be called in the future with the given data
    * @param task The task to schedule. The first argument of this will
@@ -24,7 +24,7 @@ interface ISchedulerAction {
   scheduleWithData<T>(
     task: (data: T, action: ISchedulerAction) => void,
     data: T
-  ): Subscription
+  ): ISubscription
   /**
    * Schedules the action to be called after the specified delay according
    *   to the scheduler's internal time system
@@ -39,7 +39,7 @@ interface ISchedulerAction {
   scheduleDelayed(
     task: (action: ISchedulerAction) => void,
     delay: number
-  ): Subscription
+  ): ISubscription
   /**
    * Schedules the action to be called with the given data after the specified
    *   delay according to the scheduler's internal time system
@@ -56,7 +56,7 @@ interface ISchedulerAction {
     task: (data: T, action: ISchedulerAction) => void,
     delay: number,
     data: T
-  ): Subscription
+  ): ISubscription
 }
 
 export interface IScheduler extends ISchedulerAction {
@@ -75,21 +75,21 @@ export abstract class Scheduler implements IScheduler {
 
   public abstract schedule(
     task: (action: ISchedulerAction) => void
-  ): Subscription
+  ): ISubscription
 
   public abstract scheduleWithData<T>(
     task: (data: T, action: ISchedulerAction) => void,
     data: T
-  ): Subscription
+  ): ISubscription
 
   public abstract scheduleDelayed(
     task: (action: ISchedulerAction) => void,
     delay: number
-  ): Subscription
+  ): ISubscription
 
   public abstract scheduleDelayedWithData<T>(
     task: (data: T, action: ISchedulerAction) => void,
     delay: number,
     data: T
-  ): Subscription
+  ): ISubscription
 }

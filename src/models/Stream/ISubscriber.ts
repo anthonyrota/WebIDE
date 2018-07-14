@@ -1,4 +1,4 @@
-import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
+import { ISubscription } from 'src/models/Disposable/Subscription'
 import { freeze } from 'src/utils/freeze'
 import { noop } from 'src/utils/noop'
 
@@ -26,7 +26,7 @@ export interface ISubscriber<T> {
 }
 
 export interface ISubscribable<T> {
-  subscribe(subscriber: ISubscriber<T>): IConsciousDisposable
+  subscribe(subscriber: ISubscriber<T>): ISubscription
 }
 
 export function isSubscriber(value: any): value is ISubscriber<any> {

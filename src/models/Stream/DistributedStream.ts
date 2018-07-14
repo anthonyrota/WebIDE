@@ -1,7 +1,7 @@
 import { AlreadyDisposedError } from 'src/models/Disposable/AlreadyDisposedError'
-import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { ISubscription } from 'src/models/Disposable/Subscription'
 import {
   ImmutableMutableMaybeView,
   MutableMaybe
@@ -14,7 +14,7 @@ import { removeOnce } from 'src/utils/removeOnce'
 
 export interface IDistributedStream<TInput, TOutput>
   extends Stream<TOutput>,
-    IConsciousDisposable,
+    ISubscription,
     IRequiredSubscriber<TInput> {
   lift<TNewOutput>(
     operator: IOperator<TOutput, TNewOutput>
@@ -27,15 +27,29 @@ export class DistributedStream<T> extends Stream<T>
   implements IDistributedStream<T, T> {
   private __mutableThrownError: MutableMaybe<any> = MutableMaybe.none<any>()
   private __targets: Array<MonoTypeValueTransmitter<T>>
-  private __isDisposed: boolean = true
   private __isCompleted: boolean = false
+  private __selfSubscription: ISubscription
+
+  public onDispose(dispose: () => void): ISubscription {
+    return this.__selfSubscription.onDispose(dispose)
+  }
+
+  public terminateDisposableWhenDisposed(
+    disposable: IDisposable
+  ): ISubscription {
+    return this.__selfSubscription.terminateDisposableWhenDisposed(disposable)
+  }
+
+  public removeSubscription(subscription: ISubscription): void {
+    this.__selfSubscription.removeSubscription(subscription)
+  }
 
   public lift<U>(operator: IOperator<T, U>): IDistributedStream<T, U> {
     return new LiftedDistributedStream<T, T, U>(this, operator)
   }
 
   public next(value: T): void {
-    if (this.__isDisposed) {
+    if (this.__selfSubscription.isDisposed()) {
       throw new AlreadyDisposedError()
     }
 
@@ -49,7 +63,7 @@ export class DistributedStream<T> extends Stream<T>
   }
 
   public error(error: any): void {
-    if (this.__isDisposed) {
+    if (this.__selfSubscription.isDisposed()) {
       throw new AlreadyDisposedError()
     }
 
@@ -68,7 +82,7 @@ export class DistributedStream<T> extends Stream<T>
   }
 
   public complete(): void {
-    if (this.__isDisposed) {
+    if (this.__selfSubscription.isDisposed()) {
       throw new AlreadyDisposedError()
     }
 
@@ -87,12 +101,16 @@ export class DistributedStream<T> extends Stream<T>
 
   public dispose(): void {
     this.__isCompleted = true
-    this.__isDisposed = true
     this.__targets.length = 0
+    this.__selfSubscription.dispose()
   }
 
   public isActive(): boolean {
-    return !this.__isDisposed
+    return this.__selfSubscription.isActive()
+  }
+
+  public isDisposed(): boolean {
+    return this.__selfSubscription.isDisposed()
   }
 
   public isCompleted(): boolean {
@@ -112,7 +130,7 @@ export class DistributedStream<T> extends Stream<T>
   }
 
   protected trySubscribe(target: MonoTypeValueTransmitter<T>): IDisposableLike {
-    if (this.__isDisposed) {
+    if (this.__selfSubscription.isDisposed()) {
       throw new AlreadyDisposedError()
     }
 
@@ -141,7 +159,7 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
   implements IDistributedStream<TStreamInput, TOperatorOutput> {
   private __source: IDistributedStream<TStreamInput, TOperatorInput>
   private __operator: IOperator<TOperatorInput, TOperatorOutput>
-  private __isDisposed: boolean = false
+  private __selfSubscription: ISubscription
 
   constructor(
     source: IDistributedStream<TStreamInput, TOperatorInput>,
@@ -150,6 +168,20 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
     super()
     this.__source = source
     this.__operator = operator
+  }
+
+  public onDispose(dispose: () => void): ISubscription {
+    return this.__selfSubscription.onDispose(dispose)
+  }
+
+  public terminateDisposableWhenDisposed(
+    disposable: IDisposable
+  ): ISubscription {
+    return this.__selfSubscription.terminateDisposableWhenDisposed(disposable)
+  }
+
+  public removeSubscription(subscription: ISubscription): void {
+    this.__selfSubscription.removeSubscription(subscription)
   }
 
   public lift<T>(
@@ -162,7 +194,7 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
   }
 
   public next(value: TStreamInput): void {
-    if (this.__isDisposed || !this.__source.isActive()) {
+    if (this.__selfSubscription.isDisposed() || this.__source.isDisposed()) {
       throw new AlreadyDisposedError()
     }
 
@@ -170,7 +202,7 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
   }
 
   public error(error: any): void {
-    if (this.__isDisposed || !this.__source.isActive()) {
+    if (this.__selfSubscription.isDisposed() || this.__source.isDisposed()) {
       throw new AlreadyDisposedError()
     }
 
@@ -178,7 +210,7 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
   }
 
   public complete(): void {
-    if (this.__isDisposed || !this.__source.isActive()) {
+    if (this.__selfSubscription.isDisposed() || this.__source.isDisposed()) {
       throw new AlreadyDisposedError()
     }
 
@@ -186,11 +218,15 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
   }
 
   public dispose(): void {
-    this.__isDisposed = true
+    this.__selfSubscription.dispose()
   }
 
   public isActive(): boolean {
-    return !this.__isDisposed && this.__source.isActive()
+    return this.__selfSubscription.isActive() && this.__source.isActive()
+  }
+
+  public isDisposed(): boolean {
+    return this.__selfSubscription.isDisposed() || this.__source.isDisposed()
   }
 
   public isCompleted(): boolean {
@@ -204,7 +240,7 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
   protected trySubscribe(
     target: MonoTypeValueTransmitter<TOperatorOutput>
   ): IDisposableLike {
-    if (this.__isDisposed || !this.__source.isActive()) {
+    if (this.__selfSubscription.isDisposed() || this.__source.isDisposed()) {
       throw new AlreadyDisposedError()
     }
 

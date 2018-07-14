@@ -17,7 +17,7 @@ export class DistributedStreamWithLastValue<T> extends DistributedStream<T> {
   }
 
   public trySubscribe(target: MonoTypeValueTransmitter<T>): IDisposableLike {
-    if (!this.isActive()) {
+    if (this.isDisposed()) {
       throw new AlreadyDisposedError()
     }
 
@@ -33,7 +33,7 @@ export class DistributedStreamWithLastValue<T> extends DistributedStream<T> {
   }
 
   public getValue(): T {
-    if (!this.isActive()) {
+    if (this.isDisposed()) {
       throw new AlreadyDisposedError()
     }
 

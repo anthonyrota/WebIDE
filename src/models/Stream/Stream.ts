@@ -1,6 +1,6 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { isDisposable } from 'src/models/Disposable/isDisposable'
-import { Subscription } from 'src/models/Disposable/Subscription'
+import { ISubscription } from 'src/models/Disposable/Subscription'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscribable, ISubscriber } from 'src/models/Stream/ISubscriber'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
@@ -11,7 +11,7 @@ export abstract class Stream<T> implements ISubscribable<T> {
     return new LiftedStream<T, U>(this, operator)
   }
 
-  public subscribe(targetSubscriber: ISubscriber<T>): Subscription {
+  public subscribe(targetSubscriber: ISubscriber<T>): ISubscription {
     const target = new MonoTypeValueTransmitter(targetSubscriber)
 
     let disposable: IDisposableLike

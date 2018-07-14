@@ -1,6 +1,5 @@
-import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
-import { Subscription } from 'src/models/Disposable/Subscription'
+import { ISubscription, Subscription } from 'src/models/Disposable/Subscription'
 import { canUseDOM } from 'src/utils/canUseDOM'
 import { createUniqueKey } from 'src/utils/createUniqueKey'
 import { getTime } from 'src/utils/getTime'
@@ -379,7 +378,7 @@ class RICDisposable implements IDisposable {
 export function requestIdleCallback(
   callback: FrameCallback,
   options?: { timeout: number }
-): IConsciousDisposable {
+): ISubscription {
   const config = scheduleWork(callback, options)
   return Subscription.fromDisposable(new RICDisposable(config))
 }

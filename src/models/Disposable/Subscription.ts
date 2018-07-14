@@ -1,40 +1,43 @@
-import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
 import { indexOf } from 'src/utils/indexOf'
 import { removeOnce } from 'src/utils/removeOnce'
 
-function createEmptySubscription(): Subscription {
+function createEmptySubscription(): ISubscription {
   const subscription = new Subscription()
   subscription.dispose()
   return subscription
 }
 
-export class Subscription implements IConsciousDisposable {
-  public static empty: Subscription = createEmptySubscription()
-  private __isActive: boolean = true
-  private __parents: Subscription[] = []
-  private __disposables: IDisposable[] = []
+export interface ISubscription {
+  terminateDisposableWhenDisposed(disposable: IDisposable): ISubscription
+  onDispose(dispose: () => void): ISubscription
+  removeSubscription(subscription: ISubscription): void
+  dispose(): void
+  isActive(): boolean
+  isDisposed(): boolean
+}
 
-  constructor(disposables?: IDisposable[]) {
-    if (disposables) {
-      for (let i = 0; i < disposables.length; i++) {
-        this.__disposables[i] = disposables[i]
-      }
-    }
-  }
+export class Subscription implements ISubscription {
+  public static empty: ISubscription = createEmptySubscription()
+  private __isActive: boolean = true
+  private __parents: ISubscription[] = []
+  private __subscriptions: ISubscription[] = []
+  private __staticMethod$fromDisposable$$internalDisposable?: IDisposable
 
   public static fromDisposable(disposable: IDisposable): Subscription {
     const subscription = new Subscription()
-    subscription.__disposables.push(disposable)
+    subscription.__staticMethod$fromDisposable$$internalDisposable = disposable
     return subscription
   }
 
   public terminateDisposableWhenDisposed(
     disposable: IDisposable
-  ): Subscription {
+  ): ISubscription {
     if (!this.__isActive) {
       disposable.dispose()
-      return isSubscription(disposable) ? disposable : Subscription.empty
+      return disposable instanceof Subscription
+        ? disposable
+        : Subscription.empty
     }
 
     if (disposable === Subscription.empty) {
@@ -47,14 +50,14 @@ export class Subscription implements IConsciousDisposable {
 
     let subscription: Subscription
 
-    if (isSubscription(disposable)) {
+    if (disposable instanceof Subscription) {
       if (!disposable.isActive()) {
         return disposable
       }
 
       subscription = disposable
 
-      if (indexOf(subscription, this.__disposables) !== -1) {
+      if (indexOf(subscription, this.__subscriptions) !== -1) {
         return subscription
       }
     } else {
@@ -62,16 +65,16 @@ export class Subscription implements IConsciousDisposable {
     }
 
     subscription.__addParent(this)
-    this.__disposables.push(subscription)
+    this.__subscriptions.push(subscription)
 
     return subscription
   }
 
-  public onDispose(dispose: () => void): Subscription {
+  public onDispose(dispose: () => void): ISubscription {
     if (this.__isActive) {
       const subscription = Subscription.fromDisposable({ dispose })
       subscription.__addParent(this)
-      this.__disposables.push(subscription)
+      this.__subscriptions.push(subscription)
       return subscription
     } else {
       dispose()
@@ -79,9 +82,9 @@ export class Subscription implements IConsciousDisposable {
     }
   }
 
-  public removeDisposable(disposable: IDisposable): void {
+  public removeSubscription(subscription: ISubscription): void {
     if (this.__isActive) {
-      removeOnce(disposable, this.__disposables)
+      removeOnce(subscription, this.__subscriptions)
     }
   }
 
@@ -92,13 +95,17 @@ export class Subscription implements IConsciousDisposable {
     }
   }
 
-  public recycle(): void {
-    this.__disposeDisposables()
-    this.__isActive = true
-  }
-
   public isActive(): boolean {
     return this.__isActive
+  }
+
+  public isDisposed(): boolean {
+    return !this.__isActive
+  }
+
+  protected __class$$RecyclableSubscription$$unsafePrivateRecycleMethod$$(): void {
+    this.__disposeDisposables()
+    this.__isActive = true
   }
 
   private __disposeDisposables(): void {
@@ -109,19 +116,27 @@ export class Subscription implements IConsciousDisposable {
     const errors: any[] = []
 
     for (let i = 0; i < this.__parents.length; i++) {
-      this.__parents[i].removeDisposable(this)
+      this.__parents[i].removeSubscription(this)
     }
 
-    for (let i = 0; i < this.__disposables.length; i++) {
+    if (this.__staticMethod$fromDisposable$$internalDisposable) {
       try {
-        this.__disposables[i].dispose()
+        this.__staticMethod$fromDisposable$$internalDisposable.dispose()
+      } catch (error) {
+        errors.push(error)
+      }
+    }
+
+    for (let i = 0; i < this.__subscriptions.length; i++) {
+      try {
+        this.__subscriptions[i].dispose()
       } catch (error) {
         errors.push(error)
       }
     }
 
     this.__parents.length = 0
-    this.__disposables.length = 0
+    this.__subscriptions.length = 0
 
     if (errors.length > 0) {
       throw new Error(
@@ -132,7 +147,7 @@ export class Subscription implements IConsciousDisposable {
     }
   }
 
-  private __addParent(parent: Subscription): void {
+  private __addParent(parent: ISubscription): void {
     if (this.__isActive) {
       const index = indexOf(parent, this.__parents)
 
@@ -143,6 +158,8 @@ export class Subscription implements IConsciousDisposable {
   }
 }
 
-export function isSubscription(value: any): value is Subscription {
-  return value instanceof Subscription
+export class RecyclableSubscription extends Subscription {
+  public recycle(): void {
+    super.__class$$RecyclableSubscription$$unsafePrivateRecycleMethod$$()
+  }
 }

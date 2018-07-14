@@ -1,9 +1,10 @@
 import { IDisposable } from 'src/models/Disposable/IDisposable'
-import { Subscription } from 'src/models/Disposable/Subscription'
+import { RecyclableSubscription } from 'src/models/Disposable/Subscription'
 import { IRequiredSubscriber, ISubscriber } from 'src/models/Stream/ISubscriber'
 import { reportError } from 'src/utils/reportError'
 
-export abstract class ValueTransmitter<TInput, TOutput> extends Subscription
+export abstract class ValueTransmitter<TInput, TOutput>
+  extends RecyclableSubscription
   implements IRequiredSubscriber<TInput> {
   protected destination: IRequiredSubscriber<TOutput>
   private __isReceivingValues: boolean = true
