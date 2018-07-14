@@ -1,12 +1,7 @@
 import { IDisposable } from 'src/models/Disposable/IDisposable'
+import { freeze } from 'src/utils/freeze'
 import { indexOf } from 'src/utils/indexOf'
 import { removeOnce } from 'src/utils/removeOnce'
-
-function createEmptySubscription(): ISubscription {
-  const subscription = new Subscription()
-  subscription.dispose()
-  return subscription
-}
 
 export interface ISubscription {
   terminateDisposableWhenDisposed(disposable: IDisposable): ISubscription
@@ -17,8 +12,26 @@ export interface ISubscription {
   isDisposed(): boolean
 }
 
+export const emptySubscription: ISubscription = freeze({
+  terminateDisposableWhenDisposed(disposable: IDisposable): ISubscription {
+    disposable.dispose()
+    return disposable instanceof Subscription ? disposable : emptySubscription
+  },
+  onDispose(dispose: () => void): ISubscription {
+    dispose()
+    return emptySubscription
+  },
+  removeSubscription(subscription: ISubscription): void {},
+  dispose(): void {},
+  isActive(): boolean {
+    return false
+  },
+  isDisposed(): boolean {
+    return true
+  }
+})
+
 export class Subscription implements ISubscription {
-  public static empty: ISubscription = createEmptySubscription()
   private __isActive: boolean = true
   private __parents: ISubscription[] = []
   private __subscriptions: ISubscription[] = []
@@ -35,13 +48,11 @@ export class Subscription implements ISubscription {
   ): ISubscription {
     if (!this.__isActive) {
       disposable.dispose()
-      return disposable instanceof Subscription
-        ? disposable
-        : Subscription.empty
+      return disposable instanceof Subscription ? disposable : emptySubscription
     }
 
-    if (disposable === Subscription.empty) {
-      return Subscription.empty
+    if (disposable === emptySubscription) {
+      return emptySubscription
     }
 
     if (disposable === this) {
@@ -78,7 +89,7 @@ export class Subscription implements ISubscription {
       return subscription
     } else {
       dispose()
-      return Subscription.empty
+      return emptySubscription
     }
   }
 
