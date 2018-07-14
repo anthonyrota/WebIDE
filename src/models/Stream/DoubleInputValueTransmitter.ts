@@ -1,29 +1,17 @@
-import { Disposable } from 'src/models/Disposable/Disposable'
-import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
-import { IDisposable } from 'src/models/Disposable/IDisposable'
+import { Subscription } from 'src/models/Disposable/Subscription'
 import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-class DoubleInputValueTransmitterSubscriptionTarget<T> extends Disposable
+export class DoubleInputValueTransmitterSubscriptionTarget<T>
+  extends Subscription
   implements IRequiredSubscriber<T> {
   private __transmitter: DoubleInputValueTransmitter<any, any, T>
-  private __stream: Stream<T>
-  private __streamSubscription: IConsciousDisposable
-  private __connectionDisposable: IDisposable
 
-  constructor(
-    subscriber: DoubleInputValueTransmitter<any, any, T>,
-    stream: Stream<T>
-  ) {
+  constructor(transmitter: DoubleInputValueTransmitter<any, any, T>) {
     super()
-    this.__transmitter = subscriber
-    this.__stream = stream
 
-    this.__streamSubscription = this.__stream.subscribe(this)
-    this.__connectionDisposable = this.__transmitter.terminateDisposableWhenDisposed(
-      this.__streamSubscription
-    )
+    this.__transmitter = transmitter
   }
 
   public next(value: T): void {
@@ -38,11 +26,6 @@ class DoubleInputValueTransmitterSubscriptionTarget<T> extends Disposable
   public complete(): void {
     this.__transmitter.outerComplete()
     this.dispose()
-  }
-
-  protected _afterDisposed(): void {
-    this.__streamSubscription.dispose()
-    this.__connectionDisposable.dispose()
   }
 }
 
@@ -74,13 +57,18 @@ export abstract class DoubleInputValueTransmitter<
 
   protected subscribeStreamToSelf(
     stream: Stream<TOuterValue>
-  ): IConsciousDisposable {
-    return new DoubleInputValueTransmitterSubscriptionTarget(this, stream)
+  ): DoubleInputValueTransmitterSubscriptionTarget<TOuterValue> {
+    const target = new DoubleInputValueTransmitterSubscriptionTarget(this)
+
+    target.terminateDisposableWhenDisposed(stream.subscribe(target))
+    this.terminateDisposableWhenDisposed(target)
+
+    return target
   }
 
   protected onOuterNextValue(
     value: TOuterValue,
-    target: IConsciousDisposable
+    target: DoubleInputValueTransmitterSubscriptionTarget<TOuterValue>
   ): void {}
 
   protected onOuterError(error: any): void {

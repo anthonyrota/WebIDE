@@ -1,5 +1,6 @@
-import { Disposable } from 'src/models/Disposable/Disposable'
 import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
+import { IDisposable } from 'src/models/Disposable/IDisposable'
+import { Subscription } from 'src/models/Disposable/Subscription'
 import { canUseDOM } from 'src/utils/canUseDOM'
 import { createUniqueKey } from 'src/utils/createUniqueKey'
 import { getTime } from 'src/utils/getTime'
@@ -14,8 +15,8 @@ import { getTime } from 'src/utils/getTime'
 // The frame rate is dynamically adjusted.
 
 export interface IDeadline {
-  timeRemaining: () => number
   didTimeout: boolean
+  getTimeRemaining(): number
 }
 
 type FrameCallback = (deadline: IDeadline) => void
@@ -38,6 +39,12 @@ let cancelScheduledWork: CancelScheduledWork
 
 if (!canUseDOM) {
   const timeoutIds = new Map()
+  const infiniteDeadline: IDeadline = {
+    didTimeout: false,
+    getTimeRemaining(): number {
+      return Infinity
+    }
+  }
 
   scheduleWork = (
     callback: FrameCallback,
@@ -51,12 +58,7 @@ if (!canUseDOM) {
       timeoutTime: 0
     }
     const timeoutId = setTimeout(() => {
-      callback({
-        timeRemaining() {
-          return Infinity
-        },
-        didTimeout: false
-      })
+      callback(infiniteDeadline)
     })
     timeoutIds.set(callback, timeoutId)
     return callbackConfig
@@ -87,7 +89,7 @@ if (!canUseDOM) {
 
   const frameDeadlineObject: IDeadline = {
     didTimeout: false,
-    timeRemaining() {
+    getTimeRemaining() {
       const remaining = frameDeadline - getTime()
       return remaining > 0 ? remaining : 0
     }
@@ -366,16 +368,11 @@ if (!canUseDOM) {
   }
 }
 
-class RICDisposable extends Disposable {
-  private __config: ICallbackConfig
+class RICDisposable implements IDisposable {
+  constructor(private config: ICallbackConfig) {}
 
-  constructor(config: ICallbackConfig) {
-    super()
-    this.__config = config
-  }
-
-  protected _afterDisposed() {
-    cancelScheduledWork(this.__config)
+  public dispose(): void {
+    cancelScheduledWork(this.config)
   }
 }
 
@@ -384,6 +381,5 @@ export function requestIdleCallback(
   options?: { timeout: number }
 ): IConsciousDisposable {
   const config = scheduleWork(callback, options)
-
-  return new RICDisposable(config)
+  return Subscription.fromDisposable(new RICDisposable(config))
 }

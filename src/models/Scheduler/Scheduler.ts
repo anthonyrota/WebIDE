@@ -1,52 +1,71 @@
-import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
-import { Maybe } from 'src/models/Maybe/Maybe'
+import { Subscription } from 'src/models/Disposable/Subscription'
 import { getTime } from 'src/utils/getTime'
 
-export interface IScheduler {
+interface ISchedulerAction {
+  /**
+   * Schedules the action to be called in the future
+   * @param task The task to schedule. This callback, when called, will
+   *   be called with a {@link ISchedulerAction}[scheduler action], which
+   *   can be used to reschedule the task once
+   * @returns A {@link Subscription}[subscription], which when disposed will cancel
+   *   the action from beging scheduled, or rescheduled
+   */
+  schedule(task: (action: ISchedulerAction) => void): Subscription
+  /**
+   * Schedules the action to be called in the future with the given data
+   * @param task The task to schedule. The first argument of this will
+   *   be the data given to the `scheduleWithData` method. The second argument
+   *   will be a {@link ISchedulerAction}[scheduler action] which can be used
+   *   to reschedule the task once
+   * @param data The data to be passed into the `task` argument
+   * @returns A {@link Subscription}[subscription], which when disposed will cancel the
+   *   action from being rescheduled
+   */
+  scheduleWithData<T>(
+    task: (data: T, action: ISchedulerAction) => void,
+    data: T
+  ): Subscription
+  /**
+   * Schedules the action to be called after the specified delay according
+   *   to the scheduler's internal time system
+   * @param task The task to schedule. This callback, when called, will be
+   *   called with a {@link ISchedulerAction}[scheduler action], which can be
+   *   used to reschedule the task once
+   * @param delay The amount of delay, according to the scheduler's internal
+   *   time system, after which the task will be called
+   * @returns A {@link Subscription}[subscription], which when disposed will cancel the
+   *   action from being rescheduled
+   */
+  scheduleDelayed(
+    task: (action: ISchedulerAction) => void,
+    delay: number
+  ): Subscription
+  /**
+   * Schedules the action to be called with the given data after the specified
+   *   delay according to the scheduler's internal time system
+   * @param task The task to schedule. This callback, when called, will be
+   *   called with a {@link ISchedulerAction}[scheduler action], which can be
+   *   used to reschedule the task once
+   * @param delay The amount of delay, according to the scheduler's internal
+   *   time system, after which the task will be called
+   * @param data The data to be passed into the `task` argument
+   * @returns A {@link Subscription}[subscription], which when disposed will cancel the
+   *   action from being rescheduled
+   */
+  scheduleDelayedWithData<T>(
+    task: (data: T, action: ISchedulerAction) => void,
+    delay: number,
+    data: T
+  ): Subscription
+}
+
+export interface IScheduler extends ISchedulerAction {
   /**
    * Represents the current type, from the scheduler's perpective
    * Note: This does not have to represent real world time, or, in fact,
    * any time system which makes sense
    */
   now(): number
-  /**
-   * Schedules the action to be called in the future
-   * @param action The callback to schedule. The return type of this is
-   *   an optional, but if present empty {@link Maybe}. If the maybe is
-   *   some(), then the action will be rescheduled and called again. If
-   *   the maybe is none(), or nothing is returned, then nothing extra
-   *   will happen after the action is called
-   * @returns A conscious disposable, which when disposed will cancel
-   *   the action from being scheduled. If disposed after the action
-   *   has already been stopped, or has already been run, nothing will
-   *   happen. However, if the action has already been run and the
-   *   callback returned a non empty maybe, meaning that the action
-   *   will be rescheduled, then disposing the returned disposable
-   *   will cancel the action from being rescheduled.
-   */
-  schedule(action: () => Maybe<void> | void): IConsciousDisposable
-  /**
-   * Schedules the action to be called in the future
-   * @param action The callback to schedule. The return type of this is
-   *   an optional, but if present {@link Maybe} with type `T` (the
-   *   type of the data given to the schedule function). If the maybe
-   *   has a value, then the action will be rescheduled and called
-   *   again with the returned maybe's value. If the maybe is none(),
-   *   or nothing is returned, then nothing extra will happen after the
-   *   action is called
-   * @param data The data to be passed into the `action` callback
-   * @returns A conscious disposable, which when disposed will cancel
-   *   the action from being scheduled. If disposed after the action
-   *   has already been stopped, or has already been run, nothing will
-   *   happen. Hoewver, if the action has already been run and the
-   *   callback returned a non empty maybe, meaning that the action
-   *   will be rescheduled, then disposing the returned disposable
-   *   will cancel the action from being recheduled
-   */
-  schedule<T>(
-    action: (data: T) => Maybe<T> | void,
-    data: T
-  ): IConsciousDisposable
 }
 
 export abstract class Scheduler implements IScheduler {
@@ -54,9 +73,23 @@ export abstract class Scheduler implements IScheduler {
     return getTime()
   }
 
-  public abstract schedule(action: () => void): IConsciousDisposable
-  public abstract schedule<T>(
-    action: (data: T) => void,
+  public abstract schedule(
+    task: (action: ISchedulerAction) => void
+  ): Subscription
+
+  public abstract scheduleWithData<T>(
+    task: (data: T, action: ISchedulerAction) => void,
     data: T
-  ): IConsciousDisposable
+  ): Subscription
+
+  public abstract scheduleDelayed(
+    task: (action: ISchedulerAction) => void,
+    delay: number
+  ): Subscription
+
+  public abstract scheduleDelayedWithData<T>(
+    task: (data: T, action: ISchedulerAction) => void,
+    delay: number,
+    data: T
+  ): Subscription
 }

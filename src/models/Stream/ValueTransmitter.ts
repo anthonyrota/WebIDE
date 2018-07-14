@@ -1,31 +1,22 @@
-import { CompositeDisposable } from 'src/models/Disposable/CompositeDisposable'
-import { Disposable } from 'src/models/Disposable/Disposable'
-import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
-import { IRecyclable } from 'src/models/Disposable/IRecyclable'
-import {
-  IRequiredSubscriber,
-  ISubscriber
-} from 'src/models/Stream/ISubscriber'
+import { Subscription } from 'src/models/Disposable/Subscription'
+import { IRequiredSubscriber, ISubscriber } from 'src/models/Stream/ISubscriber'
 import { reportError } from 'src/utils/reportError'
 
-export abstract class ValueTransmitter<TInput, TOutput>
-  implements IConsciousDisposable, IRequiredSubscriber<TInput>, IRecyclable {
+export abstract class ValueTransmitter<TInput, TOutput> extends Subscription
+  implements IRequiredSubscriber<TInput> {
   protected destination: IRequiredSubscriber<TOutput>
-  private __onDisposeListeners: CompositeDisposable
-  private __isReceivingValues: boolean
-  private __isActive: boolean
+  private __isReceivingValues: boolean = true
 
   constructor(target: ISubscriber<TOutput> | ValueTransmitter<TOutput, any>) {
+    super()
+
     if (isValueTransmitter(target)) {
       target.terminateDisposableWhenDisposed(this)
       this.destination = target
     } else {
       this.destination = new Destination(this, target)
     }
-    this.__onDisposeListeners = new CompositeDisposable()
-    this.__isReceivingValues = true
-    this.__isActive = true
   }
 
   public next(value: TInput): void {
@@ -43,14 +34,9 @@ export abstract class ValueTransmitter<TInput, TOutput>
 
   public complete(): void {
     if (this.__isReceivingValues) {
-      this.onBeforeComplete()
       this.__isReceivingValues = false
       this.onComplete()
     }
-  }
-
-  public isActive(): boolean {
-    return this.__isActive
   }
 
   public isReceivingValues(): boolean {
@@ -58,31 +44,16 @@ export abstract class ValueTransmitter<TInput, TOutput>
   }
 
   public dispose(): void {
-    if (this.__isReceivingValues) {
+    if (this.isActive()) {
       this.__isReceivingValues = false
-      this.__isActive = false
-      this.__onDisposeListeners.dispose()
+      super.dispose()
     }
   }
 
-  public onDispose(callback: () => void): IConsciousDisposable {
-    return this.__onDisposeListeners.addDisposableAndReturnSubscription(
-      new Disposable(callback)
-    )
-  }
-
-  public terminateDisposableWhenDisposed(
-    disposable: IDisposable
-  ): IConsciousDisposable {
-    return this.__onDisposeListeners.addDisposableAndReturnSubscription(
-      disposable
-    )
-  }
-
   public recycle(): void {
-    this.__onDisposeListeners.recycle()
+    this.dispose()
     this.__isReceivingValues = true
-    this.__isActive = true
+    super.recycle()
   }
 
   protected abstract onNextValue(value: TInput): void
@@ -96,8 +67,6 @@ export abstract class ValueTransmitter<TInput, TOutput>
     this.destination.complete()
     this.dispose()
   }
-
-  protected onBeforeComplete() {}
 }
 
 export class MonoTypeValueTransmitter<T> extends ValueTransmitter<T, T> {

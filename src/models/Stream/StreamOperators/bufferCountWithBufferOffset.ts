@@ -2,8 +2,10 @@ import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
-import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
+import {
+  MonoTypeValueTransmitter,
+  ValueTransmitter
+} from 'src/models/Stream/ValueTransmitter'
 import { curry3 } from 'src/utils/curry'
 
 export const bufferCountWithBufferOffset: {
@@ -30,7 +32,7 @@ class BufferCountOperatorWithBufferOffset<T> implements IOperator<T, T[]> {
   constructor(private bufferSize: number, private bufferOffset: number) {}
 
   public call(
-    target: SubscriptionTarget<T[]>,
+    target: MonoTypeValueTransmitter<T[]>,
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(

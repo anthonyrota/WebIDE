@@ -1,10 +1,13 @@
 import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { DoubleInputValueTransmitterWithSameOutputAndOuterTypes } from 'src/models/Stream/DoubleInputValueTransmitter'
+import {
+  DoubleInputValueTransmitterSubscriptionTarget,
+  DoubleInputValueTransmitterWithSameOutputAndOuterTypes
+} from 'src/models/Stream/DoubleInputValueTransmitter'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
+import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { curry2 } from 'src/utils/curry'
 
 export const switchMap: {
@@ -30,7 +33,7 @@ class SwitchMapOperator<T, U> implements IOperator<T, U> {
   ) {}
 
   public call(
-    target: SubscriptionTarget<U>,
+    target: MonoTypeValueTransmitter<U>,
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(
@@ -44,7 +47,9 @@ class SwitchMapSubscriber<
   U
 > extends DoubleInputValueTransmitterWithSameOutputAndOuterTypes<T, U> {
   private index: number = 0
-  private lastStreamSubscription: IConsciousDisposable | null = null
+  private lastStreamSubscription: DoubleInputValueTransmitterSubscriptionTarget<
+    U
+  > | null = null
 
   constructor(
     target: ISubscriber<U>,

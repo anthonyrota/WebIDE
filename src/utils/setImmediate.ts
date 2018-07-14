@@ -1,5 +1,5 @@
-import { Disposable } from 'src/models/Disposable/Disposable'
-import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
+import { IDisposable } from 'src/models/Disposable/IDisposable'
+import { Subscription } from 'src/models/Disposable/Subscription'
 import { root } from 'src/utils/root'
 import {
   clearImmediatePolyfill,
@@ -20,20 +20,15 @@ if (
   nativeClearImmediate = clearImmediatePolyfill
 }
 
-class SetImmediateDisposable extends Disposable {
-  private __id: any
+class SetImmediateDisposable implements IDisposable {
+  constructor(private id: any) {}
 
-  constructor(id: any) {
-    super()
-    this.__id = id
-  }
-
-  protected _afterDisposed(): void {
-    nativeClearImmediate(this.__id)
+  public dispose(): void {
+    nativeClearImmediate(this.id)
   }
 }
 
-export function setImmediate(callback: () => void): IConsciousDisposable {
+export function setImmediate(callback: () => void): Subscription {
   const id = nativeSetImmediate(callback)
-  return new SetImmediateDisposable(id)
+  return Subscription.fromDisposable(new SetImmediateDisposable(id))
 }

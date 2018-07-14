@@ -3,7 +3,7 @@ import { DoubleInputValueTransmitterWithSameOutputAndOuterTypes } from 'src/mode
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
+import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { curry2 } from 'src/utils/curry'
 
 export const buffer: {
@@ -19,7 +19,7 @@ class BufferOperator<T> implements IOperator<T, T[]> {
   constructor(private shouldFlushBufferStream: Stream<any>) {}
 
   public call(
-    target: SubscriptionTarget<T[]>,
+    target: MonoTypeValueTransmitter<T[]>,
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(

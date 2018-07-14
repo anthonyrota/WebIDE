@@ -1,7 +1,6 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { Stream } from 'src/models/Stream/Stream'
-import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function distinctUntilChanged<T>(source: Stream<T>): Stream<T> {
@@ -10,7 +9,7 @@ export function distinctUntilChanged<T>(source: Stream<T>): Stream<T> {
 
 class DistinctUntilChangedOperator<T> implements IOperator<T, T> {
   public call(
-    target: SubscriptionTarget<T>,
+    target: MonoTypeValueTransmitter<T>,
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(new DistinctUntilChangedSubscriber<T>(target))

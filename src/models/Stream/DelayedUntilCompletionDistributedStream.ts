@@ -1,11 +1,11 @@
 import { AlreadyDisposedError } from 'src/models/Disposable/AlreadyDisposedError'
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { DistributiveStream } from 'src/models/Stream/DistributiveStream'
-import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
+import { DistributedStream } from 'src/models/Stream/DistributedStream'
+import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export class DelayedUntilCompletionDistributiveStream<
+export class DelayedUntilCompletionDistributedStream<
   T
-> extends DistributiveStream<T> {
+> extends DistributedStream<T> {
   private __value?: T
   private __hasValue: boolean = false
 
@@ -34,7 +34,7 @@ export class DelayedUntilCompletionDistributiveStream<
     }
   }
 
-  public trySubscribe(target: SubscriptionTarget<T>): IDisposableLike {
+  public trySubscribe(target: MonoTypeValueTransmitter<T>): IDisposableLike {
     if (!this.isActive()) {
       throw new AlreadyDisposedError()
     }
@@ -42,7 +42,7 @@ export class DelayedUntilCompletionDistributiveStream<
     this.throwError()
 
     if (!this.isCompleted()) {
-      return super.pushSubscriptionTarget(target)
+      return super.pushTarget(target)
     }
 
     if (this.__hasValue) {

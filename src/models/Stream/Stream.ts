@@ -1,10 +1,8 @@
-import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { isDisposable } from 'src/models/Disposable/isDisposable'
+import { Subscription } from 'src/models/Disposable/Subscription'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscribable, ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Subscription } from 'src/models/Stream/Subscription'
-import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { isFunction } from 'src/utils/isFunction'
 
@@ -13,10 +11,8 @@ export abstract class Stream<T> implements ISubscribable<T> {
     return new LiftedStream<T, U>(this, operator)
   }
 
-  public subscribe(targetSubscriber: ISubscriber<T>): IConsciousDisposable {
-    const transmitter = new MonoTypeValueTransmitter(targetSubscriber)
-    const target = new SubscriptionTarget(transmitter)
-    const subscription = new Subscription(transmitter)
+  public subscribe(targetSubscriber: ISubscriber<T>): Subscription {
+    const target = new MonoTypeValueTransmitter(targetSubscriber)
 
     let disposable: IDisposableLike
 
@@ -28,29 +24,29 @@ export abstract class Stream<T> implements ISubscribable<T> {
 
     if (disposable) {
       if (isDisposable(disposable)) {
-        transmitter.terminateDisposableWhenDisposed(disposable)
+        target.terminateDisposableWhenDisposed(disposable)
       } else if (isFunction(disposable)) {
-        transmitter.onDispose(disposable)
+        target.onDispose(disposable)
       }
     }
 
-    return subscription
+    return target
   }
 
   protected abstract trySubscribe(
-    target: SubscriptionTarget<T>
+    target: MonoTypeValueTransmitter<T>
   ): IDisposableLike
 }
 
 export class RawStream<T> extends Stream<T> {
-  private __subscribe: (target: SubscriptionTarget<T>) => void
+  private __subscribe: (target: MonoTypeValueTransmitter<T>) => void
 
-  constructor(subscribe: (target: SubscriptionTarget<T>) => void) {
+  constructor(subscribe: (target: MonoTypeValueTransmitter<T>) => void) {
     super()
     this.__subscribe = subscribe
   }
 
-  protected trySubscribe(target: SubscriptionTarget<T>): IDisposableLike {
+  protected trySubscribe(target: MonoTypeValueTransmitter<T>): IDisposableLike {
     return this.__subscribe(target)
   }
 }
@@ -63,7 +59,7 @@ export class DuplicateStream<T> extends Stream<T> {
     this.__source = source
   }
 
-  protected trySubscribe(target: SubscriptionTarget<T>): IDisposableLike {
+  protected trySubscribe(target: MonoTypeValueTransmitter<T>): IDisposableLike {
     return this.__source.subscribe(target)
   }
 }
@@ -78,7 +74,7 @@ class LiftedStream<T, U> extends Stream<U> {
     this.__operator = operator
   }
 
-  protected trySubscribe(target: SubscriptionTarget<U>): IDisposableLike {
+  protected trySubscribe(target: MonoTypeValueTransmitter<U>): IDisposableLike {
     return this.__operator.call(target, this.__source)
   }
 }

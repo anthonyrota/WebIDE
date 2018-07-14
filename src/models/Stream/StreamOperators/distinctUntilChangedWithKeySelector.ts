@@ -2,7 +2,6 @@ import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import { SubscriptionTarget } from 'src/models/Stream/SubscriptionTarget'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { curry2 } from 'src/utils/curry'
 
@@ -30,7 +29,7 @@ class DistinctUntilChangedWithKeySelectorOperator<TValue, TKey>
   constructor(private selectKey: (value: TValue) => TKey) {}
 
   public call(
-    target: SubscriptionTarget<TValue>,
+    target: MonoTypeValueTransmitter<TValue>,
     source: Stream<TValue>
   ): IDisposableLike {
     return source.subscribe(
