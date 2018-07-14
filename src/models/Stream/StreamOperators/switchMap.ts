@@ -1,4 +1,3 @@
-import { IConsciousDisposable } from 'src/models/Disposable/IConsciousDisposable'
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import {
   DoubleInputValueTransmitterSubscriptionTarget,
