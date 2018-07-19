@@ -53,6 +53,14 @@ function installNextTickImplementation(): void {
   }
 }
 
+function installPromiseResolveImplementation(): void {
+  const resolved = Promise.resolve()
+
+  registerImmediatePolyfill = callbackId => {
+    resolved.then(tryRunCallback.bind(null, callbackId))
+  }
+}
+
 function shouldUsePostMessageImplementation(): boolean {
   if (!root.postMessage || root.importScripts) {
     return false
@@ -117,6 +125,8 @@ function installSetTimeoutImplementation(): void {
 
 if (Object.prototype.toString.call(root.process) === '[object process]') {
   installNextTickImplementation()
+} else if (typeof Promise !== 'undefined') {
+  installPromiseResolveImplementation()
 } else if (shouldUsePostMessageImplementation()) {
   installPostMessageImplementation()
 } else if (typeof MessageChannel !== 'undefined') {

@@ -1,4 +1,6 @@
 export const getTime =
   typeof performance !== 'undefined' && 'now' in performance
     ? () => performance.now()
-    : () => Date.now()
+    : typeof Date.now !== 'undefined'
+      ? () => Date.now()
+      : () => new Date().getTime()
