@@ -5,7 +5,7 @@ import { AsyncScheduler } from 'src/models/Scheduler/AsyncScheduler'
 
 export abstract class AsyncAction extends Subscription {
   private __scheduler: AsyncScheduler
-  private __scheduleDelayedDisposable: IDisposable | null = null
+  private __scheduleDelayedDisposable: IDisposable | null | void = null
   private __isScheduled: boolean = true
 
   constructor(scheduler: AsyncScheduler) {
@@ -21,6 +21,9 @@ export abstract class AsyncAction extends Subscription {
     this.__isScheduled = false
     try {
       this.tryExecute()
+    } catch (error) {
+      this.dispose()
+      throw error
     } finally {
       if (!this.__isScheduled) {
         this.__scheduler.removeAction(this)

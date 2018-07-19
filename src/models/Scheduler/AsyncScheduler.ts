@@ -13,7 +13,7 @@ import { removeOnce } from 'src/utils/removeOnce'
 
 export abstract class AsyncScheduler implements IScheduler {
   private __actions: AsyncAction[] = []
-  private __scheduled: IDisposable | null = null
+  private __scheduled: IDisposable | null | void = null
 
   public now(): number {
     return getTime()
@@ -65,7 +65,7 @@ export abstract class AsyncScheduler implements IScheduler {
   public scheduleActionDelayed(
     action: AsyncAction,
     delay: number
-  ): IDisposable {
+  ): IDisposable | void {
     return this.requestExecutionOfActionDelayed(action, delay)
   }
 
@@ -100,9 +100,9 @@ export abstract class AsyncScheduler implements IScheduler {
     }
   }
 
-  protected abstract requestExecutionOfAllActions(): IDisposable
+  protected abstract requestExecutionOfAllActions(): IDisposable | void
   protected abstract requestExecutionOfActionDelayed(
     action: AsyncAction,
     delay: number
-  ): IDisposable
+  ): IDisposable | void
 }

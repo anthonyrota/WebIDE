@@ -37,7 +37,6 @@ export class AsyncActionWithData<T> extends AsyncAction
 
   protected tryExecute() {
     const task = this.__task
-
     task(this.__data, this)
   }
 }

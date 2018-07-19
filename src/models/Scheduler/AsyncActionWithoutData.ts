@@ -31,7 +31,6 @@ export class AsyncActionWithoutData extends AsyncAction
 
   protected tryExecute(): void {
     const task = this.__task
-
     task(this)
   }
 }
