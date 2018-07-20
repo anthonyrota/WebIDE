@@ -25,7 +25,7 @@ export abstract class AsyncAction extends Subscription {
       this.dispose()
       throw error
     } finally {
-      if (!this.__isScheduled) {
+      if (this.isActive() && !this.__isScheduled) {
         this.__scheduler.removeAction(this)
       }
     }

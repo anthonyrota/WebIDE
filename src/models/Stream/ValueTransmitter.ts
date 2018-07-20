@@ -1,7 +1,7 @@
 import { IDisposable } from 'src/models/Disposable/IDisposable'
 import { RecyclableSubscription } from 'src/models/Disposable/Subscription'
 import { IRequiredSubscriber, ISubscriber } from 'src/models/Stream/ISubscriber'
-import { reportError } from 'src/utils/reportError'
+import { asyncReportError } from 'src/utils/asyncReportError'
 
 export abstract class ValueTransmitter<TInput, TOutput>
   extends RecyclableSubscription
@@ -97,7 +97,7 @@ class Destination<T> implements IRequiredSubscriber<T> {
         this.__target.next(value)
       } catch (subscriberError) {
         this.__dispose()
-        reportError(subscriberError)
+        asyncReportError(subscriberError)
       }
     }
   }
@@ -107,12 +107,12 @@ class Destination<T> implements IRequiredSubscriber<T> {
       try {
         this.__target.error(error)
       } catch (subscriberError) {
-        reportError(subscriberError)
+        asyncReportError(subscriberError)
       }
     }
 
     this.__dispose()
-    reportError(error)
+    asyncReportError(error)
   }
 
   public complete(): void {
@@ -120,7 +120,7 @@ class Destination<T> implements IRequiredSubscriber<T> {
       try {
         this.__target.complete()
       } catch (subscriberError) {
-        reportError(subscriberError)
+        asyncReportError(subscriberError)
       }
     }
 
