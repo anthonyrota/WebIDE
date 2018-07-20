@@ -3,7 +3,7 @@ import { AsyncAction } from 'src/models/Scheduler/AsyncAction'
 import { FlushableAsyncScheduler } from 'src/models/Scheduler/FlushableAsyncScheduler'
 import { setTimeout } from 'src/utils/setTimeout'
 
-export class SetTimeoutScheduler extends FlushableAsyncScheduler {
+export class DelayScheduler extends FlushableAsyncScheduler {
   private __delay: number
 
   constructor(delay: number) {

@@ -87,6 +87,8 @@ class SwitchMapSubscriber<
 
   protected onOuterComplete(): void {
     this.lastStreamSubscription = null
-    this.destination.complete()
+    if (!this.isReceivingValues()) {
+      this.destination.complete()
+    }
   }
 }
