@@ -1,5 +1,5 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { DoubleInputValueTransmitterWithSameOutputAndOuterTypes } from 'src/models/Stream/DoubleInputValueTransmitter'
+import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
@@ -38,10 +38,7 @@ class MergeMapOperator<T, U> implements IOperator<T, U> {
   }
 }
 
-class MergeMapSubscriber<
-  T,
-  U
-> extends DoubleInputValueTransmitterWithSameOutputAndOuterTypes<T, U> {
+class MergeMapSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
   private activeMergedStreamsCount: number = 0
   private index: number = 0
 
@@ -80,5 +77,9 @@ class MergeMapSubscriber<
     if (this.activeMergedStreamsCount === 0 && !this.isReceivingValues()) {
       this.destination.complete()
     }
+  }
+
+  protected onOuterNextValue(value: U): void {
+    this.destination.next(value)
   }
 }

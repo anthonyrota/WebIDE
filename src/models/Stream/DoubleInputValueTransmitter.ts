@@ -3,18 +3,16 @@ import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export class DoubleInputValueTransmitterSubscriptionTarget<T>
+export class DoubleInputValueTransmitterSubscriptionTarget<TOuterValue>
   extends Subscription
-  implements IRequiredSubscriber<T> {
-  private __transmitter: DoubleInputValueTransmitter<any, any, T>
-
-  constructor(transmitter: DoubleInputValueTransmitter<any, any, T>) {
+  implements IRequiredSubscriber<TOuterValue> {
+  constructor(
+    private __transmitter: DoubleInputValueTransmitter<any, any, TOuterValue>
+  ) {
     super()
-
-    this.__transmitter = transmitter
   }
 
-  public next(value: T): void {
+  public next(value: TOuterValue): void {
     this.__transmitter.outerNext(value, this)
   }
 
@@ -55,17 +53,6 @@ export abstract class DoubleInputValueTransmitter<
     }
   }
 
-  protected subscribeStreamToSelf(
-    stream: Stream<TOuterValue>
-  ): DoubleInputValueTransmitterSubscriptionTarget<TOuterValue> {
-    const target = new DoubleInputValueTransmitterSubscriptionTarget(this)
-
-    target.terminateDisposableWhenDisposed(stream.subscribe(target))
-    this.terminateDisposableWhenDisposed(target)
-
-    return target
-  }
-
   protected onOuterNextValue(
     value: TOuterValue,
     target: DoubleInputValueTransmitterSubscriptionTarget<TOuterValue>
@@ -78,43 +65,29 @@ export abstract class DoubleInputValueTransmitter<
   protected onOuterComplete(): void {
     this.complete()
   }
-}
 
-export abstract class DoubleInputValueTransmitterWithSameInputAndOuterTypes<
-  TInput,
-  TOutput
-> extends DoubleInputValueTransmitter<TInput, TOutput, TInput> {
-  protected onOuterNextValue(value: TInput): void {
-    this.next(value)
-  }
-}
+  protected subscribeStreamToSelf(
+    stream: Stream<TOuterValue>
+  ): DoubleInputValueTransmitterSubscriptionTarget<TOuterValue> {
+    const target = new DoubleInputValueTransmitterSubscriptionTarget<
+      TOuterValue
+    >(this)
 
-export abstract class DoubleInputValueTransmitterWithSameOutputAndOuterTypes<
-  TInput,
-  TOutput
-> extends DoubleInputValueTransmitter<TInput, TOutput, TOutput> {
-  protected onOuterNextValue(value: TOutput): void {
-    this.destination.next(value)
-  }
-}
+    target.terminateDisposableWhenDisposed(stream.subscribe(target))
+    this.terminateDisposableWhenDisposed(target)
 
-export class DoubleInputValueTransmitterWithSameInputAndOutputTypes<
-  TInput,
-  TOutput
-> extends DoubleInputValueTransmitter<TInput, TInput, TOutput> {
-  protected onNextValue(value: TInput): void {
-    this.destination.next(value)
+    return target
   }
 }
 
 export class MonoTypeDoubleInputValueTransmitter<
-  T
-> extends DoubleInputValueTransmitter<T, T, T> {
-  protected onNextValue(value: T): void {
+  TValue
+> extends DoubleInputValueTransmitter<TValue, TValue, TValue> {
+  protected onNextValue(value: TValue): void {
     this.destination.next(value)
   }
 
-  protected onOuterNextValue(value: T): void {
+  protected onOuterNextValue(value: TValue): void {
     this.next(value)
   }
 }

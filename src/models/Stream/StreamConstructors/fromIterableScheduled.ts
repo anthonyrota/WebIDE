@@ -8,7 +8,7 @@ import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { callIteratorReturn } from 'src/utils/callIteratorReturn'
 import { $$iterator } from 'src/utils/iteratorSymbol'
 
-export function fromIteratorScheduled<T>(
+export function fromIterableScheduled<T>(
   iterable: Iterable<T>,
   scheduler: IScheduler
 ): Stream<T> {

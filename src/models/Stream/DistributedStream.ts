@@ -1,7 +1,10 @@
 import { AlreadyDisposedError } from 'src/models/Disposable/AlreadyDisposedError'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { ISubscription } from 'src/models/Disposable/Subscription'
+import {
+  $$subscription,
+  ISubscription
+} from 'src/models/Disposable/Subscription'
 import {
   ImmutableMutableMaybeView,
   MutableMaybe
@@ -25,6 +28,8 @@ export interface IDistributedStream<TInput, TOutput>
 
 export class DistributedStream<T> extends Stream<T>
   implements IDistributedStream<T, T> {
+  public readonly [$$subscription] = true
+
   private __mutableThrownError: MutableMaybe<any> = MutableMaybe.none<any>()
   private __targets: Array<MonoTypeValueTransmitter<T>>
   private __isCompleted: boolean = false
@@ -157,6 +162,8 @@ export class DistributedStream<T> extends Stream<T>
 class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
   extends Stream<TOperatorOutput>
   implements IDistributedStream<TStreamInput, TOperatorOutput> {
+  public readonly [$$subscription] = true
+
   private __source: IDistributedStream<TStreamInput, TOperatorInput>
   private __operator: IOperator<TOperatorInput, TOperatorOutput>
   private __selfSubscription: ISubscription

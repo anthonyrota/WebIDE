@@ -1,5 +1,5 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { DoubleInputValueTransmitterWithSameOutputAndOuterTypes } from 'src/models/Stream/DoubleInputValueTransmitter'
+import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
@@ -28,9 +28,7 @@ class BufferOperator<T> implements IOperator<T, T[]> {
   }
 }
 
-class BufferSubscriber<
-  T
-> extends DoubleInputValueTransmitterWithSameOutputAndOuterTypes<T, T[]> {
+class BufferSubscriber<T> extends DoubleInputValueTransmitter<T, T[], T> {
   private buffer: T[]
 
   constructor(target: ISubscriber<T[]>, shouldFlushBufferStream: Stream<any>) {

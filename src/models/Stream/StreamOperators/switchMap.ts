@@ -1,8 +1,6 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import {
-  DoubleInputValueTransmitterSubscriptionTarget,
-  DoubleInputValueTransmitterWithSameOutputAndOuterTypes
-} from 'src/models/Stream/DoubleInputValueTransmitter'
+import { Subscription } from 'src/models/Disposable/Subscription'
+import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
@@ -41,14 +39,9 @@ class SwitchMapOperator<T, U> implements IOperator<T, U> {
   }
 }
 
-class SwitchMapSubscriber<
-  T,
-  U
-> extends DoubleInputValueTransmitterWithSameOutputAndOuterTypes<T, U> {
+class SwitchMapSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
   private index: number = 0
-  private lastStreamSubscription: DoubleInputValueTransmitterSubscriptionTarget<
-    U
-  > | null = null
+  private lastStreamSubscription: Subscription | null = null
 
   constructor(
     target: ISubscriber<U>,
@@ -90,5 +83,9 @@ class SwitchMapSubscriber<
     if (!this.isReceivingValues()) {
       this.destination.complete()
     }
+  }
+
+  protected onOuterNextValue(value: U): void {
+    this.destination.next(value)
   }
 }

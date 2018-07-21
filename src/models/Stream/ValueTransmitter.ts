@@ -1,10 +1,12 @@
 import { IDisposable } from 'src/models/Disposable/IDisposable'
-import { RecyclableSubscription } from 'src/models/Disposable/Subscription'
+import {
+  isSubscription,
+  RecyclableSubscription
+} from 'src/models/Disposable/Subscription'
 import { IRequiredSubscriber, ISubscriber } from 'src/models/Stream/ISubscriber'
 import { asyncReportError } from 'src/utils/asyncReportError'
 
-export abstract class ValueTransmitter<TInput, TOutput>
-  extends RecyclableSubscription
+export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
   implements IRequiredSubscriber<TInput> {
   protected destination: IRequiredSubscriber<TOutput>
   private __isReceivingValues: boolean = true
@@ -12,12 +14,13 @@ export abstract class ValueTransmitter<TInput, TOutput>
   constructor(target: ISubscriber<TOutput> | ValueTransmitter<TOutput, any>) {
     super()
 
-    if (isValueTransmitter(target)) {
+    if (isSubscription(target)) {
       target.terminateDisposableWhenDisposed(this)
-      this.destination = target
-    } else {
-      this.destination = new Destination(this, target)
     }
+
+    this.destination = isValueTransmitter(target)
+      ? target
+      : new Destination(this, target)
   }
 
   public next(value: TInput): void {
@@ -57,7 +60,7 @@ export abstract class ValueTransmitter<TInput, TOutput>
     super.recycle()
   }
 
-  protected abstract onNextValue(value: TInput): void
+  protected onNextValue(value: TInput): void {}
 
   protected onError(error: any): void {
     this.destination.error(error)

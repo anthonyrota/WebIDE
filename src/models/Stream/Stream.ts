@@ -6,6 +6,10 @@ import { ISubscribable, ISubscriber } from 'src/models/Stream/ISubscriber'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { isFunction } from 'src/utils/isFunction'
 
+export function isStream(value: any): value is Stream<any> {
+  return value instanceof Stream
+}
+
 export abstract class Stream<T> implements ISubscribable<T> {
   public lift<U>(operator: IOperator<T, U>): Stream<U> {
     return new LiftedStream<T, U>(this, operator)
