@@ -6,16 +6,10 @@ import {
   MonoTypeValueTransmitter,
   ValueTransmitter
 } from 'src/models/Stream/ValueTransmitter'
-import { curry2 } from 'src/utils/curry'
 
-export const bufferCount: {
-  <T>(bufferSize: number): (source: Stream<T>) => Stream<T[]>
-  <T>(bufferSize: number, source: Stream<T>): Stream<T[]>
-} = curry2(
-  <T>(bufferSize: number, source: Stream<T>): Stream<T[]> => {
-    return source.lift(new BufferCountOperator(bufferSize))
-  }
-)
+export function bufferCount<T>(bufferSize: number): IOperator<T, T[]> {
+  return new BufferCountOperator<T>(bufferSize)
+}
 
 class BufferCountOperator<T> implements IOperator<T, T[]> {
   constructor(private bufferSize: number) {}

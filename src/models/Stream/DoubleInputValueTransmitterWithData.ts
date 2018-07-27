@@ -131,6 +131,6 @@ export class MonoTypeDoubleInputValueTransmitterWithData<
   }
 
   protected onOuterNextValue(value: TValue): void {
-    this.next(value)
+    this.destination.next(value)
   }
 }

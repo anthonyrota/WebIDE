@@ -3,16 +3,10 @@ import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
-import { curry2 } from 'src/utils/curry'
 
-export const tapError: {
-  <T>(tapNextError: (error: any) => void): (source: Stream<T>) => Stream<T>
-  <T>(tapNextError: (error: any) => void, source: Stream<T>): Stream<T>
-} = curry2(
-  <T>(tapNextError: (error: any) => void, source: Stream<T>): Stream<T> => {
-    return source.lift(new TapErrorOperator<T>(tapNextError))
-  }
-)
+export function tapError<T>(tapOnError: () => void): IOperator<T, T> {
+  return new TapErrorOperator<T>(tapOnError)
+}
 
 class TapErrorOperator<T> implements IOperator<T, T> {
   constructor(private tapNextError: (error: any) => void) {}

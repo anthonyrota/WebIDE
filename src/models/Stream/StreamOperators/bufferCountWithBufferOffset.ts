@@ -6,29 +6,15 @@ import {
   MonoTypeValueTransmitter,
   ValueTransmitter
 } from 'src/models/Stream/ValueTransmitter'
-import { curry3 } from 'src/utils/curry'
 
-export const bufferCountWithBufferOffset: {
-  <T>(bufferSize: number): (
-    bufferOffset: number
-  ) => (source: Stream<T>) => Stream<T[]>
-  <T>(bufferSize: number, bufferOffset: number): (
-    source: Stream<T>
-  ) => Stream<T[]>
-  <T>(bufferSize: number, bufferOffset: number, source: Stream<T>): Stream<T[]>
-} = curry3(
-  <T>(
-    bufferSize: number,
-    bufferOffset: number,
-    source: Stream<T>
-  ): Stream<T[]> => {
-    return source.lift(
-      new BufferCountOperatorWithBufferOffset(bufferSize, bufferOffset)
-    )
-  }
-)
+export function bufferCountWithBufferOffset<T>(
+  bufferSize: number,
+  bufferOffset: number
+): IOperator<T, T[]> {
+  return new BufferCountWithBufferOffsetOperator<T>(bufferSize, bufferOffset)
+}
 
-class BufferCountOperatorWithBufferOffset<T> implements IOperator<T, T[]> {
+class BufferCountWithBufferOffsetOperator<T> implements IOperator<T, T[]> {
   constructor(private bufferSize: number, private bufferOffset: number) {}
 
   public call(
@@ -36,7 +22,7 @@ class BufferCountOperatorWithBufferOffset<T> implements IOperator<T, T[]> {
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(
-      new BufferCountSubscriberWithBufferOffset<T>(
+      new BufferCountWithBufferOffsetSubscriber<T>(
         target,
         this.bufferSize,
         this.bufferOffset
@@ -45,7 +31,7 @@ class BufferCountOperatorWithBufferOffset<T> implements IOperator<T, T[]> {
   }
 }
 
-class BufferCountSubscriberWithBufferOffset<T> extends ValueTransmitter<
+class BufferCountWithBufferOffsetSubscriber<T> extends ValueTransmitter<
   T,
   T[]
 > {

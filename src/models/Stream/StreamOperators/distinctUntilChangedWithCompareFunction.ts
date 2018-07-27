@@ -3,26 +3,12 @@ import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
-import { curry2 } from 'src/utils/curry'
 
-export const distinctUntilChangedWithCompareFunction: {
-  <T>(isEqual: (lastValue: T, newValue: T) => boolean): (
-    source: Stream<T>
-  ) => Stream<T>
-  <T>(
-    isEqual: (lastValue: T, newValue: T) => boolean,
-    source: Stream<T>
-  ): Stream<T>
-} = curry2(
-  <T>(
-    isEqual: (lastValue: T, newValue: T) => boolean,
-    source: Stream<T>
-  ): Stream<T> => {
-    return source.lift(
-      new DistinctUntilChangedWithCompareFunctionOperator<T>(isEqual)
-    )
-  }
-)
+export function distinctUntilChangedWithCompareFunction<T>(
+  isEqual: (lastValue: T, newValue: T) => boolean
+): IOperator<T, T> {
+  return new DistinctUntilChangedWithCompareFunctionOperator<T>(isEqual)
+}
 
 class DistinctUntilChangedWithCompareFunctionOperator<T>
   implements IOperator<T, T> {

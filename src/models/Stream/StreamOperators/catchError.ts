@@ -4,24 +4,12 @@ import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
-import { curry2 } from 'src/utils/curry'
 
-export const catchError: {
-  <T, U>(convertErrorToStream: (error: any) => Stream<U>): (
-    source: Stream<T>
-  ) => Stream<T | U>
-  <T, U>(
-    convertErrorToStream: (error: any) => Stream<U>,
-    source: Stream<T>
-  ): Stream<T | U>
-} = curry2(
-  <T, U>(
-    convertErrorToStream: (error: any) => Stream<U>,
-    source: Stream<T>
-  ): Stream<T | U> => {
-    return source.lift(new CatchErrorOperator<T, U>(convertErrorToStream))
-  }
-)
+export function catchError<T, U>(
+  convertErrorToStream: (error: any) => Stream<U>
+): IOperator<T, T | U> {
+  return new CatchErrorOperator<T, U>(convertErrorToStream)
+}
 
 class CatchErrorOperator<T, U> implements IOperator<T, T | U> {
   constructor(private convertErrorToStream: (error: any) => Stream<U>) {}

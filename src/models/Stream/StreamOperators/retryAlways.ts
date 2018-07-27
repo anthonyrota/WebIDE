@@ -4,8 +4,8 @@ import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function retryAlways<T>(source: Stream<T>): Stream<T> {
-  return source.lift(new RetryOperator<T>())
+export function retryAlways<T>(): IOperator<T, T> {
+  return new RetryOperator<T>()
 }
 
 class RetryOperator<T> implements IOperator<T, T> {

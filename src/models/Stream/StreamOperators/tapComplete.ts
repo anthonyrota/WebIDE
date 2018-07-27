@@ -3,16 +3,10 @@ import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
-import { curry2 } from 'src/utils/curry'
 
-export const tapComplete: {
-  <T>(tapWhenComplete: () => void): (source: Stream<T>) => Stream<T>
-  <T>(tapWhenComplete: () => void, source: Stream<T>): Stream<T>
-} = curry2(
-  <T>(tapWhenComplete: () => void, source: Stream<T>): Stream<T> => {
-    return source.lift(new TapCompleteOperator<T>(tapWhenComplete))
-  }
-)
+export function tapComplete<T>(tapWhenComplete: () => void): IOperator<T, T> {
+  return new TapCompleteOperator<T>(tapWhenComplete)
+}
 
 class TapCompleteOperator<T> implements IOperator<T, T> {
   constructor(private tapWhenComplete: () => void) {}

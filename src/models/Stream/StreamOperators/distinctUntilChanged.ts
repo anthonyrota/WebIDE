@@ -3,8 +3,8 @@ import { IOperator } from 'src/models/Stream/IOperator'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function distinctUntilChanged<T>(source: Stream<T>): Stream<T> {
-  return source.lift(new DistinctUntilChangedOperator<T>())
+export function distinctUntilChanged<T>(source: Stream<T>): IOperator<T, T> {
+  return new DistinctUntilChangedOperator<T>()
 }
 
 class DistinctUntilChangedOperator<T> implements IOperator<T, T> {

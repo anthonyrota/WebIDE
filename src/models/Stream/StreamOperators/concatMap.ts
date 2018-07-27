@@ -1,18 +1,17 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { Subscription } from 'src/models/Disposable/Subscription'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function switchMap<T, U>(
+export function concatMap<T, U>(
   convertValueToStream: (value: T, index: number) => Stream<U>
 ): IOperator<T, U> {
-  return new SwitchMapOperator<T, U>(convertValueToStream)
+  return new ConcatMapOperator<T, U>(convertValueToStream)
 }
 
-class SwitchMapOperator<T, U> implements IOperator<T, U> {
+class ConcatMapOperator<T, U> implements IOperator<T, U> {
   constructor(
     private convertValueToStream: (value: T, index: number) => Stream<U>
   ) {}
@@ -22,14 +21,15 @@ class SwitchMapOperator<T, U> implements IOperator<T, U> {
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(
-      new SwitchMapSubscriber<T, U>(target, this.convertValueToStream)
+      new ConcatMapSubscriber<T, U>(target, this.convertValueToStream)
     )
   }
 }
 
-class SwitchMapSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
+class ConcatMapSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
+  private valuesToProcess: T[] = []
+  private activeMergedStreamsCount: 0 | 1 = 0
   private index: number = 0
-  private lastStreamSubscription: Subscription | null = null
 
   constructor(
     target: ISubscriber<U>,
@@ -39,6 +39,28 @@ class SwitchMapSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
   }
 
   protected onNextValue(value: T): void {
+    if (this.activeMergedStreamsCount === 0) {
+      this.processInnerValue(value)
+    } else {
+      this.valuesToProcess.push(value)
+    }
+  }
+
+  protected onOuterNextValue(value: U): void {
+    this.destination.next(value)
+  }
+
+  protected onOuterComplete(): void {
+    this.activeMergedStreamsCount = 0
+
+    if (this.valuesToProcess.length > 0) {
+      this.processInnerValue(this.valuesToProcess.shift()!)
+    } else if (!this.isReceivingValues()) {
+      this.destination.complete()
+    }
+  }
+
+  private processInnerValue(value: T): void {
     const { convertValueToStream } = this
     const index = this.index++
     let resultStream: Stream<U>
@@ -50,30 +72,7 @@ class SwitchMapSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
       return
     }
 
-    if (this.lastStreamSubscription) {
-      this.lastStreamSubscription.dispose()
-    }
-
-    this.lastStreamSubscription = this.subscribeStreamToSelf(resultStream)
-  }
-
-  protected onComplete(): void {
-    if (
-      !this.lastStreamSubscription ||
-      !this.lastStreamSubscription.isActive()
-    ) {
-      super.onComplete()
-    }
-  }
-
-  protected onOuterComplete(): void {
-    this.lastStreamSubscription = null
-    if (!this.isReceivingValues()) {
-      this.destination.complete()
-    }
-  }
-
-  protected onOuterNextValue(value: U): void {
-    this.destination.next(value)
+    this.activeMergedStreamsCount = 1
+    this.subscribeStreamToSelf(resultStream)
   }
 }

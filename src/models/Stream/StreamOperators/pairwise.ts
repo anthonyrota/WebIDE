@@ -6,8 +6,8 @@ import {
   ValueTransmitter
 } from 'src/models/Stream/ValueTransmitter'
 
-export function pairwise<T>(source: Stream<T>): Stream<[T, T]> {
-  return source.lift(new PairwiseOperator<T>())
+export function pairwise<T>(source: Stream<T>): IOperator<T, [T, T]> {
+  return new PairwiseOperator<T>()
 }
 
 class PairwiseOperator<T> implements IOperator<T, [T, T]> {

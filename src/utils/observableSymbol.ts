@@ -1,11 +1,5 @@
-declare global {
-  // tslint:disable-next-line:interface-name
-  export interface SymbolConstructor {
-    readonly observable: symbol
-  }
-}
-
-export const $$observable: SymbolConstructor['observable'] =
+// @ts-ignore
+export const $$observable: unique symbol =
   typeof Symbol === 'function'
-    ? Symbol.observable || Symbol('observable')
+    ? (Symbol as any).observable || Symbol('observable')
     : ('@@observable' as any)

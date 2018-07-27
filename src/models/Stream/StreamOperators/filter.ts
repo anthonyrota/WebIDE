@@ -3,16 +3,10 @@ import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
-import { curry2 } from 'src/utils/curry'
 
-export const filter: {
-  <T>(predicate: (value: T) => boolean): (source: Stream<T>) => Stream<T>
-  <T>(predicate: (value: T) => boolean, source: Stream<T>): Stream<T>
-} = curry2(
-  <T>(predicate: (value: T) => boolean, source: Stream<T>): Stream<T> => {
-    return source.lift(new FilterOperator<T>(predicate))
-  }
-)
+export function filter<T>(predicate: (value: T) => boolean): IOperator<T, T> {
+  return new FilterOperator<T>(predicate)
+}
 
 class FilterOperator<T> implements IOperator<T, T> {
   constructor(private predicate: (value: T) => boolean) {}

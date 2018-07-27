@@ -4,24 +4,12 @@ import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
-import { curry2 } from 'src/utils/curry'
 
-export const mergeMap: {
-  <T, U>(convertValueToStream: (value: T, index: number) => Stream<U>): (
-    source: Stream<T>
-  ) => Stream<U>
-  <T, U>(
-    convertValueToStream: (value: T, index: number) => Stream<U>,
-    source: Stream<T>
-  ): Stream<U>
-} = curry2(
-  <T, U>(
-    convertValueToStream: (value: T, index: number) => Stream<U>,
-    source: Stream<T>
-  ): Stream<U> => {
-    return source.lift(new MergeMapOperator<T, U>(convertValueToStream))
-  }
-)
+export function mergeMap<T, U>(
+  convertValueToStream: (value: T, index: number) => Stream<U>
+): IOperator<T, U> {
+  return new MergeMapOperator<T, U>(convertValueToStream)
+}
 
 class MergeMapOperator<T, U> implements IOperator<T, U> {
   constructor(

@@ -16,7 +16,11 @@ export class ScheduledSubscriber<T> extends Subscription
   public next(value: T): void {
     if (this.__target.next) {
       this.terminateDisposableWhenDisposed(
-        this.__scheduler.schedule(this.__target.next.bind(this.__target, value))
+        this.__scheduler.schedule(() => {
+          if (this.__target.next) {
+            this.__target.next(value)
+          }
+        })
       )
     }
   }
@@ -24,9 +28,11 @@ export class ScheduledSubscriber<T> extends Subscription
   public error(error: any): void {
     if (this.__target.error) {
       this.terminateDisposableWhenDisposed(
-        this.__scheduler.schedule(
-          this.__target.error.bind(this.__target, error)
-        )
+        this.__scheduler.schedule(() => {
+          if (this.__target.error) {
+            this.__target.error(error)
+          }
+        })
       )
     }
   }
@@ -34,7 +40,11 @@ export class ScheduledSubscriber<T> extends Subscription
   public complete(): void {
     if (this.__target.complete) {
       this.terminateDisposableWhenDisposed(
-        this.__scheduler.schedule(this.__target.complete.bind(this.__target))
+        this.__scheduler.schedule(() => {
+          if (this.__target.complete) {
+            this.__target.complete()
+          }
+        })
       )
     }
   }

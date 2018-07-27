@@ -3,35 +3,19 @@ import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
-import { curry3 } from 'src/utils/curry'
 
-export const distinctUntilChangedWithKeySelectorAndCompareFunction: {
-  <TValue, TKey>(selectKey: (value: TValue) => TKey): (
-    isEqual: (lastKey: TKey, newKey: TKey) => boolean
-  ) => (source: Stream<TValue>) => Stream<TValue>
-  <TValue, TKey>(
-    selectKey: (value: TValue) => TKey,
-    isEqual: (lastKey: TKey, newKey: TKey) => boolean
-  ): (source: Stream<TValue>) => Stream<TValue>
-  <TValue, TKey>(
-    selectKey: (value: TValue) => TKey,
-    isEqual: (lastKey: TKey, newKey: TKey) => boolean,
-    source: Stream<TValue>
-  ): Stream<TValue>
-} = curry3(
-  <TValue, TKey>(
-    selectKey: (value: TValue) => TKey,
-    isEqual: (lastKey: TKey, newKey: TKey) => boolean,
-    source: Stream<TValue>
-  ): Stream<TValue> => {
-    return source.lift(
-      new DistinctUntilChangedWithKeySelectorAndCompareFunctionOperator<
-        TValue,
-        TKey
-      >(selectKey, isEqual)
-    )
-  }
-)
+export function distinctUntilChangedWithKeySelectorAndCompareFunction<
+  TValue,
+  TKey
+>(
+  selectKey: (value: TValue) => TKey,
+  isEqual: (lastKey: TKey, newKey: TKey) => boolean
+): IOperator<TValue, TValue> {
+  return new DistinctUntilChangedWithKeySelectorAndCompareFunctionOperator<
+    TValue,
+    TKey
+  >(selectKey, isEqual)
+}
 
 class DistinctUntilChangedWithKeySelectorAndCompareFunctionOperator<
   TValue,

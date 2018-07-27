@@ -1,12 +1,10 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import {
   DoubleInputValueTransmitterWithData,
   DoubleInputValueTransmitterWithDataSubscriptionTarget
 } from 'src/models/Stream/DoubleInputValueTransmitterWithData'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { RawStream, Stream } from 'src/models/Stream/Stream'
 import { empty } from 'src/models/Stream/StreamConstructors/empty'
-import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function forkJoin(): Stream<never>
 export function forkJoin<T>(v1: Stream<T>): Stream<T[]>
@@ -38,19 +36,11 @@ export function forkJoin<T, T2, T3, T4, T5, T6>(
   v6: Stream<T6>
 ): Stream<[T, T2, T3, T4, T5, T6]>
 export function forkJoin<T>(...streams: Array<Stream<T>>): Stream<T[]> {
-  return streams.length === 0 ? empty() : new ForkJoinStream<T>(streams)
-}
-
-class ForkJoinStream<T> extends Stream<T[]> {
-  constructor(private __streams: Array<Stream<T>>) {
-    super()
-  }
-
-  protected trySubscribe(
-    target: MonoTypeValueTransmitter<T[]>
-  ): IDisposableLike {
-    return new ForkJoinValueTransmitter(target, this.__streams)
-  }
+  return streams.length === 0
+    ? empty()
+    : new RawStream<T[]>(target => {
+        return new ForkJoinValueTransmitter(target, streams)
+      })
 }
 
 interface IStreamData {

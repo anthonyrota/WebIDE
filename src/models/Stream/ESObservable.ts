@@ -1,3 +1,5 @@
+import { $$observable } from 'src/utils/observableSymbol'
+
 export interface IESObservableObserver<T> {
   next(value: T): void
   error(error: any): void
@@ -10,7 +12,7 @@ export interface IESObservableSubscription {
 }
 
 export interface IESInteropObservable<T> {
-  [Symbol.observable](): IESObservable<T>
+  [$$observable](): IESObservable<T>
 }
 
 export interface IESObservable<T> extends IESInteropObservable<T> {

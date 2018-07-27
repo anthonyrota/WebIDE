@@ -3,31 +3,25 @@ import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
-import { curry2 } from 'src/utils/curry'
 
-export const finalize: {
-  <T>(onDispose: () => any): (source: Stream<T>) => Stream<T>
-  <T>(onDispose: () => any, source: Stream<T>): Stream<T>
-} = curry2(
-  <T>(onDispose: () => any, source: Stream<T>): Stream<T> => {
-    return source.lift(new FinalizeOperator<T>(onDispose))
-  }
-)
+export function finalize<T>(onFinish: () => void): IOperator<T, T> {
+  return new FinalizeOperator<T>(onFinish)
+}
 
 class FinalizeOperator<T> implements IOperator<T, T> {
-  constructor(private onDispose: () => any) {}
+  constructor(private onFinish: () => any) {}
 
   public call(
     target: MonoTypeValueTransmitter<T>,
     source: Stream<T>
   ): IDisposableLike {
-    return source.subscribe(new FinalizeSubscriber<T>(target, this.onDispose))
+    return source.subscribe(new FinalizeSubscriber<T>(target, this.onFinish))
   }
 }
 
 class FinalizeSubscriber<T> extends MonoTypeValueTransmitter<T> {
-  constructor(target: ISubscriber<T>, onDispose: () => any) {
+  constructor(target: ISubscriber<T>, onFinish: () => any) {
     super(target)
-    super.onDispose(onDispose)
+    super.onDispose(onFinish)
   }
 }

@@ -6,16 +6,10 @@ import {
   MonoTypeValueTransmitter,
   ValueTransmitter
 } from 'src/models/Stream/ValueTransmitter'
-import { curry2 } from 'src/utils/curry'
 
-export const map: {
-  <T, U>(transform: (value: T) => U): (source: Stream<T>) => Stream<U>
-  <T, U>(transform: (value: T) => U, source: Stream<T>): Stream<U>
-} = curry2(
-  <T, U>(transform: (value: T) => U, source: Stream<T>): Stream<U> => {
-    return source.lift(new MapOperator<T, U>(transform))
-  }
-)
+export function map<T, U>(transform: (value: T) => U): IOperator<T, U> {
+  return new MapOperator<T, U>(transform)
+}
 
 class MapOperator<T, U> implements IOperator<T, U> {
   constructor(private transform: (value: T) => U) {}

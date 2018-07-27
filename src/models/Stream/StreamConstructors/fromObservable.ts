@@ -1,22 +1,12 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { IESInteropObservable } from 'src/models/Stream/ESObservable'
 import { ESObservableSubscriptionDisposable } from 'src/models/Stream/ESObservableSubscriptionDisposable'
-import { Stream } from 'src/models/Stream/Stream'
-import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
+import { RawStream, Stream } from 'src/models/Stream/Stream'
 import { toESObservable } from 'src/utils/toESObservable'
 
 export function fromObservable<T>(input: IESInteropObservable<T>): Stream<T> {
-  return new FromObservableStream<T>(input)
-}
-
-export class FromObservableStream<T> extends Stream<T> {
-  constructor(private __input: IESInteropObservable<T>) {
-    super()
-  }
-
-  protected trySubscribe(target: MonoTypeValueTransmitter<T>): IDisposableLike {
+  return new RawStream<T>(target => {
     return new ESObservableSubscriptionDisposable(
-      toESObservable<T>(this.__input).subscribe(target)
+      toESObservable(input).subscribe(target)
     )
-  }
+  })
 }
