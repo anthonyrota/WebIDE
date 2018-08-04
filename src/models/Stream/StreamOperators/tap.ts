@@ -1,5 +1,5 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
+import { IConnectOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
@@ -7,14 +7,14 @@ import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 export function tap<T>(
   subscriber: ISubscriber<T>,
   source: Stream<T>
-): IOperator<T, T> {
+): IConnectOperator<T, T> {
   return new TapOperator<T>(subscriber)
 }
 
-class TapOperator<T> implements IOperator<T, T> {
+class TapOperator<T> implements IConnectOperator<T, T> {
   constructor(private subscriber: ISubscriber<T>) {}
 
-  public call(
+  public connect(
     target: MonoTypeValueTransmitter<T>,
     source: Stream<T>
   ): IDisposableLike {

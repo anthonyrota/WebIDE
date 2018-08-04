@@ -1,6 +1,7 @@
 import { IDisposable } from 'src/models/Disposable/IDisposable'
 import {
   isSubscription,
+  ISubscription,
   RecyclableSubscription
 } from 'src/models/Disposable/Subscription'
 import { IRequiredSubscriber, ISubscriber } from 'src/models/Stream/ISubscriber'
@@ -10,11 +11,19 @@ export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
   implements IRequiredSubscriber<TInput> {
   protected destination: IRequiredSubscriber<TOutput>
   private __isReceivingValues: boolean = true
+  private __onStopReceivingValuesSubscription = new RecyclableSubscription()
 
-  constructor(target: ISubscriber<TOutput> | ValueTransmitter<TOutput, any>) {
+  constructor(
+    target:
+      | ISubscriber<TOutput>
+      | (ISubscription & ISubscriber<TOutput>)
+      | ValueTransmitter<TOutput, any>
+  ) {
     super()
 
-    if (isSubscription(target)) {
+    if (isValueTransmitter(target)) {
+      target.terminateDisposableWhenStopsReceivingValues(this)
+    } else if (isSubscription(target)) {
       target.terminateDisposableWhenDisposed(this)
     }
 
@@ -33,6 +42,7 @@ export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
     if (this.__isReceivingValues) {
       this.__isReceivingValues = false
       this.onError(error)
+      this.__onStopReceivingValuesSubscription.dispose()
     }
   }
 
@@ -40,7 +50,26 @@ export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
     if (this.__isReceivingValues) {
       this.__isReceivingValues = false
       this.onComplete()
+      this.__onStopReceivingValuesSubscription.dispose()
     }
+  }
+
+  public terminateDisposableWhenStopsReceivingValues(
+    disposable: IDisposable
+  ): ISubscription {
+    return this.__onStopReceivingValuesSubscription.terminateDisposableWhenDisposed(
+      disposable
+    )
+  }
+
+  public onStopReceivingValues(dispose: () => void): ISubscription {
+    return this.__onStopReceivingValuesSubscription.onDispose(dispose)
+  }
+
+  public removeOnStopReceivingValuesSubscription(
+    subscription: ISubscription
+  ): void {
+    this.__onStopReceivingValuesSubscription.removeSubscription(subscription)
   }
 
   public isReceivingValues(): boolean {
@@ -50,14 +79,16 @@ export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
   public dispose(): void {
     if (this.isActive()) {
       this.__isReceivingValues = false
+      this.__onStopReceivingValuesSubscription.dispose()
       super.dispose()
     }
   }
 
-  public recycle(): void {
-    this.dispose()
+  public unsubscribeAndRecycle(): void {
+    this.__isReceivingValues = false
+    this.__onStopReceivingValuesSubscription.unsubscribeAndRecycle()
+    super.unsubscribeAndRecycle()
     this.__isReceivingValues = true
-    super.recycle()
   }
 
   protected onNextValue(value: TInput): void {}

@@ -1,20 +1,20 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { MonoTypeDoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
+import { IConnectOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function catchError<T, U>(
   convertErrorToStream: (error: any) => Stream<U>
-): IOperator<T, T | U> {
+): IConnectOperator<T, T | U> {
   return new CatchErrorOperator<T, U>(convertErrorToStream)
 }
 
-class CatchErrorOperator<T, U> implements IOperator<T, T | U> {
+class CatchErrorOperator<T, U> implements IConnectOperator<T, T | U> {
   constructor(private convertErrorToStream: (error: any) => Stream<U>) {}
 
-  public call(
+  public connect(
     target: MonoTypeValueTransmitter<T | U>,
     source: Stream<T>
   ): IDisposableLike {
@@ -46,7 +46,7 @@ class CatchErrorSubscriber<T, U> extends MonoTypeDoubleInputValueTransmitter<
         return
       }
 
-      this.recycle()
+      this.unsubscribeAndRecycle()
       this.subscribeStreamToSelf(resultStream)
     }
   }

@@ -5,7 +5,6 @@ import { fromAsyncIterable } from 'src/models/Stream/StreamConstructors/fromAsyn
 import { fromIterable } from 'src/models/Stream/StreamConstructors/fromIterable'
 import { fromObservable } from 'src/models/Stream/StreamConstructors/fromObservable'
 import { fromPromise } from 'src/models/Stream/StreamConstructors/fromPromise'
-import { IAsyncIterable } from 'src/utils/asyncIteratorSymbol'
 import { isArrayLike } from 'src/utils/isArrayLike'
 import { isAsyncIterable } from 'src/utils/isAsyncIterable'
 import { isESInteropObservable } from 'src/utils/isESInteropObservable'
@@ -17,7 +16,7 @@ export function from<T>(
     | ArrayLike<T>
     | Stream<T>
     | Iterable<T>
-    | IAsyncIterable<T>
+    | AsyncIterable<T>
     | IESInteropObservable<T>
     | PromiseLike<T>
 ) {

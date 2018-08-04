@@ -1,9 +1,16 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { isDisposable } from 'src/models/Disposable/isDisposable'
 import { ISubscription } from 'src/models/Disposable/Subscription'
-import { IOperator } from 'src/models/Stream/IOperator'
+import {
+  IConnectOperator,
+  isConnectOperator,
+  ITransformOperator
+} from 'src/models/Stream/IOperator'
 import { ISubscribable, ISubscriber } from 'src/models/Stream/ISubscriber'
-import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
+import {
+  isValueTransmitter,
+  MonoTypeValueTransmitter
+} from 'src/models/Stream/ValueTransmitter'
 import { isFunction } from 'src/utils/isFunction'
 
 export function isStream(value: any): value is Stream<any> {
@@ -11,12 +18,26 @@ export function isStream(value: any): value is Stream<any> {
 }
 
 export abstract class Stream<T> implements ISubscribable<T> {
-  public lift<U>(operator: IOperator<T, U>): Stream<U> {
-    return new LiftedStream<T, U>(this, operator)
+  public lift<U>(connectOperator: IConnectOperator<T, U>): Stream<U>
+  public lift<U, TStreamOutput extends Stream<U>>(
+    transformOperator: ITransformOperator<T, U, TStreamOutput>
+  ): TStreamOutput
+  public lift<U, TStreamOutput extends Stream<U>>(
+    transformOrConnectOperator:
+      | IConnectOperator<T, U>
+      | ITransformOperator<T, U, TStreamOutput>
+  ): Stream<U> | TStreamOutput {
+    return isConnectOperator(transformOrConnectOperator)
+      ? new LiftedStream<T, U>(this, transformOrConnectOperator)
+      : transformOrConnectOperator.transform(this)
   }
 
-  public subscribe(targetSubscriber: ISubscriber<T>): ISubscription {
-    const target = new MonoTypeValueTransmitter(targetSubscriber)
+  public subscribe(
+    targetSubscriber: ISubscriber<T> | MonoTypeValueTransmitter<T>
+  ): ISubscription {
+    const target = isValueTransmitter(targetSubscriber)
+      ? targetSubscriber
+      : new MonoTypeValueTransmitter(targetSubscriber)
 
     let disposable: IDisposableLike
 
@@ -28,9 +49,9 @@ export abstract class Stream<T> implements ISubscribable<T> {
 
     if (disposable) {
       if (isDisposable(disposable)) {
-        target.terminateDisposableWhenDisposed(disposable)
+        target.terminateDisposableWhenStopsReceivingValues(disposable)
       } else if (isFunction(disposable)) {
-        target.onDispose(disposable)
+        target.onStopReceivingValues(disposable)
       }
     }
 
@@ -70,15 +91,18 @@ export class DuplicateStream<T> extends Stream<T> {
 
 class LiftedStream<T, U> extends Stream<U> {
   private __source: Stream<T>
-  private __operator: IOperator<T, U>
+  private __operator: IConnectOperator<T, U>
 
-  constructor(source: Stream<T>, operator: IOperator<T, U>) {
+  constructor(source: Stream<T>, operator: IConnectOperator<T, U>) {
     super()
     this.__source = source
     this.__operator = operator
   }
 
   protected trySubscribe(target: MonoTypeValueTransmitter<U>): IDisposableLike {
-    return this.__operator.call(target, this.__source)
+    return this.__operator.connect(
+      target,
+      this.__source
+    )
   }
 }

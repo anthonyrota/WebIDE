@@ -1,5 +1,5 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
+import { IConnectOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import {
@@ -10,14 +10,15 @@ import {
 export function bufferCountWithBufferOffset<T>(
   bufferSize: number,
   bufferOffset: number
-): IOperator<T, T[]> {
+): IConnectOperator<T, T[]> {
   return new BufferCountWithBufferOffsetOperator<T>(bufferSize, bufferOffset)
 }
 
-class BufferCountWithBufferOffsetOperator<T> implements IOperator<T, T[]> {
+class BufferCountWithBufferOffsetOperator<T>
+  implements IConnectOperator<T, T[]> {
   constructor(private bufferSize: number, private bufferOffset: number) {}
 
-  public call(
+  public connect(
     target: MonoTypeValueTransmitter<T[]>,
     source: Stream<T>
   ): IDisposableLike {
@@ -64,7 +65,7 @@ class BufferCountWithBufferOffsetSubscriber<T> extends ValueTransmitter<
     }
   }
 
-  protected onBeforeComplete(): void {
+  protected onComplete(): void {
     for (let i = 0; i < this.buffers.length; i++) {
       if (this.buffers[i].length > 0) {
         this.destination.next(this.buffers[i])
@@ -72,5 +73,6 @@ class BufferCountWithBufferOffsetSubscriber<T> extends ValueTransmitter<
     }
 
     this.buffers = []
+    super.onComplete()
   }
 }

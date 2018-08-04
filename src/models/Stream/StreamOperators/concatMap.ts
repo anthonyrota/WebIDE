@@ -1,22 +1,22 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
+import { IConnectOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function concatMap<T, U>(
   convertValueToStream: (value: T, index: number) => Stream<U>
-): IOperator<T, U> {
+): IConnectOperator<T, U> {
   return new ConcatMapOperator<T, U>(convertValueToStream)
 }
 
-class ConcatMapOperator<T, U> implements IOperator<T, U> {
+class ConcatMapOperator<T, U> implements IConnectOperator<T, U> {
   constructor(
     private convertValueToStream: (value: T, index: number) => Stream<U>
   ) {}
 
-  public call(
+  public connect(
     target: MonoTypeValueTransmitter<U>,
     source: Stream<T>
   ): IDisposableLike {

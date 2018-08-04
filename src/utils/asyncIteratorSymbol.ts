@@ -1,19 +1,13 @@
-export interface IAsyncIterator<T> {
-  next(value?: any): Promise<IteratorResult<T>>
-  return?(value?: any): Promise<IteratorResult<T>>
-  throw?(e?: any): Promise<IteratorResult<T>>
-}
-
-export interface IAsyncIterable<T> {
-  [$$asyncIterator](): IAsyncIterator<T>
-}
-
-export interface IAsyncIterableIterator<T> extends IAsyncIterator<T> {
-  [$$asyncIterator](): IAsyncIterableIterator<T>
+declare global {
+  // tslint:disable-next-line
+  interface AsyncIterable<T> {
+    [$$asyncIterator](): AsyncIterator<T>
+  }
 }
 
 // @ts-ignore
 export const $$asyncIterator: unique symbol =
   typeof Symbol === 'function'
-    ? (Symbol as any).asyncIterator || Symbol('asyncIterator')
+    ? Symbol.asyncIterator ||
+      (Symbol.for ? Symbol.for('asyncIterator') : Symbol('asyncIterator'))
     : ('@@asyncIterator' as any)

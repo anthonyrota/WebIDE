@@ -2,14 +2,18 @@ import { AlreadyDisposedError } from 'src/models/Disposable/AlreadyDisposedError
 import { IDisposable } from 'src/models/Disposable/IDisposable'
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import {
-  $$subscription,
+  isSubscriptionPropertyKey,
   ISubscription
 } from 'src/models/Disposable/Subscription'
 import {
   ImmutableMutableMaybeView,
   MutableMaybe
 } from 'src/models/Maybe/MutableMaybe'
-import { IOperator } from 'src/models/Stream/IOperator'
+import {
+  IConnectOperator,
+  isConnectOperator,
+  ITransformOperator
+} from 'src/models/Stream/IOperator'
 import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
 import { DuplicateStream, Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
@@ -19,16 +23,17 @@ export interface IDistributedStream<TInput, TOutput>
   extends Stream<TOutput>,
     ISubscription,
     IRequiredSubscriber<TInput> {
-  lift<TNewOutput>(
-    operator: IOperator<TOutput, TNewOutput>
-  ): IDistributedStream<TInput, TNewOutput>
+  lift<U>(connectOperator: IConnectOperator<TOutput, U>): Stream<U>
+  lift<U, TStreamOutput extends Stream<U>>(
+    transformOperator: ITransformOperator<TOutput, U, TStreamOutput>
+  ): TStreamOutput
   isCompleted(): boolean
   asStream(): Stream<TOutput>
 }
 
 export class DistributedStream<T> extends Stream<T>
   implements IDistributedStream<T, T> {
-  public readonly [$$subscription] = true
+  public readonly [isSubscriptionPropertyKey] = true
 
   private __mutableThrownError: MutableMaybe<any> = MutableMaybe.none<any>()
   private __targets: Array<MonoTypeValueTransmitter<T>>
@@ -49,8 +54,20 @@ export class DistributedStream<T> extends Stream<T>
     this.__selfSubscription.removeSubscription(subscription)
   }
 
-  public lift<U>(operator: IOperator<T, U>): IDistributedStream<T, U> {
-    return new LiftedDistributedStream<T, T, U>(this, operator)
+  public lift<U>(
+    connectOperator: IConnectOperator<T, U>
+  ): IDistributedStream<T, U>
+  public lift<U, TStreamOutput extends Stream<U>>(
+    transformOperator: ITransformOperator<T, U, TStreamOutput>
+  ): TStreamOutput
+  public lift<U, TStreamOutput extends Stream<U>>(
+    transformOrConnectOperator:
+      | IConnectOperator<T, U>
+      | ITransformOperator<T, U, TStreamOutput>
+  ): IDistributedStream<T, U> | TStreamOutput {
+    return isConnectOperator(transformOrConnectOperator)
+      ? new LiftedDistributedStream<T, T, U>(this, transformOrConnectOperator)
+      : transformOrConnectOperator.transform(this)
   }
 
   public next(value: T): void {
@@ -162,15 +179,15 @@ export class DistributedStream<T> extends Stream<T>
 class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
   extends Stream<TOperatorOutput>
   implements IDistributedStream<TStreamInput, TOperatorOutput> {
-  public readonly [$$subscription] = true
+  public readonly [isSubscriptionPropertyKey] = true
 
   private __source: IDistributedStream<TStreamInput, TOperatorInput>
-  private __operator: IOperator<TOperatorInput, TOperatorOutput>
+  private __operator: IConnectOperator<TOperatorInput, TOperatorOutput>
   private __selfSubscription: ISubscription
 
   constructor(
     source: IDistributedStream<TStreamInput, TOperatorInput>,
-    operator: IOperator<TOperatorInput, TOperatorOutput>
+    operator: IConnectOperator<TOperatorInput, TOperatorOutput>
   ) {
     super()
     this.__source = source
@@ -191,13 +208,27 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
     this.__selfSubscription.removeSubscription(subscription)
   }
 
-  public lift<T>(
-    operator: IOperator<TOperatorOutput, T>
-  ): IDistributedStream<TStreamInput, T> {
-    return new LiftedDistributedStream<TStreamInput, TOperatorOutput, T>(
-      this,
-      operator
-    )
+  public lift<U>(
+    connectOperator: IConnectOperator<TOperatorOutput, U>
+  ): IDistributedStream<TStreamInput, U>
+  public lift<U, TNewOperatorOutput extends Stream<U>>(
+    transformOperator: ITransformOperator<
+      TOperatorOutput,
+      U,
+      TNewOperatorOutput
+    >
+  ): TNewOperatorOutput
+  public lift<U, TNewOperatorOutput extends Stream<U>>(
+    transformOrConnectOperator:
+      | IConnectOperator<TOperatorOutput, U>
+      | ITransformOperator<TOperatorOutput, U, TNewOperatorOutput>
+  ): IDistributedStream<TStreamInput, U> | TNewOperatorOutput {
+    return isConnectOperator(transformOrConnectOperator)
+      ? new LiftedDistributedStream<TStreamInput, TOperatorOutput, U>(
+          this,
+          transformOrConnectOperator
+        )
+      : transformOrConnectOperator.transform(this)
   }
 
   public next(value: TStreamInput): void {
@@ -251,7 +282,10 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
       throw new AlreadyDisposedError()
     }
 
-    return this.__operator.call(target, this.__source)
+    return this.__operator.connect(
+      target,
+      this.__source
+    )
   }
 }
 

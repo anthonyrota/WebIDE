@@ -1,14 +1,16 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
+import { IConnectOperator } from 'src/models/Stream/IOperator'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function distinctUntilChanged<T>(source: Stream<T>): IOperator<T, T> {
+export function distinctUntilChanged<T>(
+  source: Stream<T>
+): IConnectOperator<T, T> {
   return new DistinctUntilChangedOperator<T>()
 }
 
-class DistinctUntilChangedOperator<T> implements IOperator<T, T> {
-  public call(
+class DistinctUntilChangedOperator<T> implements IConnectOperator<T, T> {
+  public connect(
     target: MonoTypeValueTransmitter<T>,
     source: Stream<T>
   ): IDisposableLike {

@@ -1,5 +1,5 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
+import { IConnectOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
@@ -10,7 +10,7 @@ export function distinctUntilChangedWithKeySelectorAndCompareFunction<
 >(
   selectKey: (value: TValue) => TKey,
   isEqual: (lastKey: TKey, newKey: TKey) => boolean
-): IOperator<TValue, TValue> {
+): IConnectOperator<TValue, TValue> {
   return new DistinctUntilChangedWithKeySelectorAndCompareFunctionOperator<
     TValue,
     TKey
@@ -20,13 +20,13 @@ export function distinctUntilChangedWithKeySelectorAndCompareFunction<
 class DistinctUntilChangedWithKeySelectorAndCompareFunctionOperator<
   TValue,
   TKey
-> implements IOperator<TValue, TValue> {
+> implements IConnectOperator<TValue, TValue> {
   constructor(
     private selectKey: (value: TValue) => TKey,
     private isEqual: (lastKey: TKey, newKey: TKey) => boolean
   ) {}
 
-  public call(
+  public connect(
     target: MonoTypeValueTransmitter<TValue>,
     source: Stream<TValue>
   ): IDisposableLike {

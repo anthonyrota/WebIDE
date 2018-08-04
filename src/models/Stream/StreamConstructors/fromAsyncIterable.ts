@@ -1,7 +1,7 @@
 import { RawStream, Stream } from 'src/models/Stream/Stream'
-import { $$asyncIterator, IAsyncIterable } from 'src/utils/asyncIteratorSymbol'
+import { $$asyncIterator } from 'src/utils/asyncIteratorSymbol'
 
-export function fromAsyncIterable<T>(iterable: IAsyncIterable<T>): Stream<T> {
+export function fromAsyncIterable<T>(iterable: AsyncIterable<T>): Stream<T> {
   return new RawStream<T>(target => {
     const iterator = iterable[$$asyncIterator]()
 

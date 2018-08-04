@@ -12,5 +12,6 @@ declare global {
 // @ts-ignore
 export const $$iterator: unique symbol =
   typeof Symbol === 'function'
-    ? (Symbol as any).iterator || Symbol('iterator')
+    ? Symbol.iterator ||
+      (Symbol.for ? Symbol.for('iterator') : Symbol('iterator'))
     : ('@@iterator' as any)

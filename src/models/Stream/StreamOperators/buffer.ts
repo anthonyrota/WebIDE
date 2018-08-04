@@ -1,20 +1,20 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
+import { IConnectOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function buffer<T>(
   shouldFlushBufferStream: Stream<any>
-): IOperator<T, T[]> {
+): IConnectOperator<T, T[]> {
   return new BufferOperator<T>(shouldFlushBufferStream)
 }
 
-class BufferOperator<T> implements IOperator<T, T[]> {
+class BufferOperator<T> implements IConnectOperator<T, T[]> {
   constructor(private shouldFlushBufferStream: Stream<any>) {}
 
-  public call(
+  public connect(
     target: MonoTypeValueTransmitter<T[]>,
     source: Stream<T>
   ): IDisposableLike {
@@ -43,9 +43,10 @@ class BufferSubscriber<T> extends DoubleInputValueTransmitter<T, T[], T> {
     this.destination.next(buffer)
   }
 
-  protected onBeforeComplete(): void {
+  protected onComplete(): void {
     if (this.buffer.length > 0) {
       this.destination.next(this.buffer)
     }
+    super.onComplete()
   }
 }

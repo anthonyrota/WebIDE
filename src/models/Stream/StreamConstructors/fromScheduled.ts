@@ -7,7 +7,6 @@ import { fromIterableScheduled } from 'src/models/Stream/StreamConstructors/from
 import { fromObservableScheduled } from 'src/models/Stream/StreamConstructors/fromObservableScheduled'
 import { fromPromiseScheduled } from 'src/models/Stream/StreamConstructors/fromPromiseScheduled'
 import { fromStreamScheduled } from 'src/models/Stream/StreamConstructors/fromStreamScheduled'
-import { IAsyncIterable } from 'src/utils/asyncIteratorSymbol'
 import { isArrayLike } from 'src/utils/isArrayLike'
 import { isAsyncIterable } from 'src/utils/isAsyncIterable'
 import { isESInteropObservable } from 'src/utils/isESInteropObservable'
@@ -19,7 +18,7 @@ export function fromScheduled<T>(
     | ArrayLike<T>
     | Stream<T>
     | Iterable<T>
-    | IAsyncIterable<T>
+    | AsyncIterable<T>
     | IESInteropObservable<T>
     | PromiseLike<T>,
   scheduler: IScheduler

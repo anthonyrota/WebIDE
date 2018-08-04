@@ -1,5 +1,5 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
+import { IConnectOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import {
@@ -7,14 +7,14 @@ import {
   ValueTransmitter
 } from 'src/models/Stream/ValueTransmitter'
 
-export function mapTo<T>(value: T): IOperator<any, T> {
+export function mapTo<T>(value: T): IConnectOperator<any, T> {
   return new MapToOperator<T>(value)
 }
 
-class MapToOperator<T> implements IOperator<any, T> {
+class MapToOperator<T> implements IConnectOperator<any, T> {
   constructor(private value: T) {}
 
-  public call(
+  public connect(
     target: MonoTypeValueTransmitter<T>,
     source: Stream<any>
   ): IDisposableLike {
