@@ -54,7 +54,7 @@ abstract class SyncSchedulerAction extends Subscription {
 class SyncSchedulerActionWithData<T> extends SyncSchedulerAction
   implements ISchedulerActionWithData<T> {
   private __task: (data: T, action: ISchedulerActionWithData<T>) => void
-  private __data: T
+  private __data!: T
 
   constructor(task: (data: T, action: ISchedulerActionWithData<T>) => void) {
     super()

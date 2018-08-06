@@ -73,6 +73,6 @@ class BufferCountWithBufferOffsetSubscriber<T> extends ValueTransmitter<
     }
 
     this.buffers = []
-    super.onComplete()
+    this.destination.complete()
   }
 }

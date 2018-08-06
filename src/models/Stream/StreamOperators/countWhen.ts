@@ -1,0 +1,59 @@
+import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { IConnectOperator } from 'src/models/Stream/IOperator'
+import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { Stream } from 'src/models/Stream/Stream'
+import {
+  MonoTypeValueTransmitter,
+  ValueTransmitter
+} from 'src/models/Stream/ValueTransmitter'
+
+export function countWhen<T>(
+  predicate: (value: T, index: number) => boolean
+): IConnectOperator<T, number> {
+  return new CountWhenOperator(predicate)
+}
+
+class CountWhenOperator<T> implements IConnectOperator<T, number> {
+  constructor(private predicate: (value: T, index: number) => boolean) {}
+
+  public connect(
+    target: MonoTypeValueTransmitter<number>,
+    source: Stream<T>
+  ): IDisposableLike {
+    return source.subscribe(new CountWhenSubscriber(target, this.predicate))
+  }
+}
+
+class CountWhenSubscriber<T> extends ValueTransmitter<T, number> {
+  private count: number = 0
+  private index: number = 0
+
+  constructor(
+    target: ISubscriber<number>,
+    private predicate: (value: T, index: number) => boolean
+  ) {
+    super(target)
+  }
+
+  protected onNextValue(value: T): void {
+    const { predicate } = this
+    const index = this.index++
+    let shouldIncreaseCount: boolean
+
+    try {
+      shouldIncreaseCount = predicate(value, index)
+    } catch (error) {
+      this.destination.error(error)
+      return
+    }
+
+    if (shouldIncreaseCount) {
+      this.count++
+    }
+  }
+
+  protected onComplete(): void {
+    this.destination.next(this.count)
+    this.destination.complete()
+  }
+}

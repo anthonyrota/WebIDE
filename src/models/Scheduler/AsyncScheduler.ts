@@ -22,27 +22,21 @@ export abstract class AsyncScheduler implements IScheduler {
   public schedule(
     task: (action: ISchedulerActionWithoutData) => void
   ): ISubscription {
-    const action = new AsyncActionWithoutData(this, task)
-    this.scheduleAction(action)
-    return action
+    return new AsyncActionWithoutData(this, task).schedule()
   }
 
   public scheduleWithData<T>(
     task: (data: T, action: ISchedulerActionWithData<T>) => void,
     data: T
   ): ISubscription {
-    const action = new AsyncActionWithData<T>(this, task, data)
-    this.scheduleAction(action)
-    return action
+    return new AsyncActionWithData<T>(this, task).schedule(data)
   }
 
   public scheduleDelayed(
     task: (action: ISchedulerActionWithoutData) => void,
     delay: number
   ): ISubscription {
-    const action = new AsyncActionWithoutData(this, task)
-    this.scheduleActionDelayed(action, delay)
-    return action
+    return new AsyncActionWithoutData(this, task).scheduleDelayed(delay)
   }
 
   public scheduleDelayedWithData<T>(
@@ -50,9 +44,7 @@ export abstract class AsyncScheduler implements IScheduler {
     data: T,
     delay: number
   ): ISubscription {
-    const action = new AsyncActionWithData(this, task, data)
-    this.scheduleActionDelayed(action, delay)
-    return action
+    return new AsyncActionWithData<T>(this, task).scheduleDelayed(data, delay)
   }
 
   public scheduleAction(action: AsyncAction): void {
@@ -65,7 +57,7 @@ export abstract class AsyncScheduler implements IScheduler {
   public scheduleActionDelayed(
     action: AsyncAction,
     delay: number
-  ): IDisposable | void {
+  ): IDisposable {
     return this.requestExecutionOfActionDelayed(action, delay)
   }
 
@@ -100,9 +92,9 @@ export abstract class AsyncScheduler implements IScheduler {
     }
   }
 
-  protected abstract requestExecutionOfAllActions(): IDisposable | void
+  protected abstract requestExecutionOfAllActions(): IDisposable
   protected abstract requestExecutionOfActionDelayed(
     action: AsyncAction,
     delay: number
-  ): IDisposable | void
+  ): IDisposable
 }

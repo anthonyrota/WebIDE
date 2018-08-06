@@ -1,0 +1,47 @@
+import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { IConnectOperator } from 'src/models/Stream/IOperator'
+import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { Stream } from 'src/models/Stream/Stream'
+import { completeImmediately } from 'src/models/Stream/StreamOperators/completeImmediately'
+import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
+
+export function take<T>(total: number): IConnectOperator<T, T> {
+  if (total < 0) {
+    throw new TypeError('total must be positive')
+  }
+  if (total === 0) {
+    return completeImmediately()
+  }
+  return new TakeOperator<T>(total)
+}
+
+class TakeOperator<T> implements IConnectOperator<T, T> {
+  constructor(private total: number) {}
+
+  public connect(
+    target: MonoTypeValueTransmitter<T>,
+    source: Stream<T>
+  ): IDisposableLike {
+    return source.subscribe(new TakeSubscriber<T>(target, this.total))
+  }
+}
+
+class TakeSubscriber<T> extends MonoTypeValueTransmitter<T> {
+  private count: number = 0
+
+  constructor(target: ISubscriber<T>, private total: number) {
+    super(target)
+  }
+
+  public onNextValue(value: T): void {
+    this.count++
+
+    if (this.count <= this.total) {
+      this.destination.next(value)
+
+      if (this.count === this.total) {
+        this.destination.complete()
+      }
+    }
+  }
+}

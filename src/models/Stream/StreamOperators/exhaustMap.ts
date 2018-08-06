@@ -1,18 +1,17 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { Subscription } from 'src/models/Disposable/Subscription'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
 import { IConnectOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function switchMap<T, U>(
+export function exhaustMap<T, U>(
   convertValueToStream: (value: T, index: number) => Stream<U>
 ): IConnectOperator<T, U> {
-  return new SwitchMapOperator<T, U>(convertValueToStream)
+  return new ExhaustMapOperator<T, U>(convertValueToStream)
 }
 
-class SwitchMapOperator<T, U> implements IConnectOperator<T, U> {
+class ExhaustMapOperator<T, U> implements IConnectOperator<T, U> {
   constructor(
     private convertValueToStream: (value: T, index: number) => Stream<U>
   ) {}
@@ -22,14 +21,14 @@ class SwitchMapOperator<T, U> implements IConnectOperator<T, U> {
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(
-      new SwitchMapSubscriber<T, U>(target, this.convertValueToStream)
+      new ExhaustMapSubscriber<T, U>(target, this.convertValueToStream)
     )
   }
 }
 
-class SwitchMapSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
+class ExhaustMapSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
+  private hasActiveStream: boolean = false
   private index: number = 0
-  private lastStreamSubscription: Subscription | null = null
 
   constructor(
     target: ISubscriber<U>,
@@ -39,6 +38,10 @@ class SwitchMapSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
   }
 
   protected onNextValue(value: T): void {
+    if (this.hasActiveStream) {
+      return
+    }
+
     const { convertValueToStream } = this
     const index = this.index++
     let resultStream: Stream<U>
@@ -50,30 +53,24 @@ class SwitchMapSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
       return
     }
 
-    if (this.lastStreamSubscription) {
-      this.lastStreamSubscription.dispose()
-    }
-
-    this.lastStreamSubscription = this.subscribeStreamToSelf(resultStream)
+    this.hasActiveStream = true
+    this.subscribeStreamToSelf(resultStream)
   }
 
   protected onComplete(): void {
-    if (
-      !this.lastStreamSubscription ||
-      !this.lastStreamSubscription.isActive()
-    ) {
-      this.destination.complete()
-    }
-  }
-
-  protected onOuterComplete(): void {
-    this.lastStreamSubscription = null
-    if (!this.isReceivingValues()) {
+    if (!this.hasActiveStream) {
       this.destination.complete()
     }
   }
 
   protected onOuterNextValue(value: U): void {
     this.destination.next(value)
+  }
+
+  protected onOuterComplete(): void {
+    this.hasActiveStream = false
+    if (!this.isReceivingValues()) {
+      this.destination.complete()
+    }
   }
 }

@@ -4,10 +4,7 @@ import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function tap<T>(
-  subscriber: ISubscriber<T>,
-  source: Stream<T>
-): IConnectOperator<T, T> {
+export function tap<T>(subscriber: ISubscriber<T>): IConnectOperator<T, T> {
   return new TapOperator<T>(subscriber)
 }
 

@@ -25,7 +25,7 @@ class BufferOperator<T> implements IConnectOperator<T, T[]> {
 }
 
 class BufferSubscriber<T> extends DoubleInputValueTransmitter<T, T[], T> {
-  private buffer: T[]
+  private buffer: T[] = []
 
   constructor(target: ISubscriber<T[]>, shouldFlushBufferStream: Stream<any>) {
     super(target)
@@ -41,12 +41,5 @@ class BufferSubscriber<T> extends DoubleInputValueTransmitter<T, T[], T> {
 
     this.buffer = []
     this.destination.next(buffer)
-  }
-
-  protected onComplete(): void {
-    if (this.buffer.length > 0) {
-      this.destination.next(this.buffer)
-    }
-    super.onComplete()
   }
 }

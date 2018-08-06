@@ -53,6 +53,19 @@ export abstract class DoubleInputValueTransmitter<
     }
   }
 
+  public subscribeStreamToSelf(
+    stream: Stream<TOuterValue>
+  ): DoubleInputValueTransmitterSubscriptionTarget<TOuterValue> {
+    const target = new DoubleInputValueTransmitterSubscriptionTarget<
+      TOuterValue
+    >(this)
+
+    target.terminateDisposableWhenDisposed(stream.subscribe(target))
+    this.terminateDisposableWhenDisposed(target)
+
+    return target
+  }
+
   protected onOuterNextValue(
     value: TOuterValue,
     target: DoubleInputValueTransmitterSubscriptionTarget<TOuterValue>
@@ -64,19 +77,6 @@ export abstract class DoubleInputValueTransmitter<
 
   protected onOuterComplete(): void {
     this.complete()
-  }
-
-  protected subscribeStreamToSelf(
-    stream: Stream<TOuterValue>
-  ): DoubleInputValueTransmitterSubscriptionTarget<TOuterValue> {
-    const target = new DoubleInputValueTransmitterSubscriptionTarget<
-      TOuterValue
-    >(this)
-
-    target.terminateDisposableWhenDisposed(stream.subscribe(target))
-    this.terminateDisposableWhenDisposed(target)
-
-    return target
   }
 }
 

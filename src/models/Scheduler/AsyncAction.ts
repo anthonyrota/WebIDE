@@ -6,7 +6,7 @@ import { AsyncScheduler } from 'src/models/Scheduler/AsyncScheduler'
 export abstract class AsyncAction extends Subscription {
   private __scheduler: AsyncScheduler
   private __scheduleDelayedDisposable: IDisposable | null | void = null
-  private __isScheduled: boolean = true
+  private __isScheduled: boolean = false
 
   constructor(scheduler: AsyncScheduler) {
     super()

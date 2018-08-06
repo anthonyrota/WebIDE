@@ -6,17 +6,14 @@ import { ISchedulerActionWithData } from 'src/models/Scheduler/Scheduler'
 export class AsyncActionWithData<T> extends AsyncAction
   implements ISchedulerActionWithData<T> {
   private __task: (data: T, action: ISchedulerActionWithData<T>) => void
-  private __data: T
+  private __data!: T
 
   constructor(
     scheduler: AsyncScheduler,
-    task: (data: T, action: ISchedulerActionWithData<T>) => void,
-    data: T
+    task: (data: T, action: ISchedulerActionWithData<T>) => void
   ) {
     super(scheduler)
     this.__task = task
-    this.__data = data
-    super.requestExecution()
   }
 
   public schedule(data: T): ISubscription {

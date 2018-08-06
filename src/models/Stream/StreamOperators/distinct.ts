@@ -3,7 +3,7 @@ import { IConnectOperator } from 'src/models/Stream/IOperator'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function distinct<T>(source: Stream<T>): IConnectOperator<T, T> {
+export function distinct<T>(): IConnectOperator<T, T> {
   return new DistinctOperator<T>()
 }
 

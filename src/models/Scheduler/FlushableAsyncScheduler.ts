@@ -31,8 +31,8 @@ export abstract class FlushableAsyncScheduler extends AsyncScheduler {
           action.disposeWithoutRemovingFromScheduler()
         }
 
-        this.__addActionsAfterFinishedExecuting()
-
+        this.__isExecutingActions = false
+        this.__actionsToAddAfterFinishedExecuting.length = 0
         throw result.error
       }
     }

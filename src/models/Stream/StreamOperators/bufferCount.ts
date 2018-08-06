@@ -25,7 +25,7 @@ class BufferCountOperator<T> implements IConnectOperator<T, T[]> {
 }
 
 class BufferCountSubscriber<T> extends ValueTransmitter<T, T[]> {
-  private buffer: T[]
+  private buffer: T[] = []
 
   constructor(target: ISubscriber<T[]>, private bufferSize: number) {
     super(target)
@@ -46,6 +46,6 @@ class BufferCountSubscriber<T> extends ValueTransmitter<T, T[]> {
     if (this.buffer.length > 0) {
       this.destination.next(this.buffer)
     }
-    super.onComplete()
+    this.destination.complete()
   }
 }
