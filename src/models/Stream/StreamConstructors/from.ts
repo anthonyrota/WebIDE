@@ -34,7 +34,7 @@ export function from<T>(
     return fromPromise(input)
   } else {
     throw new TypeError(
-      'Invalid input. The input is neither ArrayLike, a Stream, an Iterable, an ES Compatible Observable or a Promise'
+      'Invalid input. The input is neither ArrayLike, a Stream, an Iterable, an AsyncIterable, an ES Compatible Observable or a Promise'
     )
   }
 }
