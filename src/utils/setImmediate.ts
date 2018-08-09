@@ -1,5 +1,4 @@
 import { IDisposable } from 'src/models/Disposable/IDisposable'
-import { ISubscription, Subscription } from 'src/models/Disposable/Subscription'
 import { root } from 'src/utils/root'
 import {
   clearImmediatePolyfill,
@@ -28,7 +27,7 @@ class SetImmediateDisposable implements IDisposable {
   }
 }
 
-export function setImmediate(callback: () => void): ISubscription {
+export function setImmediate(callback: () => void): IDisposable {
   const id = nativeSetImmediate(callback)
-  return Subscription.fromDisposable(new SetImmediateDisposable(id))
+  return new SetImmediateDisposable(id)
 }

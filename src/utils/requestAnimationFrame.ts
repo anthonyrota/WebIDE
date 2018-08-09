@@ -1,5 +1,4 @@
 import { IDisposable } from 'src/models/Disposable/IDisposable'
-import { ISubscription, Subscription } from 'src/models/Disposable/Subscription'
 import {
   cancelAnimationFramePolyfill,
   requestAnimationFramePolyfill
@@ -28,12 +27,10 @@ const nativeCancelAnimationFrame: (id: unknown) => void =
 
 export function requestAnimationFrame(
   callback: FrameRequestCallback
-): ISubscription {
+): IDisposable {
   const animationId = nativeRequestAnimationFrame(callback)
 
-  return Subscription.fromDisposable(
-    new RequestAnimationFrameDisposable(animationId)
-  )
+  return new RequestAnimationFrameDisposable(animationId)
 }
 
 class RequestAnimationFrameDisposable implements IDisposable {
