@@ -1,5 +1,4 @@
 import { IDisposable } from 'src/models/Disposable/IDisposable'
-import { ISubscription } from 'src/models/Disposable/Subscription'
 import { AsyncAction } from 'src/models/Scheduler/AsyncAction'
 import { AsyncActionWithData } from 'src/models/Scheduler/AsyncActionWithData'
 import { AsyncActionWithoutData } from 'src/models/Scheduler/AsyncActionWithoutData'
@@ -21,21 +20,21 @@ export abstract class AsyncScheduler implements IScheduler {
 
   public schedule(
     task: (action: ISchedulerActionWithoutData) => void
-  ): ISubscription {
+  ): ISchedulerActionWithoutData {
     return new AsyncActionWithoutData(this, task).schedule()
   }
 
   public scheduleWithData<T>(
     task: (data: T, action: ISchedulerActionWithData<T>) => void,
     data: T
-  ): ISubscription {
+  ): ISchedulerActionWithData<T> {
     return new AsyncActionWithData<T>(this, task).schedule(data)
   }
 
   public scheduleDelayed(
     task: (action: ISchedulerActionWithoutData) => void,
     delay: number
-  ): ISubscription {
+  ): ISchedulerActionWithoutData {
     return new AsyncActionWithoutData(this, task).scheduleDelayed(delay)
   }
 
@@ -43,7 +42,7 @@ export abstract class AsyncScheduler implements IScheduler {
     task: (data: T, action: ISchedulerActionWithData<T>) => void,
     data: T,
     delay: number
-  ): ISubscription {
+  ): ISchedulerActionWithData<T> {
     return new AsyncActionWithData<T>(this, task).scheduleDelayed(data, delay)
   }
 

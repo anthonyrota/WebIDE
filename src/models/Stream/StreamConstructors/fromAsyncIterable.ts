@@ -6,7 +6,7 @@ export function fromAsyncIterable<T>(iterable: AsyncIterable<T>): Stream<T> {
     const iterator = iterable[$$asyncIterator]()
 
     function getNext() {
-      if (target.isDisposed) {
+      if (!target.isReceivingValues()) {
         return
       }
 

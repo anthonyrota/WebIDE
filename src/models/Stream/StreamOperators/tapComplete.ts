@@ -24,8 +24,10 @@ class TapCompleteSubscriber<T> extends MonoTypeValueTransmitter<T> {
   }
 
   protected onComplete(): void {
+    const { tapWhenComplete } = this
+
     try {
-      this.tapWhenComplete()
+      tapWhenComplete()
     } catch (error) {
       this.destination.error(error)
       return

@@ -14,6 +14,9 @@ export abstract class AsyncAction extends Subscription {
   }
 
   public executeAndRemoveFromScheduler(): void {
+    if (this.isDisposed()) {
+      return
+    }
     if (this.__scheduleDelayedDisposable) {
       this.__scheduleDelayedDisposable.dispose()
       this.__scheduleDelayedDisposable = null
@@ -40,7 +43,19 @@ export abstract class AsyncAction extends Subscription {
     this.executeAndRemoveFromScheduler()
   }
 
+  /**
+   * Performance optimization so it doesn't need to be bound every request in for
+   * example setTimeout callbacks
+   */
+  @bound
+  public boundScheduleSelf(): void {
+    this.__scheduler.scheduleAction(this)
+  }
+
   public execute(): { error: unknown } | void {
+    if (this.isDisposed()) {
+      return
+    }
     if (this.__scheduleDelayedDisposable) {
       this.__scheduleDelayedDisposable.dispose()
       this.__scheduleDelayedDisposable = null
@@ -85,6 +100,9 @@ export abstract class AsyncAction extends Subscription {
   }
 
   protected requestExecution(): void {
+    if (this.isDisposed()) {
+      return
+    }
     if (this.__scheduleDelayedDisposable) {
       this.__scheduleDelayedDisposable.dispose()
       this.__scheduleDelayedDisposable = null
@@ -96,6 +114,12 @@ export abstract class AsyncAction extends Subscription {
   }
 
   protected requestExecutionDelayed(delay: number): void {
+    if (this.isDisposed()) {
+      return
+    }
+    if (delay === 0) {
+      this.requestExecution()
+    }
     if (this.__scheduleDelayedDisposable) {
       this.__scheduleDelayedDisposable.dispose()
     }

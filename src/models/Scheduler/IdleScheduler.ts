@@ -25,7 +25,7 @@ export class IdleScheduler extends AsyncScheduler {
     action: AsyncAction,
     delay: number
   ): IDisposable {
-    return setTimeout(() => this.scheduleAction(action), delay)
+    return setTimeout(action.boundScheduleSelf, delay)
   }
 
   @bound

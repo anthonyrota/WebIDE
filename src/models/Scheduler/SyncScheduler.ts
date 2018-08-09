@@ -1,6 +1,6 @@
 import { bound } from 'src/decorators/bound'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
-import { ISubscription, Subscription } from 'src/models/Disposable/Subscription'
+import { Subscription } from 'src/models/Disposable/Subscription'
 import {
   IScheduler,
   ISchedulerActionWithData,
@@ -23,6 +23,9 @@ abstract class SyncSchedulerAction extends Subscription {
   }
 
   protected execute(): void {
+    if (this.isDisposed()) {
+      return
+    }
     if (this.__scheduleDelayedDisposable) {
       this.__scheduleDelayedDisposable.dispose()
       this.__scheduleDelayedDisposable = null
@@ -36,9 +39,14 @@ abstract class SyncSchedulerAction extends Subscription {
   }
 
   protected requestExecutionDelayed(delay: number): void {
+    if (this.isDisposed()) {
+      return
+    }
+    if (delay === 0) {
+      this.execute()
+    }
     if (this.__scheduleDelayedDisposable) {
       this.__scheduleDelayedDisposable.dispose()
-      this.__scheduleDelayedDisposable = null
     }
     this.__scheduleDelayedDisposable = setTimeout(this.__boundExecute, delay)
   }
@@ -61,7 +69,7 @@ class SyncSchedulerActionWithData<T> extends SyncSchedulerAction
     this.__task = task
   }
 
-  public schedule(data: T): ISubscription {
+  public schedule(data: T): this {
     if (this.isActive()) {
       this.__data = data
       super.execute()
@@ -69,7 +77,7 @@ class SyncSchedulerActionWithData<T> extends SyncSchedulerAction
     return this
   }
 
-  public scheduleDelayed(data: T, delay: number): ISubscription {
+  public scheduleDelayed(data: T, delay: number): this {
     if (this.isActive()) {
       this.__data = data
       super.requestExecutionDelayed(delay)
@@ -92,14 +100,14 @@ class SyncSchedulerActionWithoutData extends SyncSchedulerAction
     this.__task = task
   }
 
-  public schedule(): ISubscription {
+  public schedule(): this {
     if (this.isActive()) {
       super.execute()
     }
     return this
   }
 
-  public scheduleDelayed(delay: number): ISubscription {
+  public scheduleDelayed(delay: number): this {
     if (this.isActive()) {
       super.requestExecutionDelayed(delay)
     }
@@ -119,21 +127,21 @@ export class SyncScheduler implements IScheduler {
 
   public schedule(
     task: (action: ISchedulerActionWithoutData) => void
-  ): ISubscription {
+  ): ISchedulerActionWithoutData {
     return new SyncSchedulerActionWithoutData(task).schedule()
   }
 
   public scheduleWithData<T>(
     task: (data: T, action: ISchedulerActionWithData<T>) => void,
     data: T
-  ): ISubscription {
+  ): ISchedulerActionWithData<T> {
     return new SyncSchedulerActionWithData<T>(task).schedule(data)
   }
 
   public scheduleDelayed(
     task: (action: ISchedulerActionWithoutData) => void,
     delay: number
-  ): ISubscription {
+  ): ISchedulerActionWithoutData {
     return new SyncSchedulerActionWithoutData(task).scheduleDelayed(delay)
   }
 
@@ -141,7 +149,7 @@ export class SyncScheduler implements IScheduler {
     task: (data: T, action: ISchedulerActionWithData<T>) => void,
     data: T,
     delay: number
-  ): ISubscription {
+  ): ISchedulerActionWithData<T> {
     return new SyncSchedulerActionWithData<T>(task).scheduleDelayed(data, delay)
   }
 }

@@ -27,8 +27,10 @@ class TapErrorSubscriber<T> extends MonoTypeValueTransmitter<T> {
   }
 
   protected onError(error: unknown): void {
+    const { tapNextError } = this
+
     try {
-      this.tapNextError(error)
+      tapNextError(error)
     } catch (tapError) {
       this.destination.error(tapError)
       return

@@ -27,8 +27,10 @@ class TapValueSubscriber<T> extends MonoTypeValueTransmitter<T> {
   }
 
   protected onNextValue(value: T): void {
+    const { tapNextValue } = this
+
     try {
-      this.tapNextValue(value)
+      tapNextValue(value)
     } catch (error) {
       this.destination.error(error)
       return

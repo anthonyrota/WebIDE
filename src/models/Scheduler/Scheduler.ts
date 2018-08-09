@@ -12,18 +12,20 @@ export interface ISchedulerActionWithoutData extends ISubscription {
 
 export interface IScheduler {
   now(): number
-  schedule(task: (action: ISchedulerActionWithoutData) => void): ISubscription
+  schedule(
+    task: (action: ISchedulerActionWithoutData) => void
+  ): ISchedulerActionWithoutData
   scheduleWithData<T>(
     task: (data: T, action: ISchedulerActionWithData<T>) => void,
     data: T
-  ): ISubscription
+  ): ISchedulerActionWithData<T>
   scheduleDelayed(
     task: (action: ISchedulerActionWithoutData) => void,
     delay: number
-  ): ISubscription
+  ): ISchedulerActionWithoutData
   scheduleDelayedWithData<T>(
     task: (data: T, action: ISchedulerActionWithData<T>) => void,
     data: T,
     delay: number
-  ): ISubscription
+  ): ISchedulerActionWithData<T>
 }

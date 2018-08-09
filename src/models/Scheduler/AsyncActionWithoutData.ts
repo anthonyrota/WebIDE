@@ -1,4 +1,3 @@
-import { ISubscription } from 'src/models/Disposable/Subscription'
 import { AsyncAction } from 'src/models/Scheduler/AsyncAction'
 import { AsyncScheduler } from 'src/models/Scheduler/AsyncScheduler'
 import { ISchedulerActionWithoutData } from 'src/models/Scheduler/Scheduler'
@@ -15,14 +14,14 @@ export class AsyncActionWithoutData extends AsyncAction
     this.__task = task
   }
 
-  public schedule(): ISubscription {
+  public schedule(): this {
     if (this.isActive()) {
       super.requestExecution()
     }
     return this
   }
 
-  public scheduleDelayed(delay: number): ISubscription {
+  public scheduleDelayed(delay: number): this {
     if (this.isActive()) {
       super.requestExecutionDelayed(delay)
     }
