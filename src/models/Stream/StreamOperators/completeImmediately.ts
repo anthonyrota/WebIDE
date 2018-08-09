@@ -1,4 +1,4 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
@@ -8,7 +8,7 @@ export const completeImmediately = always<IOperator<any, never>>({
   connect(
     target: IRequiredSubscriber<never>,
     source: Stream<any>
-  ): IDisposableLike {
+  ): DisposableLike {
     target.complete()
   }
 })

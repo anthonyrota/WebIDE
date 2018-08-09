@@ -1,4 +1,4 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
@@ -19,7 +19,7 @@ class DistinctUntilChangedWithKeySelectorOperator<TValue, TKey>
   public connect(
     target: ISubscriber<TValue>,
     source: Stream<TValue>
-  ): IDisposableLike {
+  ): DisposableLike {
     return source.subscribe(
       new DistinctUntilChangedWithKeySelectorSubscriber<TValue, TKey>(
         target,

@@ -1,5 +1,5 @@
 import { AlreadyDisposedError } from 'src/models/Disposable/AlreadyDisposedError'
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { DistributedStream } from 'src/models/Stream/DistributedStream'
 import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
 
@@ -16,7 +16,7 @@ export class DistributedStreamWithLastValue<T> extends DistributedStream<T> {
     super.next(value)
   }
 
-  public trySubscribe(target: IRequiredSubscriber<T>): IDisposableLike {
+  public trySubscribe(target: IRequiredSubscriber<T>): DisposableLike {
     if (this.isDisposed()) {
       throw new AlreadyDisposedError()
     }

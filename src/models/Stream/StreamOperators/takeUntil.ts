@@ -1,4 +1,4 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
@@ -11,7 +11,7 @@ export function takeUntil<T>(notifier: Stream<any>): IOperator<T, T> {
 class TakeUntilOperator<T> implements IOperator<T, T> {
   constructor(private notifier: Stream<any>) {}
 
-  public connect(target: ISubscriber<T>, source: Stream<T>): IDisposableLike {
+  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
     const subscriber = new TakeUntilSubscriber<T>(target)
     const notifierSubscription = subscriber.subscribeStreamToSelf(this.notifier)
 

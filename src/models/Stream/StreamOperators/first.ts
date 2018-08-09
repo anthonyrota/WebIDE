@@ -1,4 +1,4 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
@@ -9,7 +9,7 @@ export function first<T>(): IOperator<T, T> {
 }
 
 class FirstOperator<T> implements IOperator<T, T> {
-  public connect(target: ISubscriber<T>, source: Stream<T>): IDisposableLike {
+  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
     return source.subscribe(new FirstSubscriber<T>(target))
   }
 }

@@ -1,4 +1,4 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
@@ -16,7 +16,7 @@ class CountWhenOperator<T> implements IOperator<T, number> {
   public connect(
     target: ISubscriber<number>,
     source: Stream<T>
-  ): IDisposableLike {
+  ): DisposableLike {
     return source.subscribe(new CountWhenSubscriber(target, this.predicate))
   }
 }

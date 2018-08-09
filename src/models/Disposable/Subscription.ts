@@ -1,5 +1,5 @@
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { isDisposable } from 'src/models/Disposable/isDisposable'
 import { freeze } from 'src/utils/freeze'
 import { indexOf } from 'src/utils/indexOf'
@@ -17,7 +17,7 @@ export interface ISubscription {
   readonly [isSubscriptionPropertyKey]: true
   terminateDisposableWhenDisposed(disposable: IDisposable): ISubscription
   terminateDisposableLikeWhenDisposed(
-    disposableLike: IDisposableLike
+    disposableLike: DisposableLike
   ): ISubscription
   onDispose(dispose: () => void): ISubscription
   removeSubscription(subscription: ISubscription): void
@@ -33,7 +33,7 @@ export const emptySubscription: ISubscription = freeze({
     return isSubscription(disposable) ? disposable : emptySubscription
   },
   terminateDisposableLikeWhenDisposed(
-    disposableLike: IDisposableLike
+    disposableLike: DisposableLike
   ): ISubscription {
     return isFunction(disposableLike)
       ? emptySubscription.onDispose(disposableLike)
@@ -112,7 +112,7 @@ export class Subscription implements ISubscription {
   }
 
   public terminateDisposableLikeWhenDisposed(
-    disposableLike: IDisposableLike
+    disposableLike: DisposableLike
   ): ISubscription {
     return isFunction(disposableLike)
       ? this.onDispose(disposableLike)

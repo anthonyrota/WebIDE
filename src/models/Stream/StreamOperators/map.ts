@@ -1,4 +1,4 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
@@ -11,7 +11,7 @@ export function map<T, U>(transform: (value: T) => U): IOperator<T, U> {
 class MapOperator<T, U> implements IOperator<T, U> {
   constructor(private transform: (value: T) => U) {}
 
-  public connect(target: ISubscriber<U>, source: Stream<T>): IDisposableLike {
+  public connect(target: ISubscriber<U>, source: Stream<T>): DisposableLike {
     return source.subscribe(new MapSubscriber<T, U>(target, this.transform))
   }
 }

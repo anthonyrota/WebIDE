@@ -1,4 +1,4 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { isDisposable } from 'src/models/Disposable/isDisposable'
 import { ISubscription } from 'src/models/Disposable/Subscription'
 import { IOperator } from 'src/models/Stream/IOperator'
@@ -107,7 +107,7 @@ export abstract class Stream<T> implements ISubscribable<T> {
       ? targetSubscriber
       : new MonoTypeValueTransmitter<T>(targetSubscriber)
 
-    let disposable: IDisposableLike
+    let disposable: DisposableLike
 
     try {
       disposable = this.trySubscribe(target)
@@ -128,7 +128,7 @@ export abstract class Stream<T> implements ISubscribable<T> {
 
   protected abstract trySubscribe(
     target: ValueTransmitter<T, unknown> | MonoTypeValueTransmitter<T>
-  ): IDisposableLike
+  ): DisposableLike
 }
 
 export class RawStream<T> extends Stream<T> {
@@ -141,7 +141,7 @@ export class RawStream<T> extends Stream<T> {
 
   protected trySubscribe(
     target: ValueTransmitter<T, unknown>
-  ): IDisposableLike {
+  ): DisposableLike {
     return this.__subscribe(target)
   }
 }
@@ -156,7 +156,7 @@ export class DuplicateStream<T> extends Stream<T> {
 
   protected trySubscribe(
     target: ValueTransmitter<T, unknown>
-  ): IDisposableLike {
+  ): DisposableLike {
     return this.__source.subscribe(target)
   }
 }
@@ -173,7 +173,7 @@ class LiftedStream<T, U> extends Stream<U> {
 
   protected trySubscribe(
     target: ValueTransmitter<U, unknown>
-  ): IDisposableLike {
+  ): DisposableLike {
     return this.__operator.connect(
       target,
       this.__source

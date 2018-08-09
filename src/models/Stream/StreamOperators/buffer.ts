@@ -1,4 +1,4 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
@@ -13,7 +13,7 @@ export function buffer<T>(
 class BufferOperator<T> implements IOperator<T, T[]> {
   constructor(private shouldFlushBufferStream: Stream<any>) {}
 
-  public connect(target: ISubscriber<T[]>, source: Stream<T>): IDisposableLike {
+  public connect(target: ISubscriber<T[]>, source: Stream<T>): DisposableLike {
     return source.subscribe(
       new BufferSubscriber<T>(target, this.shouldFlushBufferStream)
     )

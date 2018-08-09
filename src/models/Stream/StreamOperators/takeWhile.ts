@@ -1,4 +1,4 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
@@ -13,7 +13,7 @@ export function takeWhile<T>(
 class TakeWhileOperator<T> implements IOperator<T, T> {
   constructor(private predicate: (value: T, index: number) => boolean) {}
 
-  public connect(target: ISubscriber<T>, source: Stream<T>): IDisposableLike {
+  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
     return source.subscribe(new TakeWhileSubscriber<T>(target, this.predicate))
   }
 }

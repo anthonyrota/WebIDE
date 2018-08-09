@@ -1,4 +1,4 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
@@ -12,7 +12,7 @@ class PairwiseOperator<T> implements IOperator<T, [T, T]> {
   public connect(
     target: ISubscriber<[T, T]>,
     source: Stream<T>
-  ): IDisposableLike {
+  ): DisposableLike {
     return source.subscribe(new PairwiseSubscriber<T>(target))
   }
 }

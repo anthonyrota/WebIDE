@@ -1,4 +1,4 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { Stream } from 'src/models/Stream/Stream'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
@@ -10,5 +10,5 @@ export interface IOperator<
   connect(
     target: ValueTransmitter<TOutput, any>,
     source: TStream
-  ): IDisposableLike
+  ): DisposableLike
 }

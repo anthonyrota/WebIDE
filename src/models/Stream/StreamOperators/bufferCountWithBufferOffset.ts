@@ -1,4 +1,4 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
@@ -14,7 +14,7 @@ export function bufferCountWithBufferOffset<T>(
 class BufferCountWithBufferOffsetOperator<T> implements IOperator<T, T[]> {
   constructor(private bufferSize: number, private bufferOffset: number) {}
 
-  public connect(target: ISubscriber<T[]>, source: Stream<T>): IDisposableLike {
+  public connect(target: ISubscriber<T[]>, source: Stream<T>): DisposableLike {
     return source.subscribe(
       new BufferCountWithBufferOffsetSubscriber<T>(
         target,

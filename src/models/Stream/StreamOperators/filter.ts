@@ -1,4 +1,4 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
@@ -11,7 +11,7 @@ export function filter<T>(predicate: (value: T) => boolean): IOperator<T, T> {
 class FilterOperator<T> implements IOperator<T, T> {
   constructor(private predicate: (value: T) => boolean) {}
 
-  public connect(target: ISubscriber<T>, source: Stream<T>): IDisposableLike {
+  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
     return source.subscribe(new FilterSubscriber<T>(target, this.predicate))
   }
 }

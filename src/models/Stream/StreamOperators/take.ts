@@ -1,4 +1,4 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
@@ -18,7 +18,7 @@ export function take<T>(total: number): IOperator<T, T> {
 class TakeOperator<T> implements IOperator<T, T> {
   constructor(private total: number) {}
 
-  public connect(target: ISubscriber<T>, source: Stream<T>): IDisposableLike {
+  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
     return source.subscribe(new TakeSubscriber<T>(target, this.total))
   }
 }

@@ -1,4 +1,4 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { MonoTypeDoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
@@ -16,7 +16,7 @@ class CatchErrorOperator<T, U> implements IOperator<T, T | U> {
   public connect(
     target: ISubscriber<T | U>,
     source: Stream<T>
-  ): IDisposableLike {
+  ): DisposableLike {
     return source.subscribe(
       new CatchErrorSubscriber<T, U>(target, this.convertErrorToStream)
     )

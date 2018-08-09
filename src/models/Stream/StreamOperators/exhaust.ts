@@ -1,4 +1,4 @@
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
@@ -12,7 +12,7 @@ class ExhaustOperator<T> implements IOperator<Stream<T>, T> {
   public connect(
     target: ISubscriber<T>,
     source: Stream<Stream<T>>
-  ): IDisposableLike {
+  ): DisposableLike {
     return source.subscribe(new ExhaustSubscriber<T>(target))
   }
 }

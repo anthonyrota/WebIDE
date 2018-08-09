@@ -1,6 +1,6 @@
 import { AlreadyDisposedError } from 'src/models/Disposable/AlreadyDisposedError'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
-import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import {
   isSubscriptionPropertyKey,
   ISubscription,
@@ -126,7 +126,7 @@ export class DistributedStream<T> extends Stream<T>
   }
 
   public terminateDisposableLikeWhenDisposed(
-    disposableLike: IDisposableLike
+    disposableLike: DisposableLike
   ): ISubscription {
     return this.__selfSubscription.terminateDisposableLikeWhenDisposed(
       disposableLike
@@ -345,9 +345,7 @@ export class DistributedStream<T> extends Stream<T>
     this.__mutableThrownError.throwValue()
   }
 
-  protected trySubscribe(
-    target: ValueTransmitter<T, unknown>
-  ): IDisposableLike {
+  protected trySubscribe(target: ValueTransmitter<T, unknown>): DisposableLike {
     if (this.__selfSubscription.isDisposed()) {
       throw new AlreadyDisposedError()
     }
@@ -398,7 +396,7 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
   }
 
   public terminateDisposableLikeWhenDisposed(
-    disposableLike: IDisposableLike
+    disposableLike: DisposableLike
   ): ISubscription {
     return this.__selfSubscription.terminateDisposableLikeWhenDisposed(
       disposableLike
@@ -620,7 +618,7 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
 
   protected trySubscribe(
     target: ValueTransmitter<TOperatorOutput, unknown>
-  ): IDisposableLike {
+  ): DisposableLike {
     if (this.isDisposed()) {
       throw new AlreadyDisposedError()
     }
