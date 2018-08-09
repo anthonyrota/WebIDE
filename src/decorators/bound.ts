@@ -13,7 +13,7 @@ export function bound<T extends Function>(
 
   return {
     configurable: true,
-    get(this: T): T {
+    get(this: typeof target): T {
       const bound: T = value.bind(this)
       Object.defineProperty(this, propertyKey, {
         configurable: true,
@@ -24,5 +24,3 @@ export function bound<T extends Function>(
     }
   }
 }
-
-export default bound
