@@ -1,18 +1,18 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { IConnectOperator } from 'src/models/Stream/IOperator'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function throwIfEmpty<T>(error: any): IConnectOperator<T, T> {
+export function throwIfEmpty<T>(error: any): IOperator<T, T> {
   return new ThrowIfEmptyOperator<T>(error)
 }
 
-class ThrowIfEmptyOperator<T> implements IConnectOperator<T, T> {
+class ThrowIfEmptyOperator<T> implements IOperator<T, T> {
   constructor(private error: any) {}
 
   public connect(
-    target: MonoTypeValueTransmitter<T>,
+    target: ISubscriber<T>,
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(new ThrowIfEmptySubscriber<T>(target, this.error))

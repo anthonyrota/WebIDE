@@ -62,6 +62,14 @@ export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
     )
   }
 
+  public terminateDisposableLikeWhenStopsReceivingValues(
+    disposableLike: IDisposable
+  ): ISubscription {
+    return this.__onStopReceivingValuesSubscription.terminateDisposableLikeWhenDisposed(
+      disposableLike
+    )
+  }
+
   public onStopReceivingValues(dispose: () => void): ISubscription {
     return this.__onStopReceivingValuesSubscription.onDispose(dispose)
   }
@@ -95,12 +103,10 @@ export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
 
   protected onError(error: any): void {
     this.destination.error(error)
-    this.dispose()
   }
 
   protected onComplete(): void {
     this.destination.complete()
-    this.dispose()
   }
 }
 

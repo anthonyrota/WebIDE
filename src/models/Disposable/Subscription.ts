@@ -1,6 +1,9 @@
 import { IDisposable } from 'src/models/Disposable/IDisposable'
+import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
+import { isDisposable } from 'src/models/Disposable/isDisposable'
 import { freeze } from 'src/utils/freeze'
 import { indexOf } from 'src/utils/indexOf'
+import { isFunction } from 'src/utils/isFunction'
 import { removeOnce } from 'src/utils/removeOnce'
 
 export const isSubscriptionPropertyKey =
@@ -13,6 +16,9 @@ export function isSubscription(candidate: any): candidate is ISubscription {
 export interface ISubscription {
   readonly [isSubscriptionPropertyKey]: true
   terminateDisposableWhenDisposed(disposable: IDisposable): ISubscription
+  terminateDisposableLikeWhenDisposed(
+    disposableLike: IDisposableLike
+  ): ISubscription
   onDispose(dispose: () => void): ISubscription
   removeSubscription(subscription: ISubscription): void
   dispose(): void
@@ -25,6 +31,15 @@ export const emptySubscription: ISubscription = freeze({
   terminateDisposableWhenDisposed(disposable: IDisposable): ISubscription {
     disposable.dispose()
     return isSubscription(disposable) ? disposable : emptySubscription
+  },
+  terminateDisposableLikeWhenDisposed(
+    disposableLike: IDisposableLike
+  ): ISubscription {
+    return isFunction(disposableLike)
+      ? emptySubscription.onDispose(disposableLike)
+      : isDisposable(disposableLike)
+        ? emptySubscription.terminateDisposableWhenDisposed(disposableLike)
+        : emptySubscription
   },
   onDispose(dispose: () => void): ISubscription {
     dispose()
@@ -94,6 +109,16 @@ export class Subscription implements ISubscription {
     this.__childDisposables.push(subscription)
 
     return subscription
+  }
+
+  public terminateDisposableLikeWhenDisposed(
+    disposableLike: IDisposableLike
+  ): ISubscription {
+    return isFunction(disposableLike)
+      ? this.onDispose(disposableLike)
+      : isDisposable(disposableLike)
+        ? this.terminateDisposableWhenDisposed(disposableLike)
+        : emptySubscription
   }
 
   public onDispose(dispose: () => void): ISubscription {

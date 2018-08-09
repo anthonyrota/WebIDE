@@ -1,27 +1,20 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { IConnectOperator } from 'src/models/Stream/IOperator'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import {
-  MonoTypeValueTransmitter,
-  ValueTransmitter
-} from 'src/models/Stream/ValueTransmitter'
+import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function bufferCountWithBufferOffset<T>(
   bufferSize: number,
   bufferOffset: number
-): IConnectOperator<T, T[]> {
+): IOperator<T, T[]> {
   return new BufferCountWithBufferOffsetOperator<T>(bufferSize, bufferOffset)
 }
 
-class BufferCountWithBufferOffsetOperator<T>
-  implements IConnectOperator<T, T[]> {
+class BufferCountWithBufferOffsetOperator<T> implements IOperator<T, T[]> {
   constructor(private bufferSize: number, private bufferOffset: number) {}
 
-  public connect(
-    target: MonoTypeValueTransmitter<T[]>,
-    source: Stream<T>
-  ): IDisposableLike {
+  public connect(target: ISubscriber<T[]>, source: Stream<T>): IDisposableLike {
     return source.subscribe(
       new BufferCountWithBufferOffsetSubscriber<T>(
         target,

@@ -3,30 +3,100 @@ import { IDisposable } from 'src/models/Disposable/IDisposable'
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import {
   isSubscriptionPropertyKey,
-  ISubscription
+  ISubscription,
+  Subscription
 } from 'src/models/Disposable/Subscription'
 import {
   ImmutableMutableMaybeView,
   MutableMaybe
 } from 'src/models/Maybe/MutableMaybe'
-import {
-  IConnectOperator,
-  isConnectOperator,
-  ITransformOperator
-} from 'src/models/Stream/IOperator'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
 import { DuplicateStream, Stream } from 'src/models/Stream/Stream'
-import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
+import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { removeOnce } from 'src/utils/removeOnce'
 
 export interface IDistributedStream<TInput, TOutput>
   extends Stream<TOutput>,
     ISubscription,
     IRequiredSubscriber<TInput> {
-  lift<U>(connectOperator: IConnectOperator<TOutput, U>): Stream<U>
-  lift<U, TStreamOutput extends Stream<U>>(
-    transformOperator: ITransformOperator<TOutput, U, TStreamOutput>
-  ): TStreamOutput
+  lift<U>(operator: IOperator<TOutput, U>): IDistributedStream<TInput, U>
+  liftAll(): IDistributedStream<TInput, TOutput>
+  liftAll<A>(
+    op1: IOperator<TOutput, A, IDistributedStream<TInput, TOutput>>
+  ): IDistributedStream<TInput, A>
+  liftAll<A, B>(
+    op1: IOperator<TOutput, A, IDistributedStream<TInput, TOutput>>,
+    op2: IOperator<A, B, IDistributedStream<TInput, A>>
+  ): IDistributedStream<TInput, B>
+  liftAll<A, B, C>(
+    op1: IOperator<TOutput, A, IDistributedStream<TInput, TOutput>>,
+    op2: IOperator<A, B, IDistributedStream<TInput, A>>,
+    op3: IOperator<B, C, IDistributedStream<TInput, B>>
+  ): IDistributedStream<TInput, C>
+  liftAll<A, B, C, D>(
+    op1: IOperator<TOutput, A, IDistributedStream<TInput, TOutput>>,
+    op2: IOperator<A, B, IDistributedStream<TInput, A>>,
+    op3: IOperator<B, C, IDistributedStream<TInput, B>>,
+    op4: IOperator<C, D, IDistributedStream<TInput, C>>
+  ): IDistributedStream<TInput, D>
+  liftAll<A, B, C, D, E>(
+    op1: IOperator<TOutput, A, IDistributedStream<TInput, TOutput>>,
+    op2: IOperator<A, B, IDistributedStream<TInput, A>>,
+    op3: IOperator<B, C, IDistributedStream<TInput, B>>,
+    op4: IOperator<C, D, IDistributedStream<TInput, C>>,
+    op5: IOperator<D, E, IDistributedStream<TInput, D>>
+  ): IDistributedStream<TInput, E>
+  liftAll<A, B, C, D, E, F>(
+    op1: IOperator<TOutput, A, IDistributedStream<TInput, TOutput>>,
+    op2: IOperator<A, B, IDistributedStream<TInput, A>>,
+    op3: IOperator<B, C, IDistributedStream<TInput, B>>,
+    op4: IOperator<C, D, IDistributedStream<TInput, C>>,
+    op5: IOperator<D, E, IDistributedStream<TInput, D>>,
+    op6: IOperator<E, F, IDistributedStream<TInput, E>>
+  ): IDistributedStream<TInput, F>
+  liftAll<A, B, C, D, E, F, G>(
+    op1: IOperator<TOutput, A, IDistributedStream<TInput, TOutput>>,
+    op2: IOperator<A, B, IDistributedStream<TInput, A>>,
+    op3: IOperator<B, C, IDistributedStream<TInput, B>>,
+    op4: IOperator<C, D, IDistributedStream<TInput, C>>,
+    op5: IOperator<D, E, IDistributedStream<TInput, D>>,
+    op6: IOperator<E, F, IDistributedStream<TInput, E>>,
+    op7: IOperator<F, G, IDistributedStream<TInput, F>>
+  ): IDistributedStream<TInput, G>
+  liftAll<A, B, C, D, E, F, G, H>(
+    op1: IOperator<TOutput, A, IDistributedStream<TInput, TOutput>>,
+    op2: IOperator<A, B, IDistributedStream<TInput, A>>,
+    op3: IOperator<B, C, IDistributedStream<TInput, B>>,
+    op4: IOperator<C, D, IDistributedStream<TInput, C>>,
+    op5: IOperator<D, E, IDistributedStream<TInput, D>>,
+    op6: IOperator<E, F, IDistributedStream<TInput, E>>,
+    op7: IOperator<F, G, IDistributedStream<TInput, F>>,
+    op8: IOperator<G, H, IDistributedStream<TInput, G>>
+  ): IDistributedStream<TInput, H>
+  liftAll<A, B, C, D, E, F, G, H, I>(
+    op1: IOperator<TOutput, A, IDistributedStream<TInput, TOutput>>,
+    op2: IOperator<A, B, IDistributedStream<TInput, A>>,
+    op3: IOperator<B, C, IDistributedStream<TInput, B>>,
+    op4: IOperator<C, D, IDistributedStream<TInput, C>>,
+    op5: IOperator<D, E, IDistributedStream<TInput, D>>,
+    op6: IOperator<E, F, IDistributedStream<TInput, E>>,
+    op7: IOperator<F, G, IDistributedStream<TInput, F>>,
+    op8: IOperator<G, H, IDistributedStream<TInput, G>>,
+    op9: IOperator<H, I, IDistributedStream<TInput, H>>
+  ): IDistributedStream<TInput, I>
+  liftAll<A, B, C, D, E, F, G, H, I>(
+    op1: IOperator<TOutput, A, IDistributedStream<TInput, TOutput>>,
+    op2: IOperator<A, B, IDistributedStream<TInput, A>>,
+    op3: IOperator<B, C, IDistributedStream<TInput, B>>,
+    op4: IOperator<C, D, IDistributedStream<TInput, C>>,
+    op5: IOperator<D, E, IDistributedStream<TInput, D>>,
+    op6: IOperator<E, F, IDistributedStream<TInput, E>>,
+    op7: IOperator<F, G, IDistributedStream<TInput, F>>,
+    op8: IOperator<G, H, IDistributedStream<TInput, G>>,
+    op9: IOperator<H, I, IDistributedStream<TInput, H>>,
+    ...operators: Array<IOperator<any, any, IDistributedStream<any, any>>>
+  ): IDistributedStream<TInput, any>
   isCompleted(): boolean
   asStream(): Stream<TOutput>
 }
@@ -36,13 +106,9 @@ export class DistributedStream<T> extends Stream<T>
   public readonly [isSubscriptionPropertyKey] = true
 
   private __mutableThrownError: MutableMaybe<any> = MutableMaybe.none<any>()
-  private __targets: Array<MonoTypeValueTransmitter<T>>
+  private __targets: Array<IRequiredSubscriber<T>> = []
   private __isCompleted: boolean = false
-  private __selfSubscription: ISubscription
-
-  public onDispose(dispose: () => void): ISubscription {
-    return this.__selfSubscription.onDispose(dispose)
-  }
+  private __selfSubscription: ISubscription = new Subscription()
 
   public terminateDisposableWhenDisposed(
     disposable: IDisposable
@@ -50,24 +116,112 @@ export class DistributedStream<T> extends Stream<T>
     return this.__selfSubscription.terminateDisposableWhenDisposed(disposable)
   }
 
+  public terminateDisposableLikeWhenDisposed(
+    disposableLike: IDisposableLike
+  ): ISubscription {
+    return this.__selfSubscription.terminateDisposableLikeWhenDisposed(
+      disposableLike
+    )
+  }
+
+  public onDispose(dispose: () => void): ISubscription {
+    return this.__selfSubscription.onDispose(dispose)
+  }
+
   public removeSubscription(subscription: ISubscription): void {
     this.__selfSubscription.removeSubscription(subscription)
   }
 
-  public lift<U>(
-    connectOperator: IConnectOperator<T, U>
-  ): IDistributedStream<T, U>
-  public lift<U, TStreamOutput extends Stream<U>>(
-    transformOperator: ITransformOperator<T, U, TStreamOutput>
-  ): TStreamOutput
-  public lift<U, TStreamOutput extends Stream<U>>(
-    transformOrConnectOperator:
-      | IConnectOperator<T, U>
-      | ITransformOperator<T, U, TStreamOutput>
-  ): IDistributedStream<T, U> | TStreamOutput {
-    return isConnectOperator(transformOrConnectOperator)
-      ? new LiftedDistributedStream<T, T, U>(this, transformOrConnectOperator)
-      : transformOrConnectOperator.transform(this)
+  public lift<U>(operator: IOperator<T, U>): IDistributedStream<T, U> {
+    return new LiftedDistributedStream<T, T, U>(this, operator)
+  }
+
+  public liftAll(): IDistributedStream<T, T>
+  public liftAll<A>(
+    op1: IOperator<T, A, IDistributedStream<T, T>>
+  ): IDistributedStream<T, A>
+  public liftAll<A, B>(
+    op1: IOperator<T, A, IDistributedStream<T, T>>,
+    op2: IOperator<A, B, IDistributedStream<T, A>>
+  ): IDistributedStream<T, B>
+  public liftAll<A, B, C>(
+    op1: IOperator<T, A, IDistributedStream<T, T>>,
+    op2: IOperator<A, B, IDistributedStream<T, A>>,
+    op3: IOperator<B, C, IDistributedStream<T, B>>
+  ): IDistributedStream<T, C>
+  public liftAll<A, B, C, D>(
+    op1: IOperator<T, A, IDistributedStream<T, T>>,
+    op2: IOperator<A, B, IDistributedStream<T, A>>,
+    op3: IOperator<B, C, IDistributedStream<T, B>>,
+    op4: IOperator<C, D, IDistributedStream<T, C>>
+  ): IDistributedStream<T, D>
+  public liftAll<A, B, C, D, E>(
+    op1: IOperator<T, A, IDistributedStream<T, T>>,
+    op2: IOperator<A, B, IDistributedStream<T, A>>,
+    op3: IOperator<B, C, IDistributedStream<T, B>>,
+    op4: IOperator<C, D, IDistributedStream<T, C>>,
+    op5: IOperator<D, E, IDistributedStream<T, D>>
+  ): IDistributedStream<T, E>
+  public liftAll<A, B, C, D, E, F>(
+    op1: IOperator<T, A, IDistributedStream<T, T>>,
+    op2: IOperator<A, B, IDistributedStream<T, A>>,
+    op3: IOperator<B, C, IDistributedStream<T, B>>,
+    op4: IOperator<C, D, IDistributedStream<T, C>>,
+    op5: IOperator<D, E, IDistributedStream<T, D>>,
+    op6: IOperator<E, F, IDistributedStream<T, E>>
+  ): IDistributedStream<T, F>
+  public liftAll<A, B, C, D, E, F, G>(
+    op1: IOperator<T, A, IDistributedStream<T, T>>,
+    op2: IOperator<A, B, IDistributedStream<T, A>>,
+    op3: IOperator<B, C, IDistributedStream<T, B>>,
+    op4: IOperator<C, D, IDistributedStream<T, C>>,
+    op5: IOperator<D, E, IDistributedStream<T, D>>,
+    op6: IOperator<E, F, IDistributedStream<T, E>>,
+    op7: IOperator<F, G, IDistributedStream<T, F>>
+  ): IDistributedStream<T, G>
+  public liftAll<A, B, C, D, E, F, G, H>(
+    op1: IOperator<T, A, IDistributedStream<T, T>>,
+    op2: IOperator<A, B, IDistributedStream<T, A>>,
+    op3: IOperator<B, C, IDistributedStream<T, B>>,
+    op4: IOperator<C, D, IDistributedStream<T, C>>,
+    op5: IOperator<D, E, IDistributedStream<T, D>>,
+    op6: IOperator<E, F, IDistributedStream<T, E>>,
+    op7: IOperator<F, G, IDistributedStream<T, F>>,
+    op8: IOperator<G, H, IDistributedStream<T, G>>
+  ): IDistributedStream<T, H>
+  public liftAll<A, B, C, D, E, F, G, H, I>(
+    op1: IOperator<T, A, IDistributedStream<T, T>>,
+    op2: IOperator<A, B, IDistributedStream<T, A>>,
+    op3: IOperator<B, C, IDistributedStream<T, B>>,
+    op4: IOperator<C, D, IDistributedStream<T, C>>,
+    op5: IOperator<D, E, IDistributedStream<T, D>>,
+    op6: IOperator<E, F, IDistributedStream<T, E>>,
+    op7: IOperator<F, G, IDistributedStream<T, F>>,
+    op8: IOperator<G, H, IDistributedStream<T, G>>,
+    op9: IOperator<H, I, IDistributedStream<T, H>>
+  ): IDistributedStream<T, I>
+  public liftAll<A, B, C, D, E, F, G, H, I>(
+    op1: IOperator<T, A, IDistributedStream<T, T>>,
+    op2: IOperator<A, B, IDistributedStream<T, A>>,
+    op3: IOperator<B, C, IDistributedStream<T, B>>,
+    op4: IOperator<C, D, IDistributedStream<T, C>>,
+    op5: IOperator<D, E, IDistributedStream<T, D>>,
+    op6: IOperator<E, F, IDistributedStream<T, E>>,
+    op7: IOperator<F, G, IDistributedStream<T, F>>,
+    op8: IOperator<G, H, IDistributedStream<T, G>>,
+    op9: IOperator<H, I, IDistributedStream<T, H>>,
+    ...operators: Array<IOperator<any, any, IDistributedStream<any, any>>>
+  ): IDistributedStream<T, any>
+  public liftAll(
+    ...operators: Array<IOperator<any, any>>
+  ): IDistributedStream<T, any> {
+    let resultStream: IDistributedStream<T, any> = this
+
+    for (let i = 0; i < operators.length; i++) {
+      resultStream = resultStream.lift(operators[i])
+    }
+
+    return resultStream
   }
 
   public next(value: T): void {
@@ -151,7 +305,7 @@ export class DistributedStream<T> extends Stream<T>
     this.__mutableThrownError.throwValue()
   }
 
-  protected trySubscribe(target: MonoTypeValueTransmitter<T>): IDisposableLike {
+  protected trySubscribe(target: ValueTransmitter<T, any>): IDisposableLike {
     if (this.__selfSubscription.isDisposed()) {
       throw new AlreadyDisposedError()
     }
@@ -165,7 +319,7 @@ export class DistributedStream<T> extends Stream<T>
     }
   }
 
-  protected pushTarget(target: MonoTypeValueTransmitter<T>): IDisposable {
+  protected pushTarget(target: IRequiredSubscriber<T>): IDisposable {
     this.__targets.push(target)
 
     return new RawDistributedStreamSubscriptionDisposable(
@@ -182,20 +336,16 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
   public readonly [isSubscriptionPropertyKey] = true
 
   private __source: IDistributedStream<TStreamInput, TOperatorInput>
-  private __operator: IConnectOperator<TOperatorInput, TOperatorOutput>
-  private __selfSubscription: ISubscription
+  private __operator: IOperator<TOperatorInput, TOperatorOutput>
+  private __selfSubscription: ISubscription = new Subscription()
 
   constructor(
     source: IDistributedStream<TStreamInput, TOperatorInput>,
-    operator: IConnectOperator<TOperatorInput, TOperatorOutput>
+    operator: IOperator<TOperatorInput, TOperatorOutput>
   ) {
     super()
     this.__source = source
     this.__operator = operator
-  }
-
-  public onDispose(dispose: () => void): ISubscription {
-    return this.__selfSubscription.onDispose(dispose)
   }
 
   public terminateDisposableWhenDisposed(
@@ -204,31 +354,157 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
     return this.__selfSubscription.terminateDisposableWhenDisposed(disposable)
   }
 
+  public terminateDisposableLikeWhenDisposed(
+    disposableLike: IDisposableLike
+  ): ISubscription {
+    return this.__selfSubscription.terminateDisposableLikeWhenDisposed(
+      disposableLike
+    )
+  }
+
+  public onDispose(dispose: () => void): ISubscription {
+    return this.__selfSubscription.onDispose(dispose)
+  }
+
   public removeSubscription(subscription: ISubscription): void {
     this.__selfSubscription.removeSubscription(subscription)
   }
 
   public lift<U>(
-    connectOperator: IConnectOperator<TOperatorOutput, U>
-  ): IDistributedStream<TStreamInput, U>
-  public lift<U, TNewOperatorOutput extends Stream<U>>(
-    transformOperator: ITransformOperator<
+    operator: IOperator<TOperatorOutput, U>
+  ): IDistributedStream<TStreamInput, U> {
+    return new LiftedDistributedStream<TStreamInput, TOperatorOutput, U>(
+      this,
+      operator
+    )
+  }
+
+  public liftAll(): IDistributedStream<TStreamInput, TOperatorOutput>
+  public liftAll<A>(
+    op1: IOperator<
       TOperatorOutput,
-      U,
-      TNewOperatorOutput
+      A,
+      IDistributedStream<TStreamInput, TOperatorOutput>
     >
-  ): TNewOperatorOutput
-  public lift<U, TNewOperatorOutput extends Stream<U>>(
-    transformOrConnectOperator:
-      | IConnectOperator<TOperatorOutput, U>
-      | ITransformOperator<TOperatorOutput, U, TNewOperatorOutput>
-  ): IDistributedStream<TStreamInput, U> | TNewOperatorOutput {
-    return isConnectOperator(transformOrConnectOperator)
-      ? new LiftedDistributedStream<TStreamInput, TOperatorOutput, U>(
-          this,
-          transformOrConnectOperator
-        )
-      : transformOrConnectOperator.transform(this)
+  ): IDistributedStream<TStreamInput, A>
+  public liftAll<A, B>(
+    op1: IOperator<
+      TOperatorOutput,
+      A,
+      IDistributedStream<TStreamInput, TOperatorOutput>
+    >,
+    op2: IOperator<A, B, IDistributedStream<TStreamInput, A>>
+  ): IDistributedStream<TStreamInput, B>
+  public liftAll<A, B, C>(
+    op1: IOperator<
+      TOperatorOutput,
+      A,
+      IDistributedStream<TStreamInput, TOperatorOutput>
+    >,
+    op2: IOperator<A, B, IDistributedStream<TStreamInput, A>>,
+    op3: IOperator<B, C, IDistributedStream<TStreamInput, B>>
+  ): IDistributedStream<TStreamInput, C>
+  public liftAll<A, B, C, D>(
+    op1: IOperator<
+      TOperatorOutput,
+      A,
+      IDistributedStream<TStreamInput, TOperatorOutput>
+    >,
+    op2: IOperator<A, B, IDistributedStream<TStreamInput, A>>,
+    op3: IOperator<B, C, IDistributedStream<TStreamInput, B>>,
+    op4: IOperator<C, D, IDistributedStream<TStreamInput, C>>
+  ): IDistributedStream<TStreamInput, D>
+  public liftAll<A, B, C, D, E>(
+    op1: IOperator<
+      TOperatorOutput,
+      A,
+      IDistributedStream<TStreamInput, TOperatorOutput>
+    >,
+    op2: IOperator<A, B, IDistributedStream<TStreamInput, A>>,
+    op3: IOperator<B, C, IDistributedStream<TStreamInput, B>>,
+    op4: IOperator<C, D, IDistributedStream<TStreamInput, C>>,
+    op5: IOperator<D, E, IDistributedStream<TStreamInput, D>>
+  ): IDistributedStream<TStreamInput, E>
+  public liftAll<A, B, C, D, E, F>(
+    op1: IOperator<
+      TOperatorOutput,
+      A,
+      IDistributedStream<TStreamInput, TOperatorOutput>
+    >,
+    op2: IOperator<A, B, IDistributedStream<TStreamInput, A>>,
+    op3: IOperator<B, C, IDistributedStream<TStreamInput, B>>,
+    op4: IOperator<C, D, IDistributedStream<TStreamInput, C>>,
+    op5: IOperator<D, E, IDistributedStream<TStreamInput, D>>,
+    op6: IOperator<E, F, IDistributedStream<TStreamInput, E>>
+  ): IDistributedStream<TStreamInput, F>
+  public liftAll<A, B, C, D, E, F, G>(
+    op1: IOperator<
+      TOperatorOutput,
+      A,
+      IDistributedStream<TStreamInput, TOperatorOutput>
+    >,
+    op2: IOperator<A, B, IDistributedStream<TStreamInput, A>>,
+    op3: IOperator<B, C, IDistributedStream<TStreamInput, B>>,
+    op4: IOperator<C, D, IDistributedStream<TStreamInput, C>>,
+    op5: IOperator<D, E, IDistributedStream<TStreamInput, D>>,
+    op6: IOperator<E, F, IDistributedStream<TStreamInput, E>>,
+    op7: IOperator<F, G, IDistributedStream<TStreamInput, F>>
+  ): IDistributedStream<TStreamInput, G>
+  public liftAll<A, B, C, D, E, F, G, H>(
+    op1: IOperator<
+      TOperatorOutput,
+      A,
+      IDistributedStream<TStreamInput, TOperatorOutput>
+    >,
+    op2: IOperator<A, B, IDistributedStream<TStreamInput, A>>,
+    op3: IOperator<B, C, IDistributedStream<TStreamInput, B>>,
+    op4: IOperator<C, D, IDistributedStream<TStreamInput, C>>,
+    op5: IOperator<D, E, IDistributedStream<TStreamInput, D>>,
+    op6: IOperator<E, F, IDistributedStream<TStreamInput, E>>,
+    op7: IOperator<F, G, IDistributedStream<TStreamInput, F>>,
+    op8: IOperator<G, H, IDistributedStream<TStreamInput, G>>
+  ): IDistributedStream<TStreamInput, H>
+  public liftAll<A, B, C, D, E, F, G, H, I>(
+    op1: IOperator<
+      TOperatorOutput,
+      A,
+      IDistributedStream<TStreamInput, TOperatorOutput>
+    >,
+    op2: IOperator<A, B, IDistributedStream<TStreamInput, A>>,
+    op3: IOperator<B, C, IDistributedStream<TStreamInput, B>>,
+    op4: IOperator<C, D, IDistributedStream<TStreamInput, C>>,
+    op5: IOperator<D, E, IDistributedStream<TStreamInput, D>>,
+    op6: IOperator<E, F, IDistributedStream<TStreamInput, E>>,
+    op7: IOperator<F, G, IDistributedStream<TStreamInput, F>>,
+    op8: IOperator<G, H, IDistributedStream<TStreamInput, G>>,
+    op9: IOperator<H, I, IDistributedStream<TStreamInput, H>>
+  ): IDistributedStream<TStreamInput, I>
+  public liftAll<A, B, C, D, E, F, G, H, I>(
+    op1: IOperator<
+      TOperatorOutput,
+      A,
+      IDistributedStream<TStreamInput, TOperatorOutput>
+    >,
+    op2: IOperator<A, B, IDistributedStream<TStreamInput, A>>,
+    op3: IOperator<B, C, IDistributedStream<TStreamInput, B>>,
+    op4: IOperator<C, D, IDistributedStream<TStreamInput, C>>,
+    op5: IOperator<D, E, IDistributedStream<TStreamInput, D>>,
+    op6: IOperator<E, F, IDistributedStream<TStreamInput, E>>,
+    op7: IOperator<F, G, IDistributedStream<TStreamInput, F>>,
+    op8: IOperator<G, H, IDistributedStream<TStreamInput, G>>,
+    op9: IOperator<H, I, IDistributedStream<TStreamInput, H>>,
+    ...operators: Array<IOperator<any, any, IDistributedStream<any, any>>>
+  ): IDistributedStream<TStreamInput, any>
+  public liftAll(
+    ...operators: Array<IOperator<any, any>>
+  ): IDistributedStream<TStreamInput, any> {
+    let resultStream: IDistributedStream<TStreamInput, any> = this
+
+    for (let i = 0; i < operators.length; i++) {
+      resultStream = resultStream.lift(operators[i])
+    }
+
+    return resultStream
   }
 
   public next(value: TStreamInput): void {
@@ -276,7 +552,7 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
   }
 
   protected trySubscribe(
-    target: MonoTypeValueTransmitter<TOperatorOutput>
+    target: ValueTransmitter<TOperatorOutput, any>
   ): IDisposableLike {
     if (this.__selfSubscription.isDisposed() || this.__source.isDisposed()) {
       throw new AlreadyDisposedError()
@@ -292,8 +568,8 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
 class RawDistributedStreamSubscriptionDisposable<T> implements IDisposable {
   constructor(
     private distributiveStream: DistributedStream<T>,
-    private distributiveStreamTargets: Array<MonoTypeValueTransmitter<T>>,
-    private target: MonoTypeValueTransmitter<T>
+    private distributiveStreamTargets: Array<IRequiredSubscriber<T>>,
+    private target: IRequiredSubscriber<T>
   ) {}
 
   public dispose() {

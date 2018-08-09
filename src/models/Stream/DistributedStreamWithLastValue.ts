@@ -1,7 +1,7 @@
 import { AlreadyDisposedError } from 'src/models/Disposable/AlreadyDisposedError'
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { DistributedStream } from 'src/models/Stream/DistributedStream'
-import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
+import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
 
 export class DistributedStreamWithLastValue<T> extends DistributedStream<T> {
   private __value: T
@@ -16,7 +16,7 @@ export class DistributedStreamWithLastValue<T> extends DistributedStream<T> {
     super.next(value)
   }
 
-  public trySubscribe(target: MonoTypeValueTransmitter<T>): IDisposableLike {
+  public trySubscribe(target: IRequiredSubscriber<T>): IDisposableLike {
     if (this.isDisposed()) {
       throw new AlreadyDisposedError()
     }

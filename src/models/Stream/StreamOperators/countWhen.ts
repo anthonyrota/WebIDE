@@ -1,23 +1,20 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { IConnectOperator } from 'src/models/Stream/IOperator'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import {
-  MonoTypeValueTransmitter,
-  ValueTransmitter
-} from 'src/models/Stream/ValueTransmitter'
+import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function countWhen<T>(
   predicate: (value: T, index: number) => boolean
-): IConnectOperator<T, number> {
+): IOperator<T, number> {
   return new CountWhenOperator(predicate)
 }
 
-class CountWhenOperator<T> implements IConnectOperator<T, number> {
+class CountWhenOperator<T> implements IOperator<T, number> {
   constructor(private predicate: (value: T, index: number) => boolean) {}
 
   public connect(
-    target: MonoTypeValueTransmitter<number>,
+    target: ISubscriber<number>,
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(new CountWhenSubscriber(target, this.predicate))

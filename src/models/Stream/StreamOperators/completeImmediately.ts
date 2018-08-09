@@ -1,12 +1,12 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { IConnectOperator } from 'src/models/Stream/IOperator'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { Stream } from 'src/models/Stream/Stream'
-import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { always } from 'src/utils/always'
+import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
 
-export const completeImmediately = always<IConnectOperator<any, never>>({
+export const completeImmediately = always<IOperator<any, never>>({
   connect(
-    target: MonoTypeValueTransmitter<never>,
+    target: IRequiredSubscriber<never>,
     source: Stream<any>
   ): IDisposableLike {
     target.complete()

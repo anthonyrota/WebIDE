@@ -1,18 +1,16 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { IConnectOperator } from 'src/models/Stream/IOperator'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { Stream } from 'src/models/Stream/Stream'
-import {
-  MonoTypeValueTransmitter,
-  ValueTransmitter
-} from 'src/models/Stream/ValueTransmitter'
+import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
+import { ISubscriber } from 'src/models/Stream/ISubscriber'
 
-export function pairwise<T>(source: Stream<T>): IConnectOperator<T, [T, T]> {
+export function pairwise<T>(source: Stream<T>): IOperator<T, [T, T]> {
   return new PairwiseOperator<T>()
 }
 
-class PairwiseOperator<T> implements IConnectOperator<T, [T, T]> {
+class PairwiseOperator<T> implements IOperator<T, [T, T]> {
   public connect(
-    target: MonoTypeValueTransmitter<[T, T]>,
+    target: ISubscriber<[T, T]>,
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(new PairwiseSubscriber<T>(target))

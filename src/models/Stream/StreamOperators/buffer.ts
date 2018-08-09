@@ -1,23 +1,19 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IConnectOperator } from 'src/models/Stream/IOperator'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function buffer<T>(
   shouldFlushBufferStream: Stream<any>
-): IConnectOperator<T, T[]> {
+): IOperator<T, T[]> {
   return new BufferOperator<T>(shouldFlushBufferStream)
 }
 
-class BufferOperator<T> implements IConnectOperator<T, T[]> {
+class BufferOperator<T> implements IOperator<T, T[]> {
   constructor(private shouldFlushBufferStream: Stream<any>) {}
 
-  public connect(
-    target: MonoTypeValueTransmitter<T[]>,
-    source: Stream<T>
-  ): IDisposableLike {
+  public connect(target: ISubscriber<T[]>, source: Stream<T>): IDisposableLike {
     return source.subscribe(
       new BufferSubscriber<T>(target, this.shouldFlushBufferStream)
     )

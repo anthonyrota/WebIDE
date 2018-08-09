@@ -1,16 +1,16 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IConnectOperator } from 'src/models/Stream/IOperator'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { Stream } from 'src/models/Stream/Stream'
-import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
+import { ISubscriber } from 'src/models/Stream/ISubscriber'
 
-export function exhaust<T>(): IConnectOperator<Stream<T>, T> {
+export function exhaust<T>(): IOperator<Stream<T>, T> {
   return new ExhaustOperator<T>()
 }
 
-class ExhaustOperator<T> implements IConnectOperator<Stream<T>, T> {
+class ExhaustOperator<T> implements IOperator<Stream<T>, T> {
   public connect(
-    target: MonoTypeValueTransmitter<T>,
+    target: ISubscriber<T>,
     source: Stream<Stream<T>>
   ): IDisposableLike {
     return source.subscribe(new ExhaustSubscriber<T>(target))

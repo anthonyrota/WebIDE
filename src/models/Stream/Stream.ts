@@ -1,15 +1,11 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { isDisposable } from 'src/models/Disposable/isDisposable'
 import { ISubscription } from 'src/models/Disposable/Subscription'
-import {
-  IConnectOperator,
-  isConnectOperator,
-  ITransformOperator
-} from 'src/models/Stream/IOperator'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscribable, ISubscriber } from 'src/models/Stream/ISubscriber'
 import {
   isValueTransmitter,
-  MonoTypeValueTransmitter
+  ValueTransmitter
 } from 'src/models/Stream/ValueTransmitter'
 import { isFunction } from 'src/utils/isFunction'
 
@@ -18,26 +14,97 @@ export function isStream(value: any): value is Stream<any> {
 }
 
 export abstract class Stream<T> implements ISubscribable<T> {
-  public lift<U>(connectOperator: IConnectOperator<T, U>): Stream<U>
-  public lift<U, TStreamOutput extends Stream<U>>(
-    transformOperator: ITransformOperator<T, U, TStreamOutput>
-  ): TStreamOutput
-  public lift<U, TStreamOutput extends Stream<U>>(
-    transformOrConnectOperator:
-      | IConnectOperator<T, U>
-      | ITransformOperator<T, U, TStreamOutput>
-  ): Stream<U> | TStreamOutput {
-    return isConnectOperator(transformOrConnectOperator)
-      ? new LiftedStream<T, U>(this, transformOrConnectOperator)
-      : transformOrConnectOperator.transform(this)
+  public lift<U>(operator: IOperator<T, U>): Stream<U> {
+    return new LiftedStream<T, U>(this, operator)
+  }
+
+  public liftAll(): Stream<T>
+  public liftAll<A>(op1: IOperator<T, A>): Stream<A>
+  public liftAll<A, B>(op1: IOperator<T, A>, op2: IOperator<A, B>): Stream<B>
+  public liftAll<A, B, C>(
+    op1: IOperator<T, A>,
+    op2: IOperator<A, B>,
+    op3: IOperator<B, C>
+  ): Stream<C>
+  public liftAll<A, B, C, D>(
+    op1: IOperator<T, A>,
+    op2: IOperator<A, B>,
+    op3: IOperator<B, C>,
+    op4: IOperator<C, D>
+  ): Stream<D>
+  public liftAll<A, B, C, D, E>(
+    op1: IOperator<T, A>,
+    op2: IOperator<A, B>,
+    op3: IOperator<B, C>,
+    op4: IOperator<C, D>,
+    op5: IOperator<D, E>
+  ): Stream<E>
+  public liftAll<A, B, C, D, E, F>(
+    op1: IOperator<T, A>,
+    op2: IOperator<A, B>,
+    op3: IOperator<B, C>,
+    op4: IOperator<C, D>,
+    op5: IOperator<D, E>,
+    op6: IOperator<E, F>
+  ): Stream<F>
+  public liftAll<A, B, C, D, E, F, G>(
+    op1: IOperator<T, A>,
+    op2: IOperator<A, B>,
+    op3: IOperator<B, C>,
+    op4: IOperator<C, D>,
+    op5: IOperator<D, E>,
+    op6: IOperator<E, F>,
+    op7: IOperator<F, G>
+  ): Stream<G>
+  public liftAll<A, B, C, D, E, F, G, H>(
+    op1: IOperator<T, A>,
+    op2: IOperator<A, B>,
+    op3: IOperator<B, C>,
+    op4: IOperator<C, D>,
+    op5: IOperator<D, E>,
+    op6: IOperator<E, F>,
+    op7: IOperator<F, G>,
+    op8: IOperator<G, H>
+  ): Stream<H>
+  public liftAll<A, B, C, D, E, F, G, H, I>(
+    op1: IOperator<T, A>,
+    op2: IOperator<A, B>,
+    op3: IOperator<B, C>,
+    op4: IOperator<C, D>,
+    op5: IOperator<D, E>,
+    op6: IOperator<E, F>,
+    op7: IOperator<F, G>,
+    op8: IOperator<G, H>,
+    op9: IOperator<H, I>
+  ): Stream<I>
+  public liftAll<A, B, C, D, E, F, G, H, I>(
+    op1: IOperator<T, A>,
+    op2: IOperator<A, B>,
+    op3: IOperator<B, C>,
+    op4: IOperator<C, D>,
+    op5: IOperator<D, E>,
+    op6: IOperator<E, F>,
+    op7: IOperator<F, G>,
+    op8: IOperator<G, H>,
+    op9: IOperator<H, I>,
+    ...operators: Array<IOperator<any, any>>
+  ): Stream<any>
+  public liftAll(...operators: Array<IOperator<any, any>>): Stream<any> {
+    let resultStream: Stream<any> = this
+
+    for (let i = 0; i < operators.length; i++) {
+      resultStream = resultStream.lift(operators[i])
+    }
+
+    return resultStream
   }
 
   public subscribe(
-    targetSubscriber: ISubscriber<T> | MonoTypeValueTransmitter<T>
+    targetSubscriber: ISubscriber<T> | ValueTransmitter<T, any>
   ): ISubscription {
     const target = isValueTransmitter(targetSubscriber)
       ? targetSubscriber
-      : new MonoTypeValueTransmitter(targetSubscriber)
+      : new ValueTransmitter<T, any>(targetSubscriber)
 
     let disposable: IDisposableLike
 
@@ -59,19 +126,19 @@ export abstract class Stream<T> implements ISubscribable<T> {
   }
 
   protected abstract trySubscribe(
-    target: MonoTypeValueTransmitter<T>
+    target: ValueTransmitter<T, any>
   ): IDisposableLike
 }
 
 export class RawStream<T> extends Stream<T> {
-  private __subscribe: (target: MonoTypeValueTransmitter<T>) => void
+  private __subscribe: (target: ValueTransmitter<T, any>) => void
 
-  constructor(subscribe: (target: MonoTypeValueTransmitter<T>) => void) {
+  constructor(subscribe: (target: ValueTransmitter<T, any>) => void) {
     super()
     this.__subscribe = subscribe
   }
 
-  protected trySubscribe(target: MonoTypeValueTransmitter<T>): IDisposableLike {
+  protected trySubscribe(target: ValueTransmitter<T, any>): IDisposableLike {
     return this.__subscribe(target)
   }
 }
@@ -84,22 +151,22 @@ export class DuplicateStream<T> extends Stream<T> {
     this.__source = source
   }
 
-  protected trySubscribe(target: MonoTypeValueTransmitter<T>): IDisposableLike {
+  protected trySubscribe(target: ValueTransmitter<T, any>): IDisposableLike {
     return this.__source.subscribe(target)
   }
 }
 
 class LiftedStream<T, U> extends Stream<U> {
   private __source: Stream<T>
-  private __operator: IConnectOperator<T, U>
+  private __operator: IOperator<T, U>
 
-  constructor(source: Stream<T>, operator: IConnectOperator<T, U>) {
+  constructor(source: Stream<T>, operator: IOperator<T, U>) {
     super()
     this.__source = source
     this.__operator = operator
   }
 
-  protected trySubscribe(target: MonoTypeValueTransmitter<U>): IDisposableLike {
+  protected trySubscribe(target: ValueTransmitter<U, any>): IDisposableLike {
     return this.__operator.connect(
       target,
       this.__source

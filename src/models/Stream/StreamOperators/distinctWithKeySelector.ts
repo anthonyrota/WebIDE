@@ -1,21 +1,21 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { IConnectOperator } from 'src/models/Stream/IOperator'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function distinctWithKeySelector<TValue, TKey>(
   selectKey: (value: TValue) => TKey
-): IConnectOperator<TValue, TValue> {
+): IOperator<TValue, TValue> {
   return new DistinctWithKeySelectorOperator<TValue, TKey>(selectKey)
 }
 
 class DistinctWithKeySelectorOperator<TValue, TKey>
-  implements IConnectOperator<TValue, TValue> {
+  implements IOperator<TValue, TValue> {
   constructor(private selectKey: (value: TValue) => TKey) {}
 
   public connect(
-    target: MonoTypeValueTransmitter<TValue>,
+    target: ISubscriber<TValue>,
     source: Stream<TValue>
   ): IDisposableLike {
     return source.subscribe(

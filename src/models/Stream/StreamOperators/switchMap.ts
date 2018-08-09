@@ -1,26 +1,22 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { Subscription } from 'src/models/Disposable/Subscription'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IConnectOperator } from 'src/models/Stream/IOperator'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function switchMap<T, U>(
   convertValueToStream: (value: T, index: number) => Stream<U>
-): IConnectOperator<T, U> {
+): IOperator<T, U> {
   return new SwitchMapOperator<T, U>(convertValueToStream)
 }
 
-class SwitchMapOperator<T, U> implements IConnectOperator<T, U> {
+class SwitchMapOperator<T, U> implements IOperator<T, U> {
   constructor(
     private convertValueToStream: (value: T, index: number) => Stream<U>
   ) {}
 
-  public connect(
-    target: MonoTypeValueTransmitter<U>,
-    source: Stream<T>
-  ): IDisposableLike {
+  public connect(target: ISubscriber<U>, source: Stream<T>): IDisposableLike {
     return source.subscribe(
       new SwitchMapSubscriber<T, U>(target, this.convertValueToStream)
     )

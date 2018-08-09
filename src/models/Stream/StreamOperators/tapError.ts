@@ -1,18 +1,18 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
-import { IConnectOperator } from 'src/models/Stream/IOperator'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function tapError<T>(tapOnError: () => void): IConnectOperator<T, T> {
+export function tapError<T>(tapOnError: () => void): IOperator<T, T> {
   return new TapErrorOperator<T>(tapOnError)
 }
 
-class TapErrorOperator<T> implements IConnectOperator<T, T> {
+class TapErrorOperator<T> implements IOperator<T, T> {
   constructor(private tapNextError: (error: any) => void) {}
 
   public connect(
-    target: MonoTypeValueTransmitter<T>,
+    target: ISubscriber<T>,
     source: Stream<T>
   ): IDisposableLike {
     return source.subscribe(

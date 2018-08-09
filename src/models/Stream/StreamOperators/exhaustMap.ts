@@ -1,25 +1,21 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IConnectOperator } from 'src/models/Stream/IOperator'
+import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
-import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function exhaustMap<T, U>(
   convertValueToStream: (value: T, index: number) => Stream<U>
-): IConnectOperator<T, U> {
+): IOperator<T, U> {
   return new ExhaustMapOperator<T, U>(convertValueToStream)
 }
 
-class ExhaustMapOperator<T, U> implements IConnectOperator<T, U> {
+class ExhaustMapOperator<T, U> implements IOperator<T, U> {
   constructor(
     private convertValueToStream: (value: T, index: number) => Stream<U>
   ) {}
 
-  public connect(
-    target: MonoTypeValueTransmitter<U>,
-    source: Stream<T>
-  ): IDisposableLike {
+  public connect(target: ISubscriber<U>, source: Stream<T>): IDisposableLike {
     return source.subscribe(
       new ExhaustMapSubscriber<T, U>(target, this.convertValueToStream)
     )
