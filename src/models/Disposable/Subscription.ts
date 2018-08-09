@@ -160,7 +160,6 @@ export class Subscription implements ISubscription {
   protected __class$$RecyclableSubscription$$unsafePrivateUnsubscribeAndRecycleRecycleMethod$$(): void {
     const parents = this.__parents
     this.__parents = null
-    this.__isActive = false
     this.dispose()
     this.__isActive = true
     this.__parents = parents

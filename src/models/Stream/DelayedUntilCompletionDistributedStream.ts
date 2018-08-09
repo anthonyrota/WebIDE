@@ -14,7 +14,7 @@ export class DelayedUntilCompletionDistributedStream<
       throw new AlreadyDisposedError()
     }
 
-    if (!this.isCompleted()) {
+    if (this.isReceivingValues()) {
       this.__value = value
       this.__hasValue = true
     }
@@ -25,7 +25,7 @@ export class DelayedUntilCompletionDistributedStream<
       throw new AlreadyDisposedError()
     }
 
-    if (!this.isCompleted()) {
+    if (this.isReceivingValues()) {
       if (this.__hasValue) {
         super.next(this.__value!)
       }
@@ -41,7 +41,7 @@ export class DelayedUntilCompletionDistributedStream<
 
     this.throwError()
 
-    if (!this.isCompleted()) {
+    if (this.isReceivingValues()) {
       return super.pushTarget(target)
     }
 

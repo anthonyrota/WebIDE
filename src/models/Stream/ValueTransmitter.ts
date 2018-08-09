@@ -7,8 +7,34 @@ import {
 import { IRequiredSubscriber, ISubscriber } from 'src/models/Stream/ISubscriber'
 import { asyncReportError } from 'src/utils/asyncReportError'
 
+export const isReceivingValuesSubscriptionPropertyKey =
+  '@@__ReceivingValuesSubscriptionClassEqualityCheckKey__@@'
+
+export function isReceivingValuesSubscription(
+  candidate: any
+): candidate is IReceivingValuesSubscription {
+  return (
+    candidate != null &&
+    candidate[isReceivingValuesSubscriptionPropertyKey] === true
+  )
+}
+
+export interface IReceivingValuesSubscription {
+  readonly [isReceivingValuesSubscriptionPropertyKey]: true
+  terminateDisposableWhenStopsReceivingValues(
+    disposable: IDisposable
+  ): ISubscription
+  terminateDisposableLikeWhenStopsReceivingValues(
+    disposableLike: IDisposable
+  ): ISubscription
+  onStopReceivingValues(dispose: () => void): ISubscription
+  removeOnStopReceivingValuesSubscription(subscription: ISubscription): void
+  isReceivingValues(): boolean
+}
+
 export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
-  implements IRequiredSubscriber<TInput> {
+  implements IRequiredSubscriber<TInput>, IReceivingValuesSubscription {
+  public readonly [isReceivingValuesSubscriptionPropertyKey] = true
   protected destination: IRequiredSubscriber<TOutput>
   private __isReceivingValues: boolean = true
   private __onStopReceivingValuesSubscription = new RecyclableSubscription()
@@ -21,7 +47,7 @@ export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
   ) {
     super()
 
-    if (isValueTransmitter(target)) {
+    if (isReceivingValuesSubscription(target)) {
       target.terminateDisposableWhenStopsReceivingValues(this)
     } else if (isSubscription(target)) {
       target.terminateDisposableWhenDisposed(this)

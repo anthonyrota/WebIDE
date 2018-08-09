@@ -23,7 +23,7 @@ export class DistributedStreamWithLastValue<T> extends DistributedStream<T> {
 
     this.throwError()
 
-    if (this.isCompleted()) {
+    if (!this.isReceivingValues()) {
       target.complete()
     } else {
       target.next(this.__value)
