@@ -5,13 +5,13 @@ import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 
 export function catchError<T, U>(
-  convertErrorToStream: (error: any) => Stream<U>
+  convertErrorToStream: (error: unknown) => Stream<U>
 ): IOperator<T, T | U> {
   return new CatchErrorOperator<T, U>(convertErrorToStream)
 }
 
 class CatchErrorOperator<T, U> implements IOperator<T, T | U> {
-  constructor(private convertErrorToStream: (error: any) => Stream<U>) {}
+  constructor(private convertErrorToStream: (error: unknown) => Stream<U>) {}
 
   public connect(
     target: ISubscriber<T | U>,
@@ -28,12 +28,12 @@ class CatchErrorSubscriber<T, U> extends MonoTypeDoubleInputValueTransmitter<
 > {
   constructor(
     target: ISubscriber<T | U>,
-    private convertErrorToStream: (error: any) => Stream<U>
+    private convertErrorToStream: (error: unknown) => Stream<U>
   ) {
     super(target)
   }
 
-  public error(error: any): void {
+  public error(error: unknown): void {
     if (this.isActive()) {
       const { convertErrorToStream } = this
       let resultStream: Stream<U>

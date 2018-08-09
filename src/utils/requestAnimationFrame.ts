@@ -6,7 +6,7 @@ import {
 } from 'src/utils/requestAnimationFramePolyfill'
 import { root } from 'src/utils/root'
 
-const nativeRequestAnimationFrame: (callback: FrameRequestCallback) => any =
+const nativeRequestAnimationFrame: (callback: FrameRequestCallback) => unknown =
   root.requestAnimationFrame ||
   root.msRequestAnimationFrame ||
   root.mozRequestAnimationFrame ||
@@ -14,7 +14,7 @@ const nativeRequestAnimationFrame: (callback: FrameRequestCallback) => any =
   root.oRequestAnimationFrame ||
   requestAnimationFramePolyfill
 
-const nativeCancelAnimationFrame: (id: any) => void =
+const nativeCancelAnimationFrame: (id: unknown) => void =
   root.cancelAnimationFrame ||
   root.msCancelAnimationFrame ||
   root.mozCancelAnimationFrame ||
@@ -37,7 +37,7 @@ export function requestAnimationFrame(
 }
 
 class RequestAnimationFrameDisposable implements IDisposable {
-  constructor(private animationId: any) {}
+  constructor(private animationId: unknown) {}
 
   public dispose(): void {
     nativeCancelAnimationFrame(this.animationId)

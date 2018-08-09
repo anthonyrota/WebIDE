@@ -39,8 +39,8 @@ export abstract class Maybe<T> {
   public abstract flatMap<U>(transform: (value: T) => Maybe<U>): Maybe<U>
   public abstract filter(predicate: (value: T) => boolean): Maybe<T>
   public abstract getOrThrow(): T
-  public abstract getOrThrowError(error: any): T
-  public abstract getOrThrowComputedError(getError: () => any): T
+  public abstract getOrThrowError(error: unknown): T
+  public abstract getOrThrowComputedError(getError: () => unknown): T
 }
 
 class Some<T> extends Maybe<T> {
@@ -107,11 +107,11 @@ class Some<T> extends Maybe<T> {
     return this.__value
   }
 
-  public getOrThrowError(error: any): T {
+  public getOrThrowError(error: unknown): T {
     return this.__value
   }
 
-  public getOrThrowComputedError(getError: () => any): T {
+  public getOrThrowComputedError(getError: () => unknown): T {
     return this.__value
   }
 
@@ -177,11 +177,11 @@ class None<T> extends Maybe<T> {
     throw new TypeError('No value')
   }
 
-  public getOrThrowError(error: any): T {
+  public getOrThrowError(error: unknown): T {
     throw error
   }
 
-  public getOrThrowComputedError(getError: () => any): T {
+  public getOrThrowComputedError(getError: () => unknown): T {
     throw getError()
   }
 

@@ -105,7 +105,9 @@ export class DistributedStream<T> extends Stream<T>
   implements IDistributedStream<T, T> {
   public readonly [isSubscriptionPropertyKey] = true
 
-  private __mutableThrownError: MutableMaybe<any> = MutableMaybe.none<any>()
+  private __mutableThrownError: MutableMaybe<unknown> = MutableMaybe.none<
+    unknown
+  >()
   private __targets: Array<IRequiredSubscriber<T>> = []
   private __isCompleted: boolean = false
   private __selfSubscription: ISubscription = new Subscription()
@@ -238,7 +240,7 @@ export class DistributedStream<T> extends Stream<T>
     }
   }
 
-  public error(error: any): void {
+  public error(error: unknown): void {
     if (this.__selfSubscription.isDisposed()) {
       throw new AlreadyDisposedError()
     }
@@ -297,7 +299,7 @@ export class DistributedStream<T> extends Stream<T>
     return new DuplicateStream<T>(this)
   }
 
-  protected getThrownError(): ImmutableMutableMaybeView<any> {
+  protected getThrownError(): ImmutableMutableMaybeView<unknown> {
     return this.__mutableThrownError.getImmutableView()
   }
 
@@ -305,7 +307,9 @@ export class DistributedStream<T> extends Stream<T>
     this.__mutableThrownError.throwValue()
   }
 
-  protected trySubscribe(target: ValueTransmitter<T, any>): IDisposableLike {
+  protected trySubscribe(
+    target: ValueTransmitter<T, unknown>
+  ): IDisposableLike {
     if (this.__selfSubscription.isDisposed()) {
       throw new AlreadyDisposedError()
     }
@@ -515,7 +519,7 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
     this.__source.next(value)
   }
 
-  public error(error: any): void {
+  public error(error: unknown): void {
     if (this.__selfSubscription.isDisposed() || this.__source.isDisposed()) {
       throw new AlreadyDisposedError()
     }
@@ -552,7 +556,7 @@ class LiftedDistributedStream<TStreamInput, TOperatorInput, TOperatorOutput>
   }
 
   protected trySubscribe(
-    target: ValueTransmitter<TOperatorOutput, any>
+    target: ValueTransmitter<TOperatorOutput, unknown>
   ): IDisposableLike {
     if (this.__selfSubscription.isDisposed() || this.__source.isDisposed()) {
       throw new AlreadyDisposedError()

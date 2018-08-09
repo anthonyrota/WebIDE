@@ -17,7 +17,7 @@ export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
     target:
       | ISubscriber<TOutput>
       | (ISubscription & ISubscriber<TOutput>)
-      | ValueTransmitter<TOutput, any>
+      | ValueTransmitter<TOutput, unknown>
   ) {
     super()
 
@@ -38,7 +38,7 @@ export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
     }
   }
 
-  public error(error: any): void {
+  public error(error: unknown): void {
     if (this.__isReceivingValues) {
       this.__isReceivingValues = false
       this.onError(error)
@@ -101,7 +101,7 @@ export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
 
   protected onNextValue(value: TInput): void {}
 
-  protected onError(error: any): void {
+  protected onError(error: unknown): void {
     this.destination.error(error)
   }
 
@@ -117,8 +117,8 @@ export class MonoTypeValueTransmitter<T> extends ValueTransmitter<T, T> {
 }
 
 export function isValueTransmitter(
-  value: any
-): value is ValueTransmitter<any, any> {
+  value: unknown
+): value is ValueTransmitter<unknown, unknown> {
   return value instanceof ValueTransmitter
 }
 
@@ -142,7 +142,7 @@ class Destination<T> implements IRequiredSubscriber<T> {
     }
   }
 
-  public error(error: any): void {
+  public error(error: unknown): void {
     if (this.__target.error) {
       try {
         this.__target.error(error)

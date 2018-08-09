@@ -7,16 +7,16 @@ function assignPolyfill<T, U, V, W>(
   source2: V,
   source3: W
 ): T & U & V & W
-function assignPolyfill(target: object, ...sources: any[]): any
-function assignPolyfill(target: object, ...sources: any[]): any {
-  if (target == null) {
+function assignPolyfill<T>(...values: T[]): T
+function assignPolyfill<T>(...values: T[]): T {
+  if (values[0] == null) {
     throw new TypeError('Cannot convert undefined or null to object')
   }
 
-  const combined = Object(target)
+  const combined = Object(values[0])
 
-  for (let index = 1; index < sources.length; index++) {
-    const nextSource = sources[index]
+  for (let index = 1; index < values.length; index++) {
+    const nextSource = values[index]
 
     if (nextSource != null) {
       for (const nextKey in nextSource) {

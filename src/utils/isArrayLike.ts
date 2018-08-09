@@ -1,5 +1,7 @@
-export function isArrayLike<T>(value: any): value is ArrayLike<T> {
+export function isArrayLike(value: any): value is ArrayLike<unknown> {
   return (
-    !!value && typeof value.length === 'number' && typeof value !== 'function'
+    value != null &&
+    typeof value.length === 'number' &&
+    typeof value !== 'function'
   )
 }

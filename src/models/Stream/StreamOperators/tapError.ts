@@ -9,12 +9,9 @@ export function tapError<T>(tapOnError: () => void): IOperator<T, T> {
 }
 
 class TapErrorOperator<T> implements IOperator<T, T> {
-  constructor(private tapNextError: (error: any) => void) {}
+  constructor(private tapNextError: (error: unknown) => void) {}
 
-  public connect(
-    target: ISubscriber<T>,
-    source: Stream<T>
-  ): IDisposableLike {
+  public connect(target: ISubscriber<T>, source: Stream<T>): IDisposableLike {
     return source.subscribe(
       new TapErrorSubscriber<T>(target, this.tapNextError)
     )
@@ -24,12 +21,12 @@ class TapErrorOperator<T> implements IOperator<T, T> {
 class TapErrorSubscriber<T> extends MonoTypeValueTransmitter<T> {
   constructor(
     target: ISubscriber<T>,
-    private tapNextError: (error: any) => void
+    private tapNextError: (error: unknown) => void
   ) {
     super(target)
   }
 
-  protected onError(error: any): void {
+  protected onError(error: unknown): void {
     try {
       this.tapNextError(error)
     } catch (tapError) {

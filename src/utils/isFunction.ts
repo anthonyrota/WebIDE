@@ -1,3 +1,3 @@
-export function isFunction(value: any): value is Function {
+export function isFunction(value: unknown): value is Function {
   return typeof value === 'function'
 }

@@ -2,7 +2,7 @@ import { $$observable } from 'src/utils/observableSymbol'
 
 export interface IESObservableObserver<T> {
   next(value: T): void
-  error(error: any): void
+  error(error: unknown): void
   complete(): void
 }
 
@@ -19,7 +19,7 @@ export interface IESObservable<T> extends IESInteropObservable<T> {
   subscribe(observer: IESObservableObserver<T>): IESObservableSubscription
   subscribe(
     onNext?: (value: T) => void,
-    onError?: (error: any) => void,
+    onError?: (error: unknown) => void,
     onComplete?: () => void
   ): IESObservableSubscription
 }

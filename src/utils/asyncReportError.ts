@@ -1,9 +1,9 @@
 import { setImmediate } from 'src/utils/setImmediate'
 
-export function asyncReportError(error: any): void {
+export function asyncReportError(error: unknown): void {
   setImmediate(throwError.bind(null, error))
 }
 
-function throwError(error: any): void {
+function throwError(error: unknown): void {
   throw error
 }

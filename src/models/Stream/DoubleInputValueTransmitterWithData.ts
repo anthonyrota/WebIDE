@@ -3,17 +3,35 @@ import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
+interface IOuterSubscriberWithData<TOuterValue, TData> {
+  outerNext(
+    value: TOuterValue,
+    target: DoubleInputValueTransmitterWithDataSubscriptionTarget<
+      TOuterValue,
+      TData
+    >
+  ): void
+  outerError(
+    error: unknown,
+    target: DoubleInputValueTransmitterWithDataSubscriptionTarget<
+      TOuterValue,
+      TData
+    >
+  ): void
+  outerComplete(
+    target: DoubleInputValueTransmitterWithDataSubscriptionTarget<
+      TOuterValue,
+      TData
+    >
+  ): void
+}
+
 export class DoubleInputValueTransmitterWithDataSubscriptionTarget<
   TOuterValue,
   TData
 > extends Subscription implements IRequiredSubscriber<TOuterValue> {
   constructor(
-    private __transmitter: DoubleInputValueTransmitterWithData<
-      any,
-      any,
-      TOuterValue,
-      TData
-    >,
+    private __transmitter: IOuterSubscriberWithData<TOuterValue, TData>,
     private __data: TData
   ) {
     super()
@@ -23,7 +41,7 @@ export class DoubleInputValueTransmitterWithDataSubscriptionTarget<
     this.__transmitter.outerNext(value, this)
   }
 
-  public error(error: any): void {
+  public error(error: unknown): void {
     this.__transmitter.outerError(error, this)
     this.dispose()
   }
@@ -36,6 +54,10 @@ export class DoubleInputValueTransmitterWithDataSubscriptionTarget<
   public getData(): TData {
     return this.__data
   }
+
+  public setData(newData: TData): void {
+    this.__data = newData
+  }
 }
 
 export abstract class DoubleInputValueTransmitterWithData<
@@ -43,7 +65,8 @@ export abstract class DoubleInputValueTransmitterWithData<
   TOutput,
   TOuterValue,
   TData
-> extends ValueTransmitter<TInput, TOutput> {
+> extends ValueTransmitter<TInput, TOutput>
+  implements IOuterSubscriberWithData<TOuterValue, TData> {
   public outerNext(
     value: TOuterValue,
     target: DoubleInputValueTransmitterWithDataSubscriptionTarget<
@@ -57,7 +80,7 @@ export abstract class DoubleInputValueTransmitterWithData<
   }
 
   public outerError(
-    error: any,
+    error: unknown,
     target: DoubleInputValueTransmitterWithDataSubscriptionTarget<
       TOuterValue,
       TData
@@ -88,7 +111,7 @@ export abstract class DoubleInputValueTransmitterWithData<
   ): void {}
 
   protected onOuterError(
-    error: any,
+    error: unknown,
     target: DoubleInputValueTransmitterWithDataSubscriptionTarget<
       TOuterValue,
       TData

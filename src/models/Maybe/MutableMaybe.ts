@@ -2,7 +2,7 @@ import { bound } from 'src/decorators/bound'
 
 export class MutableMaybe<T> {
   private __state: { hasValue: true; value: T } | { hasValue: false }
-  private __immutableView: ImmutableMutableMaybeView<T>
+  private __immutableView: ImmutableMutableMaybeView<T> | null = null
 
   private constructor(hasValue: false)
   private constructor(hasValue: true, value: T)
@@ -142,14 +142,14 @@ export class MutableMaybe<T> {
     return this.__state.value
   }
 
-  public getOrThrowError(error: any): T {
+  public getOrThrowError(error: unknown): T {
     if (!this.__state.hasValue) {
       throw error
     }
     return this.__state.value
   }
 
-  public getOrThrowComputedError(getError: () => any): T {
+  public getOrThrowComputedError(getError: () => unknown): T {
     if (!this.__state.hasValue) {
       throw getError()
     }
@@ -226,11 +226,11 @@ export class ImmutableMutableMaybeView<T> {
     return this.__maybe.getOrThrow()
   }
 
-  public getOrThrowError(error: any): T {
+  public getOrThrowError(error: unknown): T {
     return this.__maybe.getOrThrowError(error)
   }
 
-  public getOrThrowComputedError(getError: () => any): T {
+  public getOrThrowComputedError(getError: () => unknown): T {
     return this.__maybe.getOrThrowComputedError(getError)
   }
 

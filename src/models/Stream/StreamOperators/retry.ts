@@ -14,10 +14,7 @@ export function retry<T>(count: number): IOperator<T, T> {
 class RetryOperator<T> implements IOperator<T, T> {
   constructor(private count: number) {}
 
-  public connect(
-    target: ISubscriber<T>,
-    source: Stream<T>
-  ): IDisposableLike {
+  public connect(target: ISubscriber<T>, source: Stream<T>): IDisposableLike {
     return source.subscribe(new RetrySubscriber<T>(target, this.count, source))
   }
 }
@@ -31,7 +28,7 @@ class RetrySubscriber<T> extends MonoTypeValueTransmitter<T> {
     super(target)
   }
 
-  public error(error: any): void {
+  public error(error: unknown): void {
     if (this.isActive()) {
       if (this.count === 0) {
         super.error(error)

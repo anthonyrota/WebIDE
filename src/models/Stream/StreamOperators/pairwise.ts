@@ -1,8 +1,8 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { IOperator } from 'src/models/Stream/IOperator'
+import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
 
 export function pairwise<T>(source: Stream<T>): IOperator<T, [T, T]> {
   return new PairwiseOperator<T>()

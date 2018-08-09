@@ -1,8 +1,8 @@
 import { IDisposableLike } from 'src/models/Disposable/IDisposableLike'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
 import { IOperator } from 'src/models/Stream/IOperator'
-import { Stream } from 'src/models/Stream/Stream'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { Stream } from 'src/models/Stream/Stream'
 
 export function exhaust<T>(): IOperator<Stream<T>, T> {
   return new ExhaustOperator<T>()

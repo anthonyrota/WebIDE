@@ -11,10 +11,7 @@ export function finalize<T>(onFinish: () => void): IOperator<T, T> {
 class FinalizeOperator<T> implements IOperator<T, T> {
   constructor(private onFinish: () => any) {}
 
-  public connect(
-    target: ISubscriber<T>,
-    source: Stream<T>
-  ): IDisposableLike {
+  public connect(target: ISubscriber<T>, source: Stream<T>): IDisposableLike {
     return source.subscribe(new FinalizeSubscriber<T>(target, this.onFinish))
   }
 }

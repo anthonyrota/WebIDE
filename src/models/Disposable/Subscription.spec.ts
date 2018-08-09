@@ -637,7 +637,7 @@ describe('Subscription', () => {
 //       return
 //     }
 
-//     const errors: any[] = []
+//     const errors: unknown[] = []
 
 //     for (let i = 0; i < this.__parents.length; i++) {
 //       this.__parents[i].removeSubscription(this)

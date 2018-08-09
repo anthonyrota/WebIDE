@@ -40,7 +40,7 @@ export abstract class AsyncAction extends Subscription {
     this.executeAndRemoveFromScheduler()
   }
 
-  public execute(): { error: any } | void {
+  public execute(): { error: unknown } | void {
     if (this.__scheduleDelayedDisposable) {
       this.__scheduleDelayedDisposable.dispose()
       this.__scheduleDelayedDisposable = null

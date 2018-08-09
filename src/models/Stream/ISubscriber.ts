@@ -31,7 +31,7 @@ export interface ISubscribable<T> {
 
 export function isSubscriber(value: any): value is ISubscriber<any> {
   return (
-    value &&
+    value != null &&
     (typeof value.next === 'function' || value.next == null) &&
     (typeof value.error === 'function' || value.next == null) &&
     (typeof value.complete === 'function' || value.next == null)
@@ -42,7 +42,7 @@ export function isRequiredSubscriber(
   value: any
 ): value is IRequiredSubscriber<any> {
   return (
-    value &&
+    value !== null &&
     typeof value.next === 'function' &&
     typeof value.error === 'function' &&
     typeof value.complete === 'function'

@@ -18,10 +18,7 @@ export function take<T>(total: number): IOperator<T, T> {
 class TakeOperator<T> implements IOperator<T, T> {
   constructor(private total: number) {}
 
-  public connect(
-    target: ISubscriber<T>,
-    source: Stream<T>
-  ): IDisposableLike {
+  public connect(target: ISubscriber<T>, source: Stream<T>): IDisposableLike {
     return source.subscribe(new TakeSubscriber<T>(target, this.total))
   }
 }

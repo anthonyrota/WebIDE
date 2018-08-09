@@ -5,11 +5,12 @@ import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscribable, ISubscriber } from 'src/models/Stream/ISubscriber'
 import {
   isValueTransmitter,
+  MonoTypeValueTransmitter,
   ValueTransmitter
 } from 'src/models/Stream/ValueTransmitter'
 import { isFunction } from 'src/utils/isFunction'
 
-export function isStream(value: any): value is Stream<any> {
+export function isStream(value: unknown): value is Stream<unknown> {
   return value instanceof Stream
 }
 
@@ -100,11 +101,11 @@ export abstract class Stream<T> implements ISubscribable<T> {
   }
 
   public subscribe(
-    targetSubscriber: ISubscriber<T> | ValueTransmitter<T, any>
+    targetSubscriber: ISubscriber<T> | ValueTransmitter<T, unknown>
   ): ISubscription {
     const target = isValueTransmitter(targetSubscriber)
       ? targetSubscriber
-      : new ValueTransmitter<T, any>(targetSubscriber)
+      : new MonoTypeValueTransmitter<T>(targetSubscriber)
 
     let disposable: IDisposableLike
 
@@ -126,19 +127,21 @@ export abstract class Stream<T> implements ISubscribable<T> {
   }
 
   protected abstract trySubscribe(
-    target: ValueTransmitter<T, any>
+    target: ValueTransmitter<T, unknown> | MonoTypeValueTransmitter<T>
   ): IDisposableLike
 }
 
 export class RawStream<T> extends Stream<T> {
-  private __subscribe: (target: ValueTransmitter<T, any>) => void
+  private __subscribe: (target: ValueTransmitter<T, unknown>) => void
 
-  constructor(subscribe: (target: ValueTransmitter<T, any>) => void) {
+  constructor(subscribe: (target: ValueTransmitter<T, unknown>) => void) {
     super()
     this.__subscribe = subscribe
   }
 
-  protected trySubscribe(target: ValueTransmitter<T, any>): IDisposableLike {
+  protected trySubscribe(
+    target: ValueTransmitter<T, unknown>
+  ): IDisposableLike {
     return this.__subscribe(target)
   }
 }
@@ -151,7 +154,9 @@ export class DuplicateStream<T> extends Stream<T> {
     this.__source = source
   }
 
-  protected trySubscribe(target: ValueTransmitter<T, any>): IDisposableLike {
+  protected trySubscribe(
+    target: ValueTransmitter<T, unknown>
+  ): IDisposableLike {
     return this.__source.subscribe(target)
   }
 }
@@ -166,7 +171,9 @@ class LiftedStream<T, U> extends Stream<U> {
     this.__operator = operator
   }
 
-  protected trySubscribe(target: ValueTransmitter<U, any>): IDisposableLike {
+  protected trySubscribe(
+    target: ValueTransmitter<U, unknown>
+  ): IDisposableLike {
     return this.__operator.connect(
       target,
       this.__source

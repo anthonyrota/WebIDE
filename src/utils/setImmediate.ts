@@ -6,7 +6,7 @@ import {
   setImmediatePolyfill
 } from 'src/utils/setImmediatePolyfill'
 
-let nativeSetImmediate: (callback: () => void) => any
+let nativeSetImmediate: (callback: () => void) => unknown
 let nativeClearImmediate: (id: any) => void
 
 if (

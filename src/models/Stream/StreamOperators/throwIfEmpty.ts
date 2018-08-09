@@ -4,17 +4,14 @@ import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function throwIfEmpty<T>(error: any): IOperator<T, T> {
+export function throwIfEmpty<T>(error: unknown): IOperator<T, T> {
   return new ThrowIfEmptyOperator<T>(error)
 }
 
 class ThrowIfEmptyOperator<T> implements IOperator<T, T> {
-  constructor(private error: any) {}
+  constructor(private error: unknown) {}
 
-  public connect(
-    target: ISubscriber<T>,
-    source: Stream<T>
-  ): IDisposableLike {
+  public connect(target: ISubscriber<T>, source: Stream<T>): IDisposableLike {
     return source.subscribe(new ThrowIfEmptySubscriber<T>(target, this.error))
   }
 }
@@ -22,7 +19,7 @@ class ThrowIfEmptyOperator<T> implements IOperator<T, T> {
 class ThrowIfEmptySubscriber<T> extends MonoTypeValueTransmitter<T> {
   private hasValue: boolean = false
 
-  constructor(subscriber: ISubscriber<T>, private errorIfEmpty: any) {
+  constructor(subscriber: ISubscriber<T>, private errorIfEmpty: unknown) {
     super(subscriber)
   }
 

@@ -167,7 +167,7 @@ export class Subscription implements ISubscription {
   }
 
   private __disposeDisposables(): void {
-    const errors: any[] = []
+    const errors: Array<unknown> = []
 
     if (this.__parents) {
       for (let i = 0; i < this.__parents.length; i++) {

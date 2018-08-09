@@ -4,19 +4,14 @@ import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function firstWithDefaultValue<T>(
-  defaultValue: T
-): IOperator<T, T> {
+export function firstWithDefaultValue<T>(defaultValue: T): IOperator<T, T> {
   return new FirstWithDefaultValueOperator<T>(defaultValue)
 }
 
 class FirstWithDefaultValueOperator<T> implements IOperator<T, T> {
   constructor(private defaultValue: T) {}
 
-  public connect(
-    target: ISubscriber<T>,
-    source: Stream<T>
-  ): IDisposableLike {
+  public connect(target: ISubscriber<T>, source: Stream<T>): IDisposableLike {
     return source.subscribe(
       new FirstWithDefaultValueSubscriber<T>(target, this.defaultValue)
     )

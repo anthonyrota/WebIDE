@@ -25,7 +25,7 @@ export class ScheduledSubscriber<T> extends Subscription
     }
   }
 
-  public error(error: any): void {
+  public error(error: unknown): void {
     if (this.__target.error) {
       this.terminateDisposableWhenDisposed(
         this.__scheduler.schedule(() => {

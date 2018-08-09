@@ -9,10 +9,7 @@ export function retryAlways<T>(): IOperator<T, T> {
 }
 
 class RetryOperator<T> implements IOperator<T, T> {
-  public connect(
-    target: ISubscriber<T>,
-    source: Stream<T>
-  ): IDisposableLike {
+  public connect(target: ISubscriber<T>, source: Stream<T>): IDisposableLike {
     return source.subscribe(new RetrySubscriber<T>(target, source))
   }
 }

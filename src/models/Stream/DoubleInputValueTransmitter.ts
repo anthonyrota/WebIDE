@@ -3,12 +3,19 @@ import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
+interface IOuterSubscriber<TOuterValue> {
+  outerNext(
+    value: TOuterValue,
+    target: DoubleInputValueTransmitterSubscriptionTarget<TOuterValue>
+  ): void
+  outerError(error: unknown): void
+  outerComplete(): void
+}
+
 export class DoubleInputValueTransmitterSubscriptionTarget<TOuterValue>
   extends Subscription
   implements IRequiredSubscriber<TOuterValue> {
-  constructor(
-    private __transmitter: DoubleInputValueTransmitter<any, any, TOuterValue>
-  ) {
+  constructor(private __transmitter: IOuterSubscriber<TOuterValue>) {
     super()
   }
 
@@ -16,7 +23,7 @@ export class DoubleInputValueTransmitterSubscriptionTarget<TOuterValue>
     this.__transmitter.outerNext(value, this)
   }
 
-  public error(error: any): void {
+  public error(error: unknown): void {
     this.__transmitter.outerError(error)
     this.dispose()
   }
@@ -27,11 +34,9 @@ export class DoubleInputValueTransmitterSubscriptionTarget<TOuterValue>
   }
 }
 
-export abstract class DoubleInputValueTransmitter<
-  TInput,
-  TOutput,
-  TOuterValue
-> extends ValueTransmitter<TInput, TOutput> {
+export abstract class DoubleInputValueTransmitter<TInput, TOutput, TOuterValue>
+  extends ValueTransmitter<TInput, TOutput>
+  implements IOuterSubscriber<TOuterValue> {
   public outerNext(
     value: TOuterValue,
     target: DoubleInputValueTransmitterSubscriptionTarget<TOuterValue>
@@ -41,7 +46,7 @@ export abstract class DoubleInputValueTransmitter<
     }
   }
 
-  public outerError(error: any): void {
+  public outerError(error: unknown): void {
     if (this.isActive()) {
       this.onOuterError(error)
     }
@@ -71,7 +76,7 @@ export abstract class DoubleInputValueTransmitter<
     target: DoubleInputValueTransmitterSubscriptionTarget<TOuterValue>
   ): void {}
 
-  protected onOuterError(error: any): void {
+  protected onOuterError(error: unknown): void {
     this.error(error)
   }
 

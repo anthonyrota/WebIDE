@@ -13,10 +13,7 @@ export function takeWhile<T>(
 class TakeWhileOperator<T> implements IOperator<T, T> {
   constructor(private predicate: (value: T, index: number) => boolean) {}
 
-  public connect(
-    target: ISubscriber<T>,
-    source: Stream<T>
-  ): IDisposableLike {
+  public connect(target: ISubscriber<T>, source: Stream<T>): IDisposableLike {
     return source.subscribe(new TakeWhileSubscriber<T>(target, this.predicate))
   }
 }

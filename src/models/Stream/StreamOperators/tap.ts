@@ -11,10 +11,7 @@ export function tap<T>(subscriber: ISubscriber<T>): IOperator<T, T> {
 class TapOperator<T> implements IOperator<T, T> {
   constructor(private subscriber: ISubscriber<T>) {}
 
-  public connect(
-    target: ISubscriber<T>,
-    source: Stream<T>
-  ): IDisposableLike {
+  public connect(target: ISubscriber<T>, source: Stream<T>): IDisposableLike {
     return source.subscribe(new TapSubscriber<T>(target, this.subscriber))
   }
 }

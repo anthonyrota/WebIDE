@@ -14,10 +14,7 @@ class DistinctUntilChangedWithCompareFunctionOperator<T>
   implements IOperator<T, T> {
   constructor(private isEqual: (lastValue: T, newValue: T) => boolean) {}
 
-  public connect(
-    target: ISubscriber<T>,
-    source: Stream<T>
-  ): IDisposableLike {
+  public connect(target: ISubscriber<T>, source: Stream<T>): IDisposableLike {
     return source.subscribe(
       new DistinctUntilChangedWithCompareFunctionSubscriber<T>(
         target,
