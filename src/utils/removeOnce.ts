@@ -1,15 +1,8 @@
-import { curry2 } from 'src/utils/curry'
 import { indexOf } from 'src/utils/indexOf'
-import { splice } from 'src/utils/splice'
 
-export const removeOnce: {
-  <T>(item: T): (array: T[]) => void
-  <T>(item: T, array: T[]): void
-} = curry2(
-  <T>(item: T, array: T[]): void => {
-    const index = indexOf(item, array)
-    if (index !== -1) {
-      splice(1, index, array)
-    }
+export function removeOnce<T>(array: T[], item: T): void {
+  const index = indexOf(array, item)
+  if (index !== -1) {
+    array.splice(index, 1)
   }
-)
+}

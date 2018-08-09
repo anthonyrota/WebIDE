@@ -45,7 +45,7 @@ export const emptySubscription: ISubscription = freeze({
     dispose()
     return emptySubscription
   },
-  removeSubscription(subscription: ISubscription): void {},
+  removeSubscription(): void {},
   dispose(): void {},
   isActive(): boolean {
     return false
@@ -97,7 +97,7 @@ export class Subscription implements ISubscription {
     if (disposable instanceof Subscription) {
       subscription = disposable
 
-      if (indexOf(subscription, this.__childDisposables) !== -1) {
+      if (indexOf(this.__childDisposables, subscription) !== -1) {
         return subscription
       }
     } else {
@@ -138,7 +138,7 @@ export class Subscription implements ISubscription {
 
   public removeSubscription(subscription: ISubscription): void {
     if (this.__isActive) {
-      removeOnce(subscription, this.__childDisposables)
+      removeOnce(this.__childDisposables, subscription)
     }
   }
 
@@ -207,7 +207,7 @@ export class Subscription implements ISubscription {
   private __addParent(parent: ISubscription): void {
     if (this.__isActive) {
       if (this.__parents) {
-        const index = indexOf(parent, this.__parents)
+        const index = indexOf(this.__parents, parent)
 
         if (index === -1) {
           this.__parents.push(parent)

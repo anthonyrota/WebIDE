@@ -61,7 +61,7 @@ export abstract class AsyncScheduler implements IScheduler {
   }
 
   public removeAction(action: AsyncAction): void {
-    removeOnce(action, this.__actions)
+    removeOnce(this.__actions, action)
 
     if (this.__actions.length === 0 && this.__scheduled) {
       this.__scheduled.dispose()

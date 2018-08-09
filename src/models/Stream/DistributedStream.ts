@@ -641,7 +641,7 @@ class RawDistributedStreamSubscriptionDisposable<T> implements IDisposable {
 
   public dispose() {
     if (this.distributiveStream.isReceivingValues()) {
-      removeOnce(this.target, this.distributiveStreamTargets)
+      removeOnce(this.distributiveStreamTargets, this.target)
     }
   }
 }
