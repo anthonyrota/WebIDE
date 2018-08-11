@@ -82,8 +82,8 @@ class BufferToggleSubscriber<
     if (message.type === 'OpenNewBuffer') {
       this.openNewBuffer(outerValue)
     } else {
-      this.closeBuffer(message.buffer)
       target.dispose()
+      this.closeBuffer(message.buffer)
     }
   }
 
@@ -98,9 +98,12 @@ class BufferToggleSubscriber<
       return
     }
 
+    const buffer: T[] = []
+
+    this.buffers.push(buffer)
     this.subscribeStreamToSelf(shouldCloseBufferStream, {
       type: 'CloseBuffer',
-      buffer: []
+      buffer
     })
   }
 
