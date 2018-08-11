@@ -1,21 +1,25 @@
 import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
+import { delay } from 'src/models/Scheduler/delay'
+import { IScheduler } from 'src/models/Scheduler/Scheduler'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
-import { setTimeout } from 'src/utils/setTimeout'
 
-export function debounceTime<T>(duration: number): IOperator<T, T> {
-  return new DebounceTimeOperator<T>(duration)
+export function debounceTime<T>(
+  duration: number,
+  scheduler: IScheduler = delay
+): IOperator<T, T> {
+  return new DebounceTimeOperator<T>(duration, scheduler)
 }
 
 class DebounceTimeOperator<T> implements IOperator<T, T> {
-  constructor(private duration: number) {}
+  constructor(private duration: number, private scheduler: IScheduler) {}
 
   public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
     return source.subscribe(
-      new DebounceTimeSubscriber<T>(target, this.duration)
+      new DebounceTimeSubscriber<T>(target, this.duration, this.scheduler)
     )
   }
 }
@@ -25,7 +29,11 @@ class DebounceTimeSubscriber<T> extends MonoTypeValueTransmitter<T> {
   private hasValue: boolean = false
   private delayDisposable: IDisposable | null = null
 
-  constructor(target: ISubscriber<T>, private duration: number) {
+  constructor(
+    target: ISubscriber<T>,
+    private duration: number,
+    private scheduler: IScheduler
+  ) {
     super(target)
   }
 
@@ -34,7 +42,11 @@ class DebounceTimeSubscriber<T> extends MonoTypeValueTransmitter<T> {
     this.value = value
     this.hasValue = true
     this.delayDisposable = this.terminateDisposableWhenDisposed(
-      setTimeout(this.distributeValue, this.duration)
+      this.scheduler.scheduleDelayedWithData<DebounceTimeSubscriber<T>>(
+        this.distributeValue,
+        this,
+        this.duration
+      )
     )
   }
 
@@ -50,15 +62,15 @@ class DebounceTimeSubscriber<T> extends MonoTypeValueTransmitter<T> {
     }
   }
 
-  private distributeValue(): void {
-    this.clearDebounce()
+  private distributeValue(self: DebounceTimeSubscriber<T> = this): void {
+    self.clearDebounce()
 
-    if (this.hasValue) {
-      const value = this.value!
+    if (self.hasValue) {
+      const value = self.value!
 
-      this.value = null
-      this.hasValue = false
-      this.destination.next(value)
+      self.value = null
+      self.hasValue = false
+      self.destination.next(value)
     }
   }
 }
