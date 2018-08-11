@@ -1,6 +1,6 @@
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 
-export enum NotificationType {
+export const enum NotificationType {
   Value,
   Error,
   Complete
