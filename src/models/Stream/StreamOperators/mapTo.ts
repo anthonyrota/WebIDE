@@ -4,19 +4,22 @@ import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function mapTo<T>(value: T): IOperator<any, T> {
+export function mapTo<T>(value: T): IOperator<unknown, T> {
   return new MapToOperator<T>(value)
 }
 
-class MapToOperator<T> implements IOperator<any, T> {
+class MapToOperator<T> implements IOperator<unknown, T> {
   constructor(private value: T) {}
 
-  public connect(target: ISubscriber<T>, source: Stream<any>): DisposableLike {
+  public connect(
+    target: ISubscriber<T>,
+    source: Stream<unknown>
+  ): DisposableLike {
     return source.subscribe(new MapToSubscriber<T>(target, this.value))
   }
 }
 
-class MapToSubscriber<T> extends ValueTransmitter<any, T> {
+class MapToSubscriber<T> extends ValueTransmitter<unknown, T> {
   constructor(target: ISubscriber<T>, private value: T) {
     super(target)
   }

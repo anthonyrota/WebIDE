@@ -9,7 +9,7 @@ export const emptySubscriber: IRequiredSubscriber<any> = freeze({
 })
 
 export type OnNextValueListener<T> = (value: T) => void
-export type OnErrorListener = (error: any) => void
+export type OnErrorListener = (error: unknown) => void
 export type OnCompleteListener = () => void
 export type OnDisposeListener = () => void
 
@@ -29,7 +29,7 @@ export interface ISubscribable<T> {
   subscribe(subscriber: ISubscriber<T>): ISubscription
 }
 
-export function isSubscriber(value: any): value is ISubscriber<any> {
+export function isSubscriber(value: any): value is ISubscriber<unknown> {
   return (
     value != null &&
     (typeof value.next === 'function' || value.next == null) &&
@@ -40,7 +40,7 @@ export function isSubscriber(value: any): value is ISubscriber<any> {
 
 export function isRequiredSubscriber(
   value: any
-): value is IRequiredSubscriber<any> {
+): value is IRequiredSubscriber<unknown> {
   return (
     value !== null &&
     typeof value.next === 'function' &&

@@ -1,9 +1,13 @@
 import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { isDisposable } from 'src/models/Disposable/isDisposable'
-import { ISubscription } from 'src/models/Disposable/Subscription'
+import {
+  emptySubscription,
+  ISubscription
+} from 'src/models/Disposable/Subscription'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscribable, ISubscriber } from 'src/models/Stream/ISubscriber'
 import {
+  isReceivingValuesSubscription,
   isValueTransmitter,
   MonoTypeValueTransmitter,
   ValueTransmitter
@@ -103,6 +107,13 @@ export abstract class Stream<T> implements ISubscribable<T> {
   public subscribe(
     targetSubscriber: ISubscriber<T> | ValueTransmitter<T, unknown>
   ): ISubscription {
+    if (
+      isReceivingValuesSubscription(targetSubscriber) &&
+      !targetSubscriber.isReceivingValues()
+    ) {
+      return emptySubscription
+    }
+
     const target = isValueTransmitter(targetSubscriber)
       ? targetSubscriber
       : new MonoTypeValueTransmitter<T>(targetSubscriber)
@@ -139,9 +150,7 @@ export class RawStream<T> extends Stream<T> {
     this.__subscribe = subscribe
   }
 
-  protected trySubscribe(
-    target: ValueTransmitter<T, unknown>
-  ): DisposableLike {
+  protected trySubscribe(target: ValueTransmitter<T, unknown>): DisposableLike {
     return this.__subscribe(target)
   }
 }
@@ -154,9 +163,7 @@ export class DuplicateStream<T> extends Stream<T> {
     this.__source = source
   }
 
-  protected trySubscribe(
-    target: ValueTransmitter<T, unknown>
-  ): DisposableLike {
+  protected trySubscribe(target: ValueTransmitter<T, unknown>): DisposableLike {
     return this.__source.subscribe(target)
   }
 }
@@ -171,9 +178,7 @@ class LiftedStream<T, U> extends Stream<U> {
     this.__operator = operator
   }
 
-  protected trySubscribe(
-    target: ValueTransmitter<U, unknown>
-  ): DisposableLike {
+  protected trySubscribe(target: ValueTransmitter<U, unknown>): DisposableLike {
     return this.__operator.connect(
       target,
       this.__source

@@ -4,10 +4,10 @@ import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { always } from 'src/utils/always'
 
-export const completeImmediately = always<IOperator<any, never>>({
+export const completeImmediately = always<IOperator<unknown, never>>({
   connect(
     target: IRequiredSubscriber<never>,
-    source: Stream<any>
+    source: Stream<unknown>
   ): DisposableLike {
     target.complete()
   }

@@ -5,25 +5,25 @@ import { Stream } from 'src/models/Stream/Stream'
 import { completeImmediately } from 'src/models/Stream/StreamOperators/completeImmediately'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function take<T>(total: number): IOperator<T, T> {
+export function takeLast<T>(total: number): IOperator<T, T> {
   if (total < 0) {
     throw new TypeError('total must be positive')
   }
   if (total === 0) {
     return completeImmediately()
   }
-  return new TakeOperator<T>(total)
+  return new TakeLastOperator<T>(total)
 }
 
-class TakeOperator<T> implements IOperator<T, T> {
+class TakeLastOperator<T> implements IOperator<T, T> {
   constructor(private total: number) {}
 
   public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(new TakeSubscriber<T>(target, this.total))
+    return source.subscribe(new TakeLastSubscriber<T>(target, this.total))
   }
 }
 
-class TakeSubscriber<T> extends MonoTypeValueTransmitter<T> {
+class TakeLastSubscriber<T> extends MonoTypeValueTransmitter<T> {
   private lastValues: T[] = []
 
   constructor(target: ISubscriber<T>, private total: number) {

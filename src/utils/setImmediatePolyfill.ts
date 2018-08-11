@@ -4,7 +4,7 @@ import { root } from 'src/utils/root'
 const callbacksById: { [id: number]: () => void } = {}
 let currentId: number = 0
 let isCurrentlyRunningTask: boolean = false
-let registerImmediatePolyfill: (callbackId: number) => void
+let registerImmediate: (callbackId: number) => void
 
 function setCallback(callbackId: number, callback: () => void): void {
   callbacksById[callbackId] = callback
@@ -19,9 +19,10 @@ function removeCallback(callbackId: number): void {
 }
 
 function setImmediatePolyfill(callback: () => void): number {
-  setCallback(currentId, callback)
-  registerImmediatePolyfill(currentId)
-  return currentId++
+  const id = ++currentId
+  setCallback(id, callback)
+  registerImmediate(id)
+  return id
 }
 
 function clearImmediatePolyfill(callbackId: number): void {
@@ -48,16 +49,16 @@ function tryRunCallback(callbackId: number): void {
 }
 
 function installNextTickImplementation(): void {
-  registerImmediatePolyfill = callbackId => {
-    process.nextTick(tryRunCallback.bind(null, callbackId))
+  registerImmediate = callbackId => {
+    process.nextTick(() => tryRunCallback(callbackId))
   }
 }
 
 function installPromiseResolveImplementation(): void {
   const resolved = Promise.resolve()
 
-  registerImmediatePolyfill = callbackId => {
-    resolved.then(tryRunCallback.bind(null, callbackId))
+  registerImmediate = callbackId => {
+    resolved.then(() => tryRunCallback(callbackId))
   }
 }
 
@@ -98,7 +99,7 @@ function installPostMessageImplementation(): void {
     root.attachEvent('onmessage', onMessageCallback)
   }
 
-  registerImmediatePolyfill = callbackId => {
+  registerImmediate = callbackId => {
     root.postMessage(messagePrefix + callbackId, '*')
   }
 }
@@ -112,13 +113,13 @@ function installMessageChannelImplementation(): void {
     tryRunCallback(callbackId)
   }
 
-  registerImmediatePolyfill = callbackId => {
+  registerImmediate = callbackId => {
     channel.port2.postMessage(callbackId)
   }
 }
 
 function installSetTimeoutImplementation(): void {
-  registerImmediatePolyfill = callbackId => {
+  registerImmediate = callbackId => {
     setTimeout(tryRunCallback, 0, callbackId)
   }
 }

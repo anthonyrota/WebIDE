@@ -5,13 +5,13 @@ import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 
 export function buffer<T>(
-  shouldFlushBufferStream: Stream<any>
+  shouldFlushBufferStream: Stream<unknown>
 ): IOperator<T, T[]> {
   return new BufferOperator<T>(shouldFlushBufferStream)
 }
 
 class BufferOperator<T> implements IOperator<T, T[]> {
-  constructor(private shouldFlushBufferStream: Stream<any>) {}
+  constructor(private shouldFlushBufferStream: Stream<unknown>) {}
 
   public connect(target: ISubscriber<T[]>, source: Stream<T>): DisposableLike {
     return source.subscribe(
@@ -20,10 +20,13 @@ class BufferOperator<T> implements IOperator<T, T[]> {
   }
 }
 
-class BufferSubscriber<T> extends DoubleInputValueTransmitter<T, T[], T> {
+class BufferSubscriber<T> extends DoubleInputValueTransmitter<T, T[], unknown> {
   private buffer: T[] = []
 
-  constructor(target: ISubscriber<T[]>, shouldFlushBufferStream: Stream<any>) {
+  constructor(
+    target: ISubscriber<T[]>,
+    shouldFlushBufferStream: Stream<unknown>
+  ) {
     super(target)
     this.subscribeStreamToSelf(shouldFlushBufferStream)
   }

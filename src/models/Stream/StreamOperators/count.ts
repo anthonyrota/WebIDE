@@ -5,13 +5,16 @@ import { Stream } from 'src/models/Stream/Stream'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { always } from 'src/utils/always'
 
-export const count = always<IOperator<any, number>>({
-  connect(target: ISubscriber<number>, source: Stream<any>): DisposableLike {
+export const count = always<IOperator<unknown, number>>({
+  connect(
+    target: ISubscriber<number>,
+    source: Stream<unknown>
+  ): DisposableLike {
     return source.subscribe(new CountSubscriber(target))
   }
 })
 
-class CountSubscriber extends ValueTransmitter<any, number> {
+class CountSubscriber extends ValueTransmitter<unknown, number> {
   private count: number = 0
 
   protected onNextValue(): void {
