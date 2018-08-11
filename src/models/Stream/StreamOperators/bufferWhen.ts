@@ -64,6 +64,7 @@ class BufferWhenSubscriber<T> extends DoubleInputValueTransmitter<
   protected closeBuffer(): void {
     if (this.shouldCloseBufferStreamSubscription) {
       this.shouldCloseBufferStreamSubscription.dispose()
+      this.shouldCloseBufferStreamSubscription = null
     }
 
     this.destination.next(this.buffer)

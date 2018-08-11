@@ -67,6 +67,7 @@ class AuditSubscriber<T> extends DoubleInputValueTransmitter<T, T, unknown> {
   private clearThrottle(): void {
     if (this.shouldClearThrottleStreamSubscription) {
       this.shouldClearThrottleStreamSubscription.dispose()
+      this.shouldClearThrottleStreamSubscription = null
     }
 
     if (this.hasValue) {
