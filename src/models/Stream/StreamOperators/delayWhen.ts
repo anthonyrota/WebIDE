@@ -41,15 +41,18 @@ class DelayWhenSubscriber<T> extends DoubleInputValueTransmitterWithData<
     super(target)
   }
 
+  protected onOuterNextValue(
+    value: unknown,
+    target: DoubleInputValueTransmitterWithDataSubscriptionTarget<unknown, T>
+  ) {
+    target.dispose()
+    this.distributeDelayedValue(target.getData())
+  }
+
   protected onOuterComplete(
     target: DoubleInputValueTransmitterWithDataSubscriptionTarget<unknown, T>
   ) {
-    this.delayedValuesCount -= 1
-    this.destination.next(target.getData())
-
-    if (!this.isReceivingValues() && this.delayedValuesCount === 0) {
-      this.destination.complete()
-    }
+    this.distributeDelayedValue(target.getData())
   }
 
   protected onNextValue(value: T): void {
@@ -69,6 +72,15 @@ class DelayWhenSubscriber<T> extends DoubleInputValueTransmitterWithData<
   }
 
   protected onComplete(): void {
+    if (!this.isReceivingValues() && this.delayedValuesCount === 0) {
+      this.destination.complete()
+    }
+  }
+
+  private distributeDelayedValue(value: T): void {
+    this.delayedValuesCount -= 1
+    this.destination.next(value)
+
     if (!this.isReceivingValues() && this.delayedValuesCount === 0) {
       this.destination.complete()
     }
