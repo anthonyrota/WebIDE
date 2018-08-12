@@ -175,10 +175,11 @@ class Destination<T> implements IRequiredSubscriber<T> {
       } catch (subscriberError) {
         asyncReportError(subscriberError)
       }
+    } else {
+      asyncReportError(error)
     }
 
     this.__dispose()
-    asyncReportError(error)
   }
 
   public complete(): void {

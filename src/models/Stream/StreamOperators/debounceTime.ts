@@ -1,7 +1,7 @@
 import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
-import { delay } from 'src/models/Scheduler/delay'
 import { IScheduler } from 'src/models/Scheduler/Scheduler'
+import { sync } from 'src/models/Scheduler/sync'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
@@ -9,7 +9,7 @@ import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function debounceTime<T>(
   duration: number,
-  scheduler: IScheduler = delay
+  scheduler: IScheduler = sync
 ): IOperator<T, T> {
   return new DebounceTimeOperator<T>(duration, scheduler)
 }

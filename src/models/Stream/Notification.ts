@@ -1,18 +1,18 @@
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 
 export const enum NotificationType {
-  Value,
+  Next,
   Error,
   Complete
 }
 
 export type Notification<T> =
-  | { type: NotificationType.Value; value: T }
+  | { type: NotificationType.Next; value: T }
   | { type: NotificationType.Error; error: unknown }
   | { type: NotificationType.Complete }
 
 export function createValueNotification<T>(value: T): Notification<T> {
-  return { type: NotificationType.Value, value }
+  return { type: NotificationType.Next, value }
 }
 
 export function createErrorNotification<T>(error: unknown): Notification<T> {
@@ -27,7 +27,7 @@ export function distributeNotification<T>(
   notification: Notification<T>,
   target: ISubscriber<T>
 ): void {
-  if (notification.type === NotificationType.Value) {
+  if (notification.type === NotificationType.Next) {
     if (target.next) {
       target.next(notification.value)
     }
