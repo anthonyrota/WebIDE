@@ -24,15 +24,17 @@ export abstract class FlushableAsyncScheduler extends AsyncScheduler {
       const result = action.execute()
 
       if (result) {
-        this.__isExecutingActions = false
         this.disposeScheduled()
 
         while ((action = this.shiftAction())) {
           action.disposeWithoutRemovingFromScheduler()
         }
 
+        while ((action = this.__actionsToAddAfterFinishedExecuting.shift())) {
+          action.disposeWithoutRemovingFromScheduler()
+        }
+
         this.__isExecutingActions = false
-        this.__actionsToAddAfterFinishedExecuting.length = 0
         throw result.error
       }
     }

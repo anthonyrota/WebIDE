@@ -51,13 +51,18 @@ class BufferWhenSubscriber<T> extends DoubleInputValueTransmitter<
 
   protected onOuterNextValue(): void {
     this.closeBuffer()
+    this.openBuffer()
   }
 
   protected onOuterComplete(): void {
     if (this.isSubscribing) {
+      if (this.buffer.length > 0) {
+        this.destination.next(this.buffer)
+      }
       this.destination.complete()
     } else {
       this.closeBuffer()
+      this.openBuffer()
     }
   }
 

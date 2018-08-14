@@ -41,4 +41,11 @@ class BufferSubscriber<T> extends DoubleInputValueTransmitter<T, T[], unknown> {
     this.buffer = []
     this.destination.next(buffer)
   }
+
+  protected onOuterComplete(): void {
+    if (this.buffer.length > 0) {
+      this.destination.next(this.buffer)
+    }
+    this.destination.complete()
+  }
 }
