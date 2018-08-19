@@ -38,6 +38,7 @@ export function combineLatest<T, T2, T3, T4, T5, T6>(
   v5: Stream<T5>,
   v6: Stream<T6>
 ): Stream<[T, T2, T3, T4, T5, T6]>
+export function combineLatest<T>(...streams: Array<Stream<T>>): Stream<T[]>
 export function combineLatest<T>(...streams: Array<Stream<T>>): Stream<T[]> {
   return streams.length === 0
     ? empty()
