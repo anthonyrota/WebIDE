@@ -34,8 +34,4 @@ class NthSubscriber<T> extends ValueTransmitter<T, T> {
       this.index++
     }
   }
-
-  public onComplete(): void {
-    this.destination.error(new Error('stream emitted no values'))
-  }
 }

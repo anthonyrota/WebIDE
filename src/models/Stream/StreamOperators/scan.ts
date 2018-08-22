@@ -36,6 +36,8 @@ class ScanSubscriber<T> extends MonoTypeValueTransmitter<T> {
     if (!this.hasAccumulatedValue) {
       this.hasAccumulatedValue = true
       this.accumulatedValue = value
+      this.destination.next(value)
+      return
     }
 
     const { accumulate } = this

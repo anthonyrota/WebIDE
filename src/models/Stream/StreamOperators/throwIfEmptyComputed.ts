@@ -4,25 +4,23 @@ import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function throwIfEmptyWithDefaultValue<T>(
+export function throwIfEmptyComputed<T>(
   getError: () => unknown
 ): IOperator<T, T> {
-  return new ThrowIfEmptyWithDefaultValueOperator<T>(getError)
+  return new ThrowIfEmptyComputedOperator<T>(getError)
 }
 
-class ThrowIfEmptyWithDefaultValueOperator<T> implements IOperator<T, T> {
+class ThrowIfEmptyComputedOperator<T> implements IOperator<T, T> {
   constructor(private getError: () => unknown) {}
 
   public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
     return source.subscribe(
-      new ThrowIfEmptyWithDefaultValueSubscriber<T>(target, this.getError)
+      new ThrowIfEmptyComputedSubscriber<T>(target, this.getError)
     )
   }
 }
 
-class ThrowIfEmptyWithDefaultValueSubscriber<
-  T
-> extends MonoTypeValueTransmitter<T> {
+class ThrowIfEmptyComputedSubscriber<T> extends MonoTypeValueTransmitter<T> {
   private hasValue: boolean = false
 
   constructor(subscriber: ISubscriber<T>, private getError: () => unknown) {

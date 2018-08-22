@@ -19,8 +19,4 @@ class FirstSubscriber<T> extends MonoTypeValueTransmitter<T> {
     this.destination.next(value)
     this.destination.complete()
   }
-
-  protected onComplete(): void {
-    this.destination.error(new Error('[FirstOperator] No value was emitted'))
-  }
 }

@@ -91,7 +91,7 @@ export abstract class AsyncScheduler implements IScheduler {
     }
   }
 
-  protected abstract requestExecutionOfAllActions(): IDisposable
+  protected abstract requestExecutionOfAllActions(): IDisposable | void
   protected abstract requestExecutionOfActionDelayed(
     action: AsyncAction,
     delay: number
