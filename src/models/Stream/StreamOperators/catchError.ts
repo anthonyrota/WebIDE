@@ -45,7 +45,7 @@ class CatchErrorSubscriber<T, U> extends MonoTypeDoubleInputValueTransmitter<
         return
       }
 
-      this.unsubscribeAndRecycle()
+      this.disposeAndRecycle()
       this.subscribeStreamToSelf(resultStream)
     }
   }

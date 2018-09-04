@@ -1,6 +1,6 @@
 import { IScheduler } from 'src/models/Scheduler/Scheduler'
 import { RawStream, Stream } from 'src/models/Stream/Stream'
-import { $$iterator } from 'src/utils/iteratorSymbol'
+import { getIteratorSymbol } from 'src/utils/iteratorSymbol'
 
 export function fromIterableScheduled<T>(
   iterable: Iterable<T>,
@@ -8,7 +8,7 @@ export function fromIterableScheduled<T>(
 ): Stream<T> {
   return new RawStream<T>(target => {
     return scheduler.schedule(() => {
-      const iterator = iterable[$$iterator]()
+      const iterator = iterable[getIteratorSymbol()]()
 
       target.terminateDisposableWhenDisposed(
         scheduler.schedule(action => {

@@ -55,6 +55,9 @@ export const emptySubscription: ISubscription = freeze({
   }
 })
 
+const recycleMethodPropertyName: string =
+  '$$__private_recycleMethodPropertyName__$$'
+
 export class Subscription implements ISubscription {
   public readonly [isSubscriptionPropertyKey] = true
 
@@ -157,7 +160,7 @@ export class Subscription implements ISubscription {
     return !this.__isActive
   }
 
-  protected __class$$RecyclableSubscription$$unsafePrivateUnsubscribeAndRecycleRecycleMethod$$(): void {
+  public [recycleMethodPropertyName](): void {
     const parents = this.__parents
     this.__parents = null
     this.dispose()
@@ -218,7 +221,7 @@ export class Subscription implements ISubscription {
 }
 
 export class RecyclableSubscription extends Subscription {
-  public unsubscribeAndRecycle(): void {
-    super.__class$$RecyclableSubscription$$unsafePrivateUnsubscribeAndRecycleRecycleMethod$$()
+  public disposeAndRecycle(): void {
+    super[recycleMethodPropertyName]()
   }
 }

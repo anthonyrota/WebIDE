@@ -2,35 +2,16 @@ import { IDisposable } from 'src/models/Disposable/IDisposable'
 import {
   isSubscription,
   ISubscription,
-  RecyclableSubscription
+  RecyclableSubscription,
+  Subscription
 } from 'src/models/Disposable/Subscription'
+import {
+  IReceivingValuesSubscription,
+  isReceivingValuesSubscription,
+  isReceivingValuesSubscriptionPropertyKey
+} from 'src/models/Stream/IReceivingValuesSubscription'
 import { IRequiredSubscriber, ISubscriber } from 'src/models/Stream/ISubscriber'
 import { asyncReportError } from 'src/utils/asyncReportError'
-
-export const isReceivingValuesSubscriptionPropertyKey =
-  '@@__ReceivingValuesSubscriptionClassEqualityCheckKey__@@'
-
-export function isReceivingValuesSubscription(
-  candidate: any
-): candidate is IReceivingValuesSubscription {
-  return (
-    candidate != null &&
-    candidate[isReceivingValuesSubscriptionPropertyKey] === true
-  )
-}
-
-export interface IReceivingValuesSubscription {
-  readonly [isReceivingValuesSubscriptionPropertyKey]: true
-  terminateDisposableWhenStopsReceivingValues(
-    disposable: IDisposable
-  ): ISubscription
-  terminateDisposableLikeWhenStopsReceivingValues(
-    disposableLike: IDisposable
-  ): ISubscription
-  onStopReceivingValues(dispose: () => void): ISubscription
-  removeOnStopReceivingValuesSubscription(subscription: ISubscription): void
-  isReceivingValues(): boolean
-}
 
 export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
   implements IRequiredSubscriber<TInput>, IReceivingValuesSubscription {
@@ -42,8 +23,8 @@ export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
   constructor(
     target:
       | ISubscriber<TOutput>
+      | (IReceivingValuesSubscription & ISubscriber<TOutput>)
       | (ISubscription & ISubscriber<TOutput>)
-      | ValueTransmitter<TOutput, unknown>
   ) {
     super()
 
@@ -118,10 +99,10 @@ export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
     }
   }
 
-  public unsubscribeAndRecycle(): void {
+  public disposeAndRecycle(): void {
     this.__isReceivingValues = false
-    this.__onStopReceivingValuesSubscription.unsubscribeAndRecycle()
-    super.unsubscribeAndRecycle()
+    this.__onStopReceivingValuesSubscription.disposeAndRecycle()
+    super.disposeAndRecycle()
     this.__isReceivingValues = true
   }
 
@@ -148,53 +129,89 @@ export function isValueTransmitter(
   return value instanceof ValueTransmitter
 }
 
-class Destination<T> implements IRequiredSubscriber<T> {
+class Destination<T> extends Subscription
+  implements IRequiredSubscriber<T>, IReceivingValuesSubscription {
+  public readonly [isReceivingValuesSubscriptionPropertyKey] = true
   private __parentDistributor: IDisposable
   private __target: ISubscriber<T>
 
   constructor(parentDistributor: IDisposable, target: ISubscriber<T>) {
+    super()
     this.__parentDistributor = parentDistributor
     this.__target = target
   }
 
   public next(value: T): void {
-    if (this.__target.next) {
-      try {
-        this.__target.next(value)
-      } catch (subscriberError) {
-        this.__dispose()
-        asyncReportError(subscriberError)
+    if (this.isActive()) {
+      if (this.__target.next) {
+        try {
+          this.__target.next(value)
+        } catch (targetError) {
+          this.dispose()
+          asyncReportError(targetError)
+        }
       }
     }
   }
 
   public error(error: unknown): void {
-    if (this.__target.error) {
-      try {
-        this.__target.error(error)
-      } catch (subscriberError) {
-        asyncReportError(subscriberError)
+    if (this.isActive()) {
+      if (this.__target.error) {
+        try {
+          this.__target.error(error)
+        } catch (targetError) {
+          asyncReportError(targetError)
+        }
+      } else {
+        asyncReportError(error)
       }
-    } else {
-      asyncReportError(error)
-    }
 
-    this.__dispose()
+      this.dispose()
+    }
   }
 
   public complete(): void {
-    if (this.__target.complete) {
-      try {
-        this.__target.complete()
-      } catch (subscriberError) {
-        asyncReportError(subscriberError)
+    if (this.isActive()) {
+      if (this.__target.complete) {
+        try {
+          this.__target.complete()
+        } catch (targetError) {
+          asyncReportError(targetError)
+        }
       }
-    }
 
-    this.__dispose()
+      this.dispose()
+    }
   }
 
-  private __dispose(): void {
+  public dispose(): void {
+    super.dispose()
     this.__parentDistributor.dispose()
+  }
+
+  public terminateDisposableWhenStopsReceivingValues(
+    disposable: IDisposable
+  ): ISubscription {
+    return this.terminateDisposableWhenDisposed(disposable)
+  }
+
+  public terminateDisposableLikeWhenStopsReceivingValues(
+    disposableLike: IDisposable
+  ): ISubscription {
+    return this.terminateDisposableLikeWhenDisposed(disposableLike)
+  }
+
+  public onStopReceivingValues(dispose: () => void): ISubscription {
+    return this.onDispose(dispose)
+  }
+
+  public removeOnStopReceivingValuesSubscription(
+    subscription: ISubscription
+  ): void {
+    this.removeSubscription(subscription)
+  }
+
+  public isReceivingValues(): boolean {
+    return this.isActive()
   }
 }

@@ -1,8 +1,8 @@
 import { ISubscription } from 'src/models/Disposable/Subscription'
 
 export interface ISchedulerActionWithData<T> extends ISubscription {
-  schedule(data: T): ISubscription
-  scheduleDelayed(data: T, delay: number): ISubscription
+  scheduleWithData(data: T): ISubscription
+  scheduleDelayedWithData(delay: number, data: T): ISubscription
 }
 
 export interface ISchedulerActionWithoutData extends ISubscription {
@@ -25,7 +25,7 @@ export interface IScheduler {
   ): ISchedulerActionWithoutData
   scheduleDelayedWithData<T>(
     task: (data: T, action: ISchedulerActionWithData<T>) => void,
-    data: T,
-    delay: number
+    delay: number,
+    data: T
   ): ISchedulerActionWithData<T>
 }

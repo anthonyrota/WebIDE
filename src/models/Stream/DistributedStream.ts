@@ -11,13 +11,13 @@ import {
   MutableMaybe
 } from 'src/models/Maybe/MutableMaybe'
 import { IOperator } from 'src/models/Stream/IOperator'
-import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
-import { DuplicateStream, Stream } from 'src/models/Stream/Stream'
 import {
   IReceivingValuesSubscription,
-  isReceivingValuesSubscriptionPropertyKey,
-  ValueTransmitter
-} from 'src/models/Stream/ValueTransmitter'
+  isReceivingValuesSubscriptionPropertyKey
+} from 'src/models/Stream/IReceivingValuesSubscription'
+import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
+import { DuplicateStream, Stream } from 'src/models/Stream/Stream'
+import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { removeOnce } from 'src/utils/removeOnce'
 
 export interface IDistributedStream<TInput, TOutput>

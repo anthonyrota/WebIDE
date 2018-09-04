@@ -1,9 +1,9 @@
 import { RawStream, Stream } from 'src/models/Stream/Stream'
-import { $$asyncIterator } from 'src/utils/asyncIteratorSymbol'
+import { getAsyncIteratorSymbol } from 'src/utils/asyncIteratorSymbol'
 
 export function fromAsyncIterable<T>(iterable: AsyncIterable<T>): Stream<T> {
   return new RawStream<T>(target => {
-    const iterator = iterable[$$asyncIterator]()
+    const iterator = iterable[getAsyncIteratorSymbol()]()
 
     function getNext() {
       if (!target.isReceivingValues()) {

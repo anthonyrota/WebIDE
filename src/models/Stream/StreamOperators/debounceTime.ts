@@ -37,15 +37,19 @@ class DebounceTimeSubscriber<T> extends MonoTypeValueTransmitter<T> {
     super(target)
   }
 
+  private static distributeValue<T>(target: DebounceTimeSubscriber<T>): void {
+    target.distributeValue()
+  }
+
   protected onNextValue(value: T): void {
     this.clearDebounce()
     this.value = value
     this.hasValue = true
     this.delayDisposable = this.terminateDisposableWhenDisposed(
       this.scheduler.scheduleDelayedWithData<DebounceTimeSubscriber<T>>(
-        this.distributeValue,
-        this,
-        this.duration
+        DebounceTimeSubscriber.distributeValue,
+        this.duration,
+        this
       )
     )
   }
@@ -62,15 +66,15 @@ class DebounceTimeSubscriber<T> extends MonoTypeValueTransmitter<T> {
     }
   }
 
-  private distributeValue(self: DebounceTimeSubscriber<T> = this): void {
-    self.clearDebounce()
+  private distributeValue(): void {
+    this.clearDebounce()
 
-    if (self.hasValue) {
-      const value = self.value!
+    if (this.hasValue) {
+      const value = this.value!
 
-      self.value = null
-      self.hasValue = false
-      self.destination.next(value)
+      this.value = null
+      this.hasValue = false
+      this.destination.next(value)
     }
   }
 }

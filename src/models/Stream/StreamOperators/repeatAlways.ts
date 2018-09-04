@@ -4,22 +4,22 @@ import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function retryAlways<T>(): IOperator<T, T> {
-  return new RetryOperator<T>()
+export function repeatAlways<T>(): IOperator<T, T> {
+  return new RepeatAlwaysOperator<T>()
 }
 
-class RetryOperator<T> implements IOperator<T, T> {
+class RepeatAlwaysOperator<T> implements IOperator<T, T> {
   public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(new RetrySubscriber<T>(target, source))
+    return source.subscribe(new RepeatAlwaysSubscriber<T>(target, source))
   }
 }
 
-class RetrySubscriber<T> extends MonoTypeValueTransmitter<T> {
+class RepeatAlwaysSubscriber<T> extends MonoTypeValueTransmitter<T> {
   constructor(target: ISubscriber<T>, private source: Stream<T>) {
     super(target)
   }
 
-  public error(): void {
+  public complete(): void {
     if (this.isActive()) {
       this.disposeAndRecycle()
       this.source.subscribe(this)

@@ -11,7 +11,7 @@ export type Notification<T> =
   | { type: NotificationType.Error; error: unknown }
   | { type: NotificationType.Complete }
 
-export function createValueNotification<T>(value: T): Notification<T> {
+export function createNextNotification<T>(value: T): Notification<T> {
   return { type: NotificationType.Next, value }
 }
 

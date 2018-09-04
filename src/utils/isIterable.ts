@@ -1,5 +1,5 @@
-import { $$iterator } from 'src/utils/iteratorSymbol'
+import { getIteratorSymbol } from 'src/utils/iteratorSymbol'
 
 export function isIterable(value: any): value is Iterable<unknown> {
-  return value != null && typeof value[$$iterator] === 'function'
+  return value != null && typeof value[getIteratorSymbol()] === 'function'
 }

@@ -14,7 +14,7 @@ export function fromArrayScheduled<T>(
             target.complete()
           } else {
             target.next(array[index])
-            action.schedule(index + 1)
+            action.scheduleWithData(index + 1)
           }
         }, 0)
       })

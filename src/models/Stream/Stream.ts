@@ -5,9 +5,9 @@ import {
   ISubscription
 } from 'src/models/Disposable/Subscription'
 import { IOperator } from 'src/models/Stream/IOperator'
+import { isReceivingValuesSubscription } from 'src/models/Stream/IReceivingValuesSubscription'
 import { ISubscribable, ISubscriber } from 'src/models/Stream/ISubscriber'
 import {
-  isReceivingValuesSubscription,
   isValueTransmitter,
   MonoTypeValueTransmitter,
   ValueTransmitter
@@ -117,6 +117,10 @@ export abstract class Stream<T> implements ISubscribable<T> {
     const target = isValueTransmitter(targetSubscriber)
       ? targetSubscriber
       : new MonoTypeValueTransmitter<T>(targetSubscriber)
+
+    if (!target.isReceivingValues()) {
+      return emptySubscription
+    }
 
     let disposable: DisposableLike
 

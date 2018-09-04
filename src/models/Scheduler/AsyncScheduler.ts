@@ -28,7 +28,7 @@ export abstract class AsyncScheduler implements IScheduler {
     task: (data: T, action: ISchedulerActionWithData<T>) => void,
     data: T
   ): ISchedulerActionWithData<T> {
-    return new AsyncActionWithData<T>(this, task).schedule(data)
+    return new AsyncActionWithData<T>(this, task).scheduleWithData(data)
   }
 
   public scheduleDelayed(
@@ -40,10 +40,13 @@ export abstract class AsyncScheduler implements IScheduler {
 
   public scheduleDelayedWithData<T>(
     task: (data: T, action: ISchedulerActionWithData<T>) => void,
-    data: T,
-    delay: number
+    delay: number,
+    data: T
   ): ISchedulerActionWithData<T> {
-    return new AsyncActionWithData<T>(this, task).scheduleDelayed(data, delay)
+    return new AsyncActionWithData<T>(this, task).scheduleDelayedWithData(
+      delay,
+      data
+    )
   }
 
   public scheduleAction(action: AsyncAction): void {

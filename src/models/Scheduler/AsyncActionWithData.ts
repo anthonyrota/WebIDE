@@ -15,7 +15,7 @@ export class AsyncActionWithData<T> extends AsyncAction
     this.__task = task
   }
 
-  public schedule(data: T): this {
+  public scheduleWithData(data: T): this {
     if (this.isActive()) {
       this.__data = data
       super.requestExecution()
@@ -23,7 +23,7 @@ export class AsyncActionWithData<T> extends AsyncAction
     return this
   }
 
-  public scheduleDelayed(data: T, delay: number): this {
+  public scheduleDelayedWithData(delay: number, data: T): this {
     if (this.isActive()) {
       this.__data = data
       super.requestExecutionDelayed(delay)

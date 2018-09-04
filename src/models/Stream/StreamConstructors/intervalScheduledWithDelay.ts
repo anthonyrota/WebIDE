@@ -9,10 +9,10 @@ export function intervalScheduledWithDelay(
     return scheduler.scheduleDelayedWithData<number>(
       (index, action) => {
         target.next(index)
-        action.scheduleDelayed(index, delay)
+        action.scheduleDelayedWithData(delay, index)
       },
-      0,
-      delay
+      delay,
+      0
     )
   })
 }

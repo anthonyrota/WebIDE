@@ -1,9 +1,9 @@
 import { RawStream, Stream } from 'src/models/Stream/Stream'
-import { $$iterator } from 'src/utils/iteratorSymbol'
+import { getIteratorSymbol } from 'src/utils/iteratorSymbol'
 
 export function fromIterable<T>(iterable: Iterable<T>): Stream<T> {
   return new RawStream<T>(target => {
-    const iterator = iterable[$$iterator]()
+    const iterator = iterable[getIteratorSymbol()]()
 
     while (target.isReceivingValues()) {
       let result: IteratorResult<T>

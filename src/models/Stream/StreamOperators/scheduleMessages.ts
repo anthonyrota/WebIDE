@@ -69,8 +69,8 @@ class ScheduleMessagesSubscriber<T> extends MonoTypeValueTransmitter<T> {
     this.terminateDisposableWhenDisposed(
       this.scheduler.scheduleDelayedWithData<ISchedulerData<T>>(
         ScheduleMessagesSubscriber.schedulerCallback,
-        { transmitter: this, notification },
-        this.delay
+        this.delay,
+        { transmitter: this, notification }
       )
     )
   }

@@ -4,22 +4,22 @@ import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function retry<T>(count: number): IOperator<T, T> {
+export function repeat<T>(count: number): IOperator<T, T> {
   if (count < 0) {
     throw new TypeError('count must be positive')
   }
-  return new RetryOperator<T>(count)
+  return new RepeatOperator<T>(count)
 }
 
-class RetryOperator<T> implements IOperator<T, T> {
+class RepeatOperator<T> implements IOperator<T, T> {
   constructor(private count: number) {}
 
   public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(new RetrySubscriber<T>(target, this.count, source))
+    return source.subscribe(new RepeatSubscriber<T>(target, this.count, source))
   }
 }
 
-class RetrySubscriber<T> extends MonoTypeValueTransmitter<T> {
+class RepeatSubscriber<T> extends MonoTypeValueTransmitter<T> {
   constructor(
     target: ISubscriber<T>,
     private count: number,
@@ -28,10 +28,9 @@ class RetrySubscriber<T> extends MonoTypeValueTransmitter<T> {
     super(target)
   }
 
-  public error(error: unknown): void {
+  public complete(): void {
     if (this.isActive()) {
       if (this.count === 0) {
-        super.error(error)
         return
       }
 

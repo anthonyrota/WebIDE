@@ -69,7 +69,7 @@ class SyncSchedulerActionWithData<T> extends SyncSchedulerAction
     this.__task = task
   }
 
-  public schedule(data: T): this {
+  public scheduleWithData(data: T): this {
     if (this.isActive()) {
       this.__data = data
       super.execute()
@@ -77,7 +77,7 @@ class SyncSchedulerActionWithData<T> extends SyncSchedulerAction
     return this
   }
 
-  public scheduleDelayed(data: T, delay: number): this {
+  public scheduleDelayedWithData(delay: number, data: T): this {
     if (this.isActive()) {
       this.__data = data
       super.requestExecutionDelayed(delay)
@@ -135,7 +135,7 @@ export class SyncScheduler implements IScheduler {
     task: (data: T, action: ISchedulerActionWithData<T>) => void,
     data: T
   ): ISchedulerActionWithData<T> {
-    return new SyncSchedulerActionWithData<T>(task).schedule(data)
+    return new SyncSchedulerActionWithData<T>(task).scheduleWithData(data)
   }
 
   public scheduleDelayed(
@@ -147,9 +147,12 @@ export class SyncScheduler implements IScheduler {
 
   public scheduleDelayedWithData<T>(
     task: (data: T, action: ISchedulerActionWithData<T>) => void,
-    data: T,
-    delay: number
+    delay: number,
+    data: T
   ): ISchedulerActionWithData<T> {
-    return new SyncSchedulerActionWithData<T>(task).scheduleDelayed(data, delay)
+    return new SyncSchedulerActionWithData<T>(task).scheduleDelayedWithData(
+      delay,
+      data
+    )
   }
 }

@@ -1,13 +1,16 @@
 declare global {
   // tslint:disable-next-line
   interface AsyncIterable<T> {
-    [$$asyncIterator](): AsyncIterator<T>
+    [asyncIteratorSymbolType](): AsyncIterator<T>
   }
 }
 
-// @ts-ignore
-export const $$asyncIterator: unique symbol =
-  typeof Symbol === 'function'
+export const asyncIteratorSymbolType: unique symbol = getAsyncIteratorSymbol()
+
+export function getAsyncIteratorSymbol(): typeof asyncIteratorSymbolType {
+  // @ts-ignore
+  return typeof Symbol === 'function'
     ? Symbol.asyncIterator ||
-      (Symbol.for ? Symbol.for('asyncIterator') : Symbol('asyncIterator'))
+        (Symbol.for ? Symbol.for('asyncIterator') : Symbol('asyncIterator'))
     : ('@@asyncIterator' as any)
+}

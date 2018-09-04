@@ -64,12 +64,12 @@ class DelaySubscriber<T> extends MonoTypeValueTransmitter<T> {
     }
 
     if (subscriber.notificationQueue.length > 0) {
-      action.scheduleDelayed(
-        subscriber,
+      action.scheduleDelayedWithData(
         Math.max(
           0,
           subscriber.notificationQueue[0].dueTime - subscriber.scheduler.now()
-        )
+        ),
+        subscriber
       )
     } else {
       subscriber.isScheduled = false
@@ -102,8 +102,8 @@ class DelaySubscriber<T> extends MonoTypeValueTransmitter<T> {
       this.terminateDisposableWhenDisposed(
         this.scheduler.scheduleDelayedWithData<DelaySubscriber<T>>(
           DelaySubscriber.schedulerCallback,
-          this,
-          this.delayTime
+          this.delayTime,
+          this
         )
       )
     }

@@ -44,7 +44,7 @@ class EndWithScheduledSubscriber<T> extends MonoTypeValueTransmitter<T> {
       transmitter.destination.complete()
     } else {
       transmitter.destination.next(transmitter.values[transmitter.index++])
-      action.schedule(transmitter)
+      action.scheduleWithData(transmitter)
     }
   }
 
