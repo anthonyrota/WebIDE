@@ -31,7 +31,7 @@ class RetryWhenSubscriber<T> extends DoubleInputValueTransmitter<
 > {
   private errorStream: DistributedStream<unknown>
   private shouldRetryStreamSubscription!: ISubscription
-  private isSubscribedToSource: boolean = false
+  private isSubscribedToSource: boolean = true
 
   constructor(
     target: ISubscriber<T>,
@@ -52,8 +52,7 @@ class RetryWhenSubscriber<T> extends DoubleInputValueTransmitter<
       return
     }
 
-    this.resubscribeToSource()
-
+    this.source.subscribe(this)
     this.shouldRetryStreamSubscription = this.subscribeStreamToSelf(
       shouldRetryStream
     )

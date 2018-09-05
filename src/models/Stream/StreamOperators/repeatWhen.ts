@@ -20,8 +20,10 @@ class RepeatWhenOperator<T> implements IOperator<T, T> {
   ) {}
 
   public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new RepeatWhenSubscriber<T>(target, this.getShouldRepeatStream, source)
+    return new RepeatWhenSubscriber<T>(
+      target,
+      this.getShouldRepeatStream,
+      source
     )
   }
 }
@@ -29,11 +31,11 @@ class RepeatWhenOperator<T> implements IOperator<T, T> {
 class RepeatWhenSubscriber<T> extends DoubleInputValueTransmitter<T, T, void> {
   private completionsStream: DistributedStream<void>
   private shouldRepeatStreamSubscription!: ISubscription
-  private isSubscribedToSource: boolean = false
+  private isSubscribedToSource: boolean = true
 
   constructor(
     target: ISubscriber<T>,
-    getShouldRepeatStream: (errorStream: Stream<void>) => Stream<void>,
+    getShouldRepeatStream: (completionsStream: Stream<void>) => Stream<void>,
     private source: Stream<T>
   ) {
     super(target)
@@ -50,8 +52,7 @@ class RepeatWhenSubscriber<T> extends DoubleInputValueTransmitter<T, T, void> {
       return
     }
 
-    this.resubscribeToSource()
-
+    this.source.subscribe(this)
     this.shouldRepeatStreamSubscription = this.subscribeStreamToSelf(
       shouldRepeatStream
     )
