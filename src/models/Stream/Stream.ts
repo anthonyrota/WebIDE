@@ -114,9 +114,20 @@ export abstract class Stream<T> implements ISubscribable<T> {
       return emptySubscription
     }
 
-    const target = isValueTransmitter(targetSubscriber)
-      ? targetSubscriber
-      : new MonoTypeValueTransmitter<T>(targetSubscriber)
+    /**
+     * This one is not used as if the target is a value transmitter, and
+     * the target `disposeAndRecycle`s, then the producer will still be able
+     * to send the destination values through the `next` method, etc., which
+     * messes with operators such as `retryWhen` and `repeatWhen`. Because
+     * of this, we always have to create a new intermediate value transmitter
+     * which is then send to the `trySubscribe` function
+     *
+     * const target = isValueTransmitter(targetSubscriber)
+     *   ? targetSubscriber
+     *   : new MonoTypeValueTransmitter<T>(targetSubscriber)
+     */
+
+    const target = new MonoTypeValueTransmitter<T>(targetSubscriber)
 
     if (!target.isReceivingValues()) {
       return emptySubscription

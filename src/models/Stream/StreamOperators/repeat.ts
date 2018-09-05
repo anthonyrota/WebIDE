@@ -31,6 +31,7 @@ class RepeatSubscriber<T> extends MonoTypeValueTransmitter<T> {
   public complete(): void {
     if (this.isActive()) {
       if (this.count === 0) {
+        this.destination.complete()
         return
       }
 

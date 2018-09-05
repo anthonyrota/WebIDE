@@ -31,64 +31,34 @@ class RepeatWhenSubscriber<T> extends DoubleInputValueTransmitter<
   T,
   unknown
 > {
-  private completionsStream: DistributedStream<void> | null = null
-  private shouldRepeatStreamSubscription: ISubscription | null = null
-  private isCurrentlySubscribedToSource: boolean = true
+  private completionsStream: DistributedStream<unknown>
+  private shouldRepeatStreamSubscription!: ISubscription
+  private isSubscribedToSource: boolean = false
 
   constructor(
     target: ISubscriber<T>,
-    private getShouldRepeatStream: (
-      completionsStream: Stream<void>
-    ) => Stream<unknown>,
+    getShouldRepeatStream: (errorStream: Stream<unknown>) => Stream<unknown>,
     private source: Stream<T>
   ) {
     super(target)
-  }
 
-  public onOuterNextValue(): void {
-    this.isCurrentlySubscribedToSource = true
-    this.source.subscribe(this)
-  }
+    this.completionsStream = new DistributedStream<unknown>()
+    this.terminateDisposableWhenDisposed(this.completionsStream)
 
-  public onOuterComplete(): void {
-    if (!this.isCurrentlySubscribedToSource) {
-      this.destination.complete()
+    let shouldRepeatStream: Stream<unknown>
+
+    try {
+      shouldRepeatStream = getShouldRepeatStream(this.completionsStream)
+    } catch (error) {
+      this.destination.error(error)
+      return
     }
-  }
 
-  public complete(): void {
-    if (this.isReceivingValues()) {
-      this.isCurrentlySubscribedToSource = false
+    this.resubscribeToSource()
 
-      if (!this.completionsStream) {
-        this.completionsStream = new DistributedStream<void>()
-
-        const { getShouldRepeatStream } = this
-        let shouldRepeatStream: Stream<unknown>
-
-        try {
-          shouldRepeatStream = getShouldRepeatStream(this.completionsStream)
-        } catch (error) {
-          this.destination.error(error)
-          return
-        }
-
-        this.shouldRepeatStreamSubscription = this.subscribeStreamToSelf(
-          shouldRepeatStream
-        )
-      }
-
-      if (
-        !this.shouldRepeatStreamSubscription ||
-        this.shouldRepeatStreamSubscription.isDisposed()
-      ) {
-        this.destination.complete()
-        return
-      }
-
-      this.disposeAndRecycle()
-      this.completionsStream.next(undefined)
-    }
+    this.shouldRepeatStreamSubscription = this.subscribeStreamToSelf(
+      shouldRepeatStream
+    )
   }
 
   public disposeAndRecycle(): void {
@@ -105,5 +75,38 @@ class RepeatWhenSubscriber<T> extends DoubleInputValueTransmitter<
     if (this.shouldRepeatStreamSubscription) {
       this.terminateDisposableWhenDisposed(this.shouldRepeatStreamSubscription)
     }
+  }
+
+  public complete(): void {
+    if (this.isReceivingValues()) {
+      if (this.shouldRepeatStreamSubscription.isDisposed()) {
+        this.destination.complete()
+        return
+      }
+      this.isSubscribedToSource = false
+      this.disposeAndRecycle()
+      this.completionsStream.next(undefined)
+    }
+  }
+
+  protected onComplete(): void {
+    this.completionsStream.complete()
+    this.destination.complete()
+  }
+
+  protected onOuterNextValue(): void {
+    this.resubscribeToSource()
+  }
+
+  protected onOuterComplete(): void {
+    if (!this.isSubscribedToSource) {
+      this.destination.complete()
+    }
+  }
+
+  private resubscribeToSource(): void {
+    this.isSubscribedToSource = true
+    this.disposeAndRecycle()
+    this.source.subscribe(this)
   }
 }

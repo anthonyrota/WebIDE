@@ -20,9 +20,7 @@ class RetryWhenOperator<T> implements IOperator<T, T> {
   ) {}
 
   public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new RetryWhenSubscriber(target, this.getShouldRetryStream, source)
-    )
+    return new RetryWhenSubscriber(target, this.getShouldRetryStream, source)
   }
 }
 
@@ -31,17 +29,34 @@ class RetryWhenSubscriber<T> extends DoubleInputValueTransmitter<
   T,
   unknown
 > {
-  private errorStream: DistributedStream<unknown> | null = null
-  private shouldRetryStreamSubscription: ISubscription | null = null
+  private errorStream: DistributedStream<unknown>
+  private shouldRetryStreamSubscription!: ISubscription
+  private isSubscribedToSource: boolean = false
 
   constructor(
     target: ISubscriber<T>,
-    private getShouldRetryStream: (
-      errorStream: Stream<unknown>
-    ) => Stream<unknown>,
+    getShouldRetryStream: (errorStream: Stream<unknown>) => Stream<unknown>,
     private source: Stream<T>
   ) {
     super(target)
+
+    this.errorStream = new DistributedStream<unknown>()
+    this.terminateDisposableWhenDisposed(this.errorStream)
+
+    let shouldRetryStream: Stream<unknown>
+
+    try {
+      shouldRetryStream = getShouldRetryStream(this.errorStream)
+    } catch (error) {
+      this.destination.error(error)
+      return
+    }
+
+    this.resubscribeToSource()
+
+    this.shouldRetryStreamSubscription = this.subscribeStreamToSelf(
+      shouldRetryStream
+    )
   }
 
   public disposeAndRecycle(): void {
@@ -62,30 +77,33 @@ class RetryWhenSubscriber<T> extends DoubleInputValueTransmitter<
 
   public error(error: unknown): void {
     if (this.isReceivingValues()) {
-      if (!this.errorStream) {
-        this.errorStream = new DistributedStream<unknown>()
-
-        let shouldRetryStream: Stream<unknown>
-        const { getShouldRetryStream } = this
-
-        try {
-          shouldRetryStream = getShouldRetryStream(this.errorStream)
-        } catch (error) {
-          this.destination.error(error)
-          return
-        }
-
-        this.shouldRetryStreamSubscription = this.subscribeStreamToSelf(
-          shouldRetryStream
-        )
+      if (this.shouldRetryStreamSubscription.isDisposed()) {
+        this.destination.error(error)
+        return
       }
-
+      this.isSubscribedToSource = false
       this.disposeAndRecycle()
       this.errorStream.next(error)
     }
   }
 
+  protected onComplete(): void {
+    this.errorStream.complete()
+    this.destination.complete()
+  }
+
   protected onOuterNextValue(): void {
+    this.resubscribeToSource()
+  }
+
+  protected onOuterComplete(): void {
+    if (!this.isSubscribedToSource) {
+      this.destination.complete()
+    }
+  }
+
+  private resubscribeToSource(): void {
+    this.isSubscribedToSource = true
     this.disposeAndRecycle()
     this.source.subscribe(this)
   }
