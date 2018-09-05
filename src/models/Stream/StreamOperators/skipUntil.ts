@@ -41,7 +41,7 @@ class SkipUntilSubscriber<T> extends DoubleInputValueTransmitter<
     this.notifierSubscription.dispose()
   }
 
-  protected onOuterError(): void {
+  protected onOuterComplete(): void {
     this.hasStoppedSkippingValues = false
     this.notifierSubscription.dispose()
   }

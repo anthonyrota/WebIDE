@@ -7,7 +7,7 @@ import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 
 export function repeatWhen<T>(
-  getShouldRepeatStream: (competionsStream: Stream<void>) => Stream<unknown>
+  getShouldRepeatStream: (competionsStream: Stream<void>) => Stream<void>
 ): IOperator<T, T> {
   return new RepeatWhenOperator<T>(getShouldRepeatStream)
 }
@@ -16,7 +16,7 @@ class RepeatWhenOperator<T> implements IOperator<T, T> {
   constructor(
     private getShouldRepeatStream: (
       completionsStream: Stream<void>
-    ) => Stream<unknown>
+    ) => Stream<void>
   ) {}
 
   public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
@@ -26,26 +26,22 @@ class RepeatWhenOperator<T> implements IOperator<T, T> {
   }
 }
 
-class RepeatWhenSubscriber<T> extends DoubleInputValueTransmitter<
-  T,
-  T,
-  unknown
-> {
-  private completionsStream: DistributedStream<unknown>
+class RepeatWhenSubscriber<T> extends DoubleInputValueTransmitter<T, T, void> {
+  private completionsStream: DistributedStream<void>
   private shouldRepeatStreamSubscription!: ISubscription
   private isSubscribedToSource: boolean = false
 
   constructor(
     target: ISubscriber<T>,
-    getShouldRepeatStream: (errorStream: Stream<unknown>) => Stream<unknown>,
+    getShouldRepeatStream: (errorStream: Stream<void>) => Stream<void>,
     private source: Stream<T>
   ) {
     super(target)
 
-    this.completionsStream = new DistributedStream<unknown>()
+    this.completionsStream = new DistributedStream<void>()
     this.terminateDisposableWhenDisposed(this.completionsStream)
 
-    let shouldRepeatStream: Stream<unknown>
+    let shouldRepeatStream: Stream<void>
 
     try {
       shouldRepeatStream = getShouldRepeatStream(this.completionsStream)
