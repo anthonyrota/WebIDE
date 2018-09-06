@@ -7,7 +7,7 @@ import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 
 export function repeatWhen<T>(
-  getShouldRepeatStream: (competionsStream: Stream<void>) => Stream<void>
+  getShouldRepeatStream: (completionsStream: Stream<void>) => Stream<void>
 ): IOperator<T, T> {
   return new RepeatWhenOperator<T>(getShouldRepeatStream)
 }
