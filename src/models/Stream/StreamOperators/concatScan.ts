@@ -4,49 +4,53 @@ import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 
-export function mergeMapConcurrent<T, U>(
-  convertValueToStream: (value: T, index: number) => Stream<U>,
-  concurrency: number
+export function concatScan<T, U>(
+  accumulate: (accumulatedValue: U, value: T, index: number) => Stream<U>,
+  startingValue: U
 ): IOperator<T, U> {
-  return new MergeMapConcurrentOperator<T, U>(convertValueToStream, concurrency)
+  return new ConcatScanOperator<T, U>(accumulate, startingValue)
 }
 
-class MergeMapConcurrentOperator<T, U> implements IOperator<T, U> {
+class ConcatScanOperator<T, U> implements IOperator<T, U> {
   constructor(
-    private convertValueToStream: (value: T, index: number) => Stream<U>,
-    private concurrency: number
+    private accumulate: (
+      accumulatedValue: U,
+      value: T,
+      index: number
+    ) => Stream<U>,
+    private startingValue: U
   ) {}
 
   public connect(target: ISubscriber<U>, source: Stream<T>): DisposableLike {
     return source.subscribe(
-      new MergeMapConcurrentSubscriber<T, U>(
+      new ConcatScanSubscriber<T, U>(
         target,
-        this.convertValueToStream,
-        this.concurrency
+        this.accumulate,
+        this.startingValue
       )
     )
   }
 }
 
-class MergeMapConcurrentSubscriber<T, U> extends DoubleInputValueTransmitter<
-  T,
-  U,
-  U
-> {
+class ConcatScanSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
   private valuesToProcess: T[] = []
-  private activeMergedStreamsCount: number = 0
+  private activeMergedStreamsCount: 0 | 1 = 0
   private index: number = 0
 
   constructor(
     target: ISubscriber<U>,
-    private convertValueToStream: (value: T, index: number) => Stream<U>,
-    private concurrency: number
+    private accumulate: (
+      accumulatedValue: U,
+      value: T,
+      index: number
+    ) => Stream<U>,
+    private accumulatedValue: U
   ) {
     super(target)
   }
 
   protected onNextValue(value: T): void {
-    if (this.activeMergedStreamsCount < this.concurrency) {
+    if (this.activeMergedStreamsCount === 0) {
       this.processValue(value)
     } else {
       this.valuesToProcess.push(value)
@@ -63,35 +67,33 @@ class MergeMapConcurrentSubscriber<T, U> extends DoubleInputValueTransmitter<
   }
 
   protected onOuterNextValue(value: U): void {
+    this.accumulatedValue = value
     this.destination.next(value)
   }
 
   protected onOuterComplete(): void {
-    this.activeMergedStreamsCount -= 1
+    this.activeMergedStreamsCount = 0
 
     if (this.valuesToProcess.length > 0) {
       this.processValue(this.valuesToProcess.shift()!)
-    } else if (
-      this.activeMergedStreamsCount === 0 &&
-      !this.isReceivingValues()
-    ) {
+    } else if (!this.isReceivingValues()) {
       this.destination.complete()
     }
   }
 
   private processValue(value: T): void {
-    const { convertValueToStream } = this
+    const { accumulate } = this
     const index = this.index++
     let resultStream: Stream<U>
 
     try {
-      resultStream = convertValueToStream(value, index)
+      resultStream = accumulate(this.accumulatedValue, value, index)
     } catch (error) {
       this.destination.error(error)
       return
     }
 
-    this.activeMergedStreamsCount += 1
+    this.activeMergedStreamsCount = 1
     this.subscribeStreamToSelf(resultStream)
   }
 }

@@ -1,25 +1,25 @@
 import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
+import { MonoTypeDoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 
-export function mergeMapConcurrent<T, U>(
-  convertValueToStream: (value: T, index: number) => Stream<U>,
+export function expandMapConcurrent<T>(
+  convertValueToStream: (value: T, index: number) => Stream<T>,
   concurrency: number
-): IOperator<T, U> {
-  return new MergeMapConcurrentOperator<T, U>(convertValueToStream, concurrency)
+): IOperator<T, T> {
+  return new ExpandMapConcurrentOperator<T>(convertValueToStream, concurrency)
 }
 
-class MergeMapConcurrentOperator<T, U> implements IOperator<T, U> {
+class ExpandMapConcurrentOperator<T> implements IOperator<T, T> {
   constructor(
-    private convertValueToStream: (value: T, index: number) => Stream<U>,
+    private convertValueToStream: (value: T, index: number) => Stream<T>,
     private concurrency: number
   ) {}
 
-  public connect(target: ISubscriber<U>, source: Stream<T>): DisposableLike {
+  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
     return source.subscribe(
-      new MergeMapConcurrentSubscriber<T, U>(
+      new ExpandMapConcurrentSubscriber<T>(
         target,
         this.convertValueToStream,
         this.concurrency
@@ -28,18 +28,16 @@ class MergeMapConcurrentOperator<T, U> implements IOperator<T, U> {
   }
 }
 
-class MergeMapConcurrentSubscriber<T, U> extends DoubleInputValueTransmitter<
-  T,
-  U,
-  U
-> {
+class ExpandMapConcurrentSubscriber<
+  T
+> extends MonoTypeDoubleInputValueTransmitter<T> {
   private valuesToProcess: T[] = []
   private activeMergedStreamsCount: number = 0
   private index: number = 0
 
   constructor(
-    target: ISubscriber<U>,
-    private convertValueToStream: (value: T, index: number) => Stream<U>,
+    target: ISubscriber<T>,
+    private convertValueToStream: (value: T, index: number) => Stream<T>,
     private concurrency: number
   ) {
     super(target)
@@ -62,8 +60,8 @@ class MergeMapConcurrentSubscriber<T, U> extends DoubleInputValueTransmitter<
     }
   }
 
-  protected onOuterNextValue(value: U): void {
-    this.destination.next(value)
+  protected onOuterNextValue(value: T): void {
+    this.onNextValue(value)
   }
 
   protected onOuterComplete(): void {
@@ -82,7 +80,7 @@ class MergeMapConcurrentSubscriber<T, U> extends DoubleInputValueTransmitter<
   private processValue(value: T): void {
     const { convertValueToStream } = this
     const index = this.index++
-    let resultStream: Stream<U>
+    let resultStream: Stream<T>
 
     try {
       resultStream = convertValueToStream(value, index)

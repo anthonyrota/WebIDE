@@ -5,32 +5,46 @@ import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 
-export function expand<T>(
+export function expandMapConcurrentScheduled<T>(
   convertValueToStream: (value: T, index: number) => Stream<T>,
-  scheduler: IScheduler
+  scheduler: IScheduler,
+  concurrency: number
 ): IOperator<T, T> {
-  return new ExpandOperator<T>(convertValueToStream, scheduler)
+  return new ExpandMapConcurrentScheduledOperator<T>(
+    convertValueToStream,
+    scheduler,
+    concurrency
+  )
 }
 
-class ExpandOperator<T> implements IOperator<T, T> {
+class ExpandMapConcurrentScheduledOperator<T> implements IOperator<T, T> {
   constructor(
     private convertValueToStream: (value: T, index: number) => Stream<T>,
-    private scheduler: IScheduler
+    private scheduler: IScheduler,
+    private concurrency: number
   ) {}
 
   public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
     return source.subscribe(
-      new ExpandSubscriber<T>(target, this.convertValueToStream, this.scheduler)
+      new ExpandMapConcurrentScheduledSubscriber<T>(
+        target,
+        this.convertValueToStream,
+        this.scheduler,
+        this.concurrency
+      )
     )
   }
 }
 
 interface ISchedulerData<T> {
-  transmitter: ExpandSubscriber<T>
+  transmitter: ExpandMapConcurrentScheduledSubscriber<T>
   resultStream: Stream<T>
 }
 
-class ExpandSubscriber<T> extends MonoTypeDoubleInputValueTransmitter<T> {
+class ExpandMapConcurrentScheduledSubscriber<
+  T
+> extends MonoTypeDoubleInputValueTransmitter<T> {
+  private valuesToProcess: T[] = []
   private activeMergedStreamsCount: number = 0
   private scheduledStreamsToMergeCount: number = 0
   private index: number = 0
@@ -38,7 +52,8 @@ class ExpandSubscriber<T> extends MonoTypeDoubleInputValueTransmitter<T> {
   constructor(
     target: ISubscriber<T>,
     private convertValueToStream: (value: T, index: number) => Stream<T>,
-    private scheduler: IScheduler
+    private scheduler: IScheduler,
+    private concurrency: number
   ) {
     super(target)
   }
@@ -49,6 +64,42 @@ class ExpandSubscriber<T> extends MonoTypeDoubleInputValueTransmitter<T> {
   }
 
   protected onNextValue(value: T): void {
+    if (this.activeMergedStreamsCount < this.concurrency) {
+      this.processValue(value)
+    } else {
+      this.valuesToProcess.push(value)
+    }
+  }
+
+  protected onComplete(): void {
+    if (
+      this.activeMergedStreamsCount === 0 &&
+      this.scheduledStreamsToMergeCount === 0 &&
+      this.valuesToProcess.length === 0
+    ) {
+      this.destination.complete()
+    }
+  }
+
+  protected onOuterNextValue(value: T): void {
+    this.onNextValue(value)
+  }
+
+  protected onOuterComplete(): void {
+    this.activeMergedStreamsCount -= 1
+
+    if (this.valuesToProcess.length > 0) {
+      this.processValue(this.valuesToProcess.shift()!)
+    } else if (
+      this.activeMergedStreamsCount === 0 &&
+      this.scheduledStreamsToMergeCount === 0 &&
+      !this.isReceivingValues()
+    ) {
+      this.destination.complete()
+    }
+  }
+
+  private processValue(value: T): void {
     const { convertValueToStream } = this
     const index = this.index++
     let resultStream: Stream<T>
@@ -63,35 +114,10 @@ class ExpandSubscriber<T> extends MonoTypeDoubleInputValueTransmitter<T> {
     this.scheduledStreamsToMergeCount += 1
     this.terminateDisposableWhenDisposed(
       this.scheduler.scheduleWithData<ISchedulerData<T>>(
-        ExpandSubscriber.schedulerCallback,
+        ExpandMapConcurrentScheduledSubscriber.schedulerCallback,
         { transmitter: this, resultStream }
       )
     )
-  }
-
-  protected onComplete(): void {
-    if (
-      this.activeMergedStreamsCount === 0 &&
-      this.scheduledStreamsToMergeCount === 0
-    ) {
-      this.destination.complete()
-    }
-  }
-
-  protected onOuterNextValue(value: T): void {
-    this.onNextValue(value)
-  }
-
-  protected onOuterComplete(): void {
-    this.activeMergedStreamsCount -= 1
-
-    if (
-      this.activeMergedStreamsCount === 0 &&
-      this.scheduledStreamsToMergeCount === 0 &&
-      !this.isReceivingValues()
-    ) {
-      this.destination.complete()
-    }
   }
 
   private subscribeResultStreamToSelf(resultStream: Stream<T>): void {

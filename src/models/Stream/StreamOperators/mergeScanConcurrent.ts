@@ -1,43 +1,61 @@
 import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { MonoTypeDoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
+import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 
-export function expandConcurrent<T>(
-  convertValueToStream: (value: T, index: number) => Stream<T>,
+export function mergeScanConcurrent<T, U>(
+  accumulate: (accumulatedValue: U, value: T, index: number) => Stream<U>,
+  startingValue: U,
   concurrency: number
-): IOperator<T, T> {
-  return new ExpandConcurrentOperator<T>(convertValueToStream, concurrency)
+): IOperator<T, U> {
+  return new MergeScanConcurrentOperator<T, U>(
+    accumulate,
+    startingValue,
+    concurrency
+  )
 }
 
-class ExpandConcurrentOperator<T> implements IOperator<T, T> {
+class MergeScanConcurrentOperator<T, U> implements IOperator<T, U> {
   constructor(
-    private convertValueToStream: (value: T, index: number) => Stream<T>,
+    private accumulate: (
+      accumulatedValue: U,
+      value: T,
+      index: number
+    ) => Stream<U>,
+    private startingValue: U,
     private concurrency: number
   ) {}
 
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
+  public connect(target: ISubscriber<U>, source: Stream<T>): DisposableLike {
     return source.subscribe(
-      new ExpandConcurrentSubscriber<T>(
+      new MergeScanConcurrentSubscriber<T, U>(
         target,
-        this.convertValueToStream,
+        this.accumulate,
+        this.startingValue,
         this.concurrency
       )
     )
   }
 }
 
-class ExpandConcurrentSubscriber<T> extends MonoTypeDoubleInputValueTransmitter<
-  T
+class MergeScanConcurrentSubscriber<T, U> extends DoubleInputValueTransmitter<
+  T,
+  U,
+  U
 > {
   private valuesToProcess: T[] = []
   private activeMergedStreamsCount: number = 0
   private index: number = 0
 
   constructor(
-    target: ISubscriber<T>,
-    private convertValueToStream: (value: T, index: number) => Stream<T>,
+    target: ISubscriber<U>,
+    private accumulate: (
+      accumulatedValue: U,
+      value: T,
+      index: number
+    ) => Stream<U>,
+    private accumulatedValue: U,
     private concurrency: number
   ) {
     super(target)
@@ -45,7 +63,7 @@ class ExpandConcurrentSubscriber<T> extends MonoTypeDoubleInputValueTransmitter<
 
   protected onNextValue(value: T): void {
     if (this.activeMergedStreamsCount < this.concurrency) {
-      this.processInnerValue(value)
+      this.processValue(value)
     } else {
       this.valuesToProcess.push(value)
     }
@@ -60,15 +78,16 @@ class ExpandConcurrentSubscriber<T> extends MonoTypeDoubleInputValueTransmitter<
     }
   }
 
-  protected onOuterNextValue(value: T): void {
-    this.onNextValue(value)
+  protected onOuterNextValue(value: U): void {
+    this.accumulatedValue = value
+    this.destination.next(value)
   }
 
   protected onOuterComplete(): void {
     this.activeMergedStreamsCount -= 1
 
     if (this.valuesToProcess.length > 0) {
-      this.processInnerValue(this.valuesToProcess.shift()!)
+      this.processValue(this.valuesToProcess.shift()!)
     } else if (
       this.activeMergedStreamsCount === 0 &&
       !this.isReceivingValues()
@@ -77,13 +96,13 @@ class ExpandConcurrentSubscriber<T> extends MonoTypeDoubleInputValueTransmitter<
     }
   }
 
-  private processInnerValue(value: T): void {
-    const { convertValueToStream } = this
+  private processValue(value: T): void {
+    const { accumulate } = this
     const index = this.index++
-    let resultStream: Stream<T>
+    let resultStream: Stream<U>
 
     try {
-      resultStream = convertValueToStream(value, index)
+      resultStream = accumulate(this.accumulatedValue, value, index)
     } catch (error) {
       this.destination.error(error)
       return

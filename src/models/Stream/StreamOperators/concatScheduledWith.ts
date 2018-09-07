@@ -5,14 +5,14 @@ import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 import { concatScheduled } from 'src/models/Stream/StreamConstructors/concatScheduled'
 
-export function concatWith<T>(
+export function concatScheduledWith<T>(
   streams: Array<Stream<T>>,
   scheduler: IScheduler
 ): IOperator<T, T> {
-  return new ConcatWithOperator<T>(streams, scheduler)
+  return new ConcatScheduledWithOperator<T>(streams, scheduler)
 }
 
-class ConcatWithOperator<T> implements IOperator<T, T> {
+class ConcatScheduledWithOperator<T> implements IOperator<T, T> {
   constructor(
     private streams: Array<Stream<T>>,
     private scheduler: IScheduler

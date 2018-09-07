@@ -36,9 +36,18 @@ class ConcatMapSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
 
   protected onNextValue(value: T): void {
     if (this.activeMergedStreamsCount === 0) {
-      this.processInnerValue(value)
+      this.processValue(value)
     } else {
       this.valuesToProcess.push(value)
+    }
+  }
+
+  protected onComplete(): void {
+    if (
+      this.activeMergedStreamsCount === 0 &&
+      this.valuesToProcess.length === 0
+    ) {
+      this.destination.complete()
     }
   }
 
@@ -50,13 +59,13 @@ class ConcatMapSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
     this.activeMergedStreamsCount = 0
 
     if (this.valuesToProcess.length > 0) {
-      this.processInnerValue(this.valuesToProcess.shift()!)
+      this.processValue(this.valuesToProcess.shift()!)
     } else if (!this.isReceivingValues()) {
       this.destination.complete()
     }
   }
 
-  private processInnerValue(value: T): void {
+  private processValue(value: T): void {
     const { convertValueToStream } = this
     const index = this.index++
     let resultStream: Stream<U>

@@ -4,25 +4,25 @@ import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 
-export function expand<T>(
+export function expandMap<T>(
   convertValueToStream: (value: T, index: number) => Stream<T>
 ): IOperator<T, T> {
-  return new ExpandOperator<T>(convertValueToStream)
+  return new ExpandMapOperator<T>(convertValueToStream)
 }
 
-class ExpandOperator<T> implements IOperator<T, T> {
+class ExpandMapOperator<T> implements IOperator<T, T> {
   constructor(
     private convertValueToStream: (value: T, index: number) => Stream<T>
   ) {}
 
   public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
     return source.subscribe(
-      new ExpandSubscriber<T>(target, this.convertValueToStream)
+      new ExpandMapSubscriber<T>(target, this.convertValueToStream)
     )
   }
 }
 
-class ExpandSubscriber<T> extends MonoTypeDoubleInputValueTransmitter<T> {
+class ExpandMapSubscriber<T> extends MonoTypeDoubleInputValueTransmitter<T> {
   private activeMergedStreamsCount: number = 0
   private index: number = 0
 

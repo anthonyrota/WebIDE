@@ -4,31 +4,46 @@ import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import { Stream } from 'src/models/Stream/Stream'
 
-export function exhaustMap<T, U>(
-  convertValueToStream: (value: T, index: number) => Stream<U>
+export function exhaustScan<T, U>(
+  accumulate: (accumulatedValue: U, value: T, index: number) => Stream<U>,
+  startingValue: U
 ): IOperator<T, U> {
-  return new ExhaustMapOperator<T, U>(convertValueToStream)
+  return new ExhaustScanOperator<T, U>(accumulate, startingValue)
 }
 
-class ExhaustMapOperator<T, U> implements IOperator<T, U> {
+class ExhaustScanOperator<T, U> implements IOperator<T, U> {
   constructor(
-    private convertValueToStream: (value: T, index: number) => Stream<U>
+    private accumulate: (
+      accumulatedValue: U,
+      value: T,
+      index: number
+    ) => Stream<U>,
+    private startingValue: U
   ) {}
 
   public connect(target: ISubscriber<U>, source: Stream<T>): DisposableLike {
     return source.subscribe(
-      new ExhaustMapSubscriber<T, U>(target, this.convertValueToStream)
+      new ExhaustScanSubscriber<T, U>(
+        target,
+        this.accumulate,
+        this.startingValue
+      )
     )
   }
 }
 
-class ExhaustMapSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
+class ExhaustScanSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
   private hasActiveStream: boolean = false
   private index: number = 0
 
   constructor(
     target: ISubscriber<U>,
-    private convertValueToStream: (value: T, index: number) => Stream<U>
+    private accumulate: (
+      accumulatedValue: U,
+      value: T,
+      index: number
+    ) => Stream<U>,
+    private accumulatedValue: U
   ) {
     super(target)
   }
@@ -38,12 +53,12 @@ class ExhaustMapSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
       return
     }
 
-    const { convertValueToStream } = this
+    const { accumulate } = this
     const index = this.index++
     let resultStream: Stream<U>
 
     try {
-      resultStream = convertValueToStream(value, index)
+      resultStream = accumulate(this.accumulatedValue, value, index)
     } catch (error) {
       this.destination.error(error)
       return
@@ -60,6 +75,7 @@ class ExhaustMapSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
   }
 
   protected onOuterNextValue(value: U): void {
+    this.accumulatedValue = value
     this.destination.next(value)
   }
 
