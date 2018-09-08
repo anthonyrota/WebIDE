@@ -9,10 +9,10 @@ export function fromPromiseScheduled<T>(
     return scheduler.schedule(() => {
       promise.then(
         value => {
-          target.terminateDisposableWhenStopsReceivingValues(
+          target.add(
             scheduler.schedule(() => {
               target.next(value)
-              target.terminateDisposableWhenStopsReceivingValues(
+              target.add(
                 scheduler.schedule(() => {
                   target.complete()
                 })
@@ -21,7 +21,7 @@ export function fromPromiseScheduled<T>(
           )
         },
         error => {
-          target.terminateDisposableWhenStopsReceivingValues(
+          target.add(
             scheduler.schedule(() => {
               target.error(error)
             })

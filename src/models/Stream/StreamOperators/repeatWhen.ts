@@ -41,7 +41,7 @@ class RepeatWhenSubscriber<T> extends DoubleInputValueTransmitter<T, T, void> {
     super(target)
 
     this.completionsStream = new DistributedStream<void>()
-    this.terminateDisposableWhenDisposed(this.completionsStream)
+    this.add(this.completionsStream)
 
     let shouldRepeatStream: Stream<void>
 
@@ -60,23 +60,23 @@ class RepeatWhenSubscriber<T> extends DoubleInputValueTransmitter<T, T, void> {
 
   public disposeAndRecycle(): void {
     if (this.completionsStream) {
-      this.removeSubscription(this.completionsStream)
+      this.remove(this.completionsStream)
     }
     if (this.shouldRepeatStreamSubscription) {
-      this.removeSubscription(this.shouldRepeatStreamSubscription)
+      this.remove(this.shouldRepeatStreamSubscription)
     }
     super.disposeAndRecycle()
     if (this.completionsStream) {
-      this.terminateDisposableWhenDisposed(this.completionsStream)
+      this.add(this.completionsStream)
     }
     if (this.shouldRepeatStreamSubscription) {
-      this.terminateDisposableWhenDisposed(this.shouldRepeatStreamSubscription)
+      this.add(this.shouldRepeatStreamSubscription)
     }
   }
 
   public complete(): void {
     if (this.isReceivingValues()) {
-      if (this.shouldRepeatStreamSubscription.isDisposed()) {
+      if (!this.shouldRepeatStreamSubscription.isActive()) {
         this.destination.complete()
         return
       }

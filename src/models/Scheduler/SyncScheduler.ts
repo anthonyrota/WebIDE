@@ -23,7 +23,7 @@ abstract class SyncSchedulerAction extends Subscription {
   }
 
   protected execute(): void {
-    if (this.isDisposed()) {
+    if (!this.isActive()) {
       return
     }
     if (this.__scheduleDelayedDisposable) {
@@ -39,7 +39,7 @@ abstract class SyncSchedulerAction extends Subscription {
   }
 
   protected requestExecutionDelayed(delay: number): void {
-    if (this.isDisposed()) {
+    if (!this.isActive()) {
       return
     }
     if (delay === 0) {

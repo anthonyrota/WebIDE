@@ -1,27 +1,22 @@
-import { IDisposable } from 'src/models/Disposable/IDisposable'
-import { ISubscription } from 'src/models/Disposable/Subscription'
+import { IImmutableSubscriptionView } from 'src/models/Disposable/Subscription'
+import { isFunction } from 'src/utils/isFunction'
 
 export const isReceivingValuesSubscriptionPropertyKey =
   '@@__ReceivingValuesSubscriptionClassEqualityCheckKey__@@'
 
 export function isReceivingValuesSubscription(
   candidate: any
-): candidate is IReceivingValuesSubscription {
+): candidate is IReceivingValueSubscription {
   return (
     candidate != null &&
-    candidate[isReceivingValuesSubscriptionPropertyKey] === true
+    candidate[isReceivingValuesSubscriptionPropertyKey] === true &&
+    isFunction(candidate.isReceivingValues) &&
+    isFunction(candidate.getOnStopReceivingValuesSubscription)
   )
 }
 
-export interface IReceivingValuesSubscription {
+export interface IReceivingValueSubscription {
   readonly [isReceivingValuesSubscriptionPropertyKey]: true
-  terminateDisposableWhenStopsReceivingValues(
-    disposable: IDisposable
-  ): ISubscription
-  terminateDisposableLikeWhenStopsReceivingValues(
-    disposableLike: IDisposable
-  ): ISubscription
-  onStopReceivingValues(dispose: () => void): ISubscription
-  removeOnStopReceivingValuesSubscription(subscription: ISubscription): void
+  getOnStopReceivingValuesSubscription(): IImmutableSubscriptionView
   isReceivingValues(): boolean
 }

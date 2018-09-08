@@ -19,6 +19,6 @@ class FinalizeOperator<T> implements IOperator<T, T> {
 class FinalizeSubscriber<T> extends MonoTypeValueTransmitter<T> {
   constructor(target: ISubscriber<T>, onFinish: () => unknown) {
     super(target)
-    super.onDispose(onFinish)
+    this.add(onFinish)
   }
 }

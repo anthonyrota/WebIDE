@@ -1,4 +1,3 @@
-import { bound } from 'src/decorators/bound'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
 import { Subscription } from 'src/models/Disposable/Subscription'
 import { AsyncScheduler } from 'src/models/Scheduler/AsyncScheduler'
@@ -14,7 +13,7 @@ export abstract class AsyncAction extends Subscription {
   }
 
   public executeAndRemoveFromScheduler(): void {
-    if (this.isDisposed()) {
+    if (!this.isActive()) {
       return
     }
     if (this.__scheduleDelayedDisposable) {
@@ -34,26 +33,8 @@ export abstract class AsyncAction extends Subscription {
     }
   }
 
-  /**
-   * Performance optimization so it doesn't need to be bound every request in for
-   * example setTimeout callbacks
-   */
-  @bound
-  public boundExecuteAndRemoveFromScheduler(): void {
-    this.executeAndRemoveFromScheduler()
-  }
-
-  /**
-   * Performance optimization so it doesn't need to be bound every request in for
-   * example setTimeout callbacks
-   */
-  @bound
-  public boundScheduleSelf(): void {
-    this.__scheduler.scheduleAction(this)
-  }
-
   public execute(): { error: unknown } | void {
-    if (this.isDisposed()) {
+    if (!this.isActive()) {
       return
     }
     if (this.__scheduleDelayedDisposable) {
@@ -100,7 +81,7 @@ export abstract class AsyncAction extends Subscription {
   }
 
   protected requestExecution(): void {
-    if (this.isDisposed()) {
+    if (!this.isActive()) {
       return
     }
     if (this.__scheduleDelayedDisposable) {
@@ -114,7 +95,7 @@ export abstract class AsyncAction extends Subscription {
   }
 
   protected requestExecutionDelayed(delay: number): void {
-    if (this.isDisposed()) {
+    if (!this.isActive()) {
       return
     }
     if (delay === 0) {

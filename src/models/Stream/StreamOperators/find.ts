@@ -6,6 +6,12 @@ import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function find<T>(
   predicate: (value: T, index: number) => boolean
+): IOperator<T, T>
+export function find<T, U extends T>(
+  predicate: (value: T, index: number) => value is U
+): IOperator<T, U>
+export function find<T>(
+  predicate: (value: T, index: number) => boolean
 ): IOperator<T, T> {
   return new FindOperator<T>(predicate)
 }

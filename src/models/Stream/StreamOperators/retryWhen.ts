@@ -41,7 +41,7 @@ class RetryWhenSubscriber<T> extends DoubleInputValueTransmitter<
     super(target)
 
     this.errorStream = new DistributedStream<unknown>()
-    this.terminateDisposableWhenDisposed(this.errorStream)
+    this.add(this.errorStream)
 
     let shouldRetryStream: Stream<unknown>
 
@@ -60,23 +60,23 @@ class RetryWhenSubscriber<T> extends DoubleInputValueTransmitter<
 
   public disposeAndRecycle(): void {
     if (this.errorStream) {
-      this.removeSubscription(this.errorStream)
+      this.remove(this.errorStream)
     }
     if (this.shouldRetryStreamSubscription) {
-      this.removeSubscription(this.shouldRetryStreamSubscription)
+      this.remove(this.shouldRetryStreamSubscription)
     }
     super.disposeAndRecycle()
     if (this.errorStream) {
-      this.terminateDisposableWhenDisposed(this.errorStream)
+      this.add(this.errorStream)
     }
     if (this.shouldRetryStreamSubscription) {
-      this.terminateDisposableWhenDisposed(this.shouldRetryStreamSubscription)
+      this.add(this.shouldRetryStreamSubscription)
     }
   }
 
   public error(error: unknown): void {
     if (this.isReceivingValues()) {
-      if (this.shouldRetryStreamSubscription.isDisposed()) {
+      if (!this.shouldRetryStreamSubscription.isActive()) {
         this.destination.error(error)
         return
       }

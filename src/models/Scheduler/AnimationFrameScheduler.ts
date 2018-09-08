@@ -12,6 +12,6 @@ export class AnimationFrameScheduler extends FlushableAsyncScheduler {
     action: AsyncAction,
     delay: number
   ): IDisposable {
-    return setTimeout(action.boundScheduleSelf, delay)
+    return setTimeout(() => this.scheduleAction(action), delay)
   }
 }

@@ -99,7 +99,7 @@ class DelaySubscriber<T> extends MonoTypeValueTransmitter<T> {
 
     if (!this.isScheduled) {
       this.isScheduled = true
-      this.terminateDisposableWhenDisposed(
+      this.add(
         this.scheduler.scheduleDelayedWithData<DelaySubscriber<T>>(
           DelaySubscriber.schedulerCallback,
           this.delayTime,

@@ -54,7 +54,7 @@ interface IStreamData {
 
 class CombineLatestValueTransmitter<
   T
-> extends DoubleInputValueTransmitterWithData<T, T[], T, IStreamData> {
+> extends DoubleInputValueTransmitterWithData<never, T[], T, IStreamData> {
   private values: T[] = []
   private streamsCompletedCount: number = 0
   private streamsWithValuesCount: number = 0

@@ -21,6 +21,7 @@
     "no-this-assignment": false,
     "no-shadowed-variable": false,
     "no-conditional-assignment": false,
-    "callable-types": false
+    "callable-types": false,
+    "unified-signatures": false
   }
 }

@@ -14,7 +14,7 @@ export class IdleScheduler extends AsyncScheduler {
     action: AsyncAction,
     delay: number
   ) {
-    return setTimeout(action.boundScheduleSelf, delay)
+    return setTimeout(() => this.scheduleAction(action), delay)
   }
 
   @bound

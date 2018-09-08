@@ -54,7 +54,7 @@ class EndWithScheduledSubscriber<T> extends MonoTypeValueTransmitter<T> {
       return
     }
 
-    this.terminateDisposableWhenDisposed(
+    this.add(
       this.scheduler.scheduleWithData<EndWithScheduledSubscriber<T>>(
         EndWithScheduledSubscriber.schedulerCallback,
         this

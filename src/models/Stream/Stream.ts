@@ -1,5 +1,4 @@
 import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { isDisposable } from 'src/models/Disposable/isDisposable'
 import {
   emptySubscription,
   ISubscription
@@ -8,11 +7,9 @@ import { IOperator } from 'src/models/Stream/IOperator'
 import { isReceivingValuesSubscription } from 'src/models/Stream/IReceivingValuesSubscription'
 import { ISubscribable, ISubscriber } from 'src/models/Stream/ISubscriber'
 import {
-  isValueTransmitter,
   MonoTypeValueTransmitter,
   ValueTransmitter
 } from 'src/models/Stream/ValueTransmitter'
-import { isFunction } from 'src/utils/isFunction'
 
 export function isStream(value: unknown): value is Stream<unknown> {
   return value instanceof Stream
@@ -133,21 +130,15 @@ export abstract class Stream<T> implements ISubscribable<T> {
       return emptySubscription
     }
 
-    let disposable: DisposableLike
+    let disposableLike: DisposableLike
 
     try {
-      disposable = this.trySubscribe(target)
+      disposableLike = this.trySubscribe(target)
     } catch (error) {
       target.error(error)
     }
 
-    if (disposable) {
-      if (isDisposable(disposable)) {
-        target.terminateDisposableWhenStopsReceivingValues(disposable)
-      } else if (isFunction(disposable)) {
-        target.onStopReceivingValues(disposable)
-      }
-    }
+    target.getOnStopReceivingValuesSubscription().add(disposableLike)
 
     return target
   }

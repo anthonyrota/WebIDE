@@ -1,8 +1,9 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IDisposable } from 'src/models/Disposable/IDisposable'
+import {
+  DisposableLike,
+  disposeDisposableLike
+} from 'src/models/Disposable/DisposableLike'
 import { isDisposable } from 'src/models/Disposable/isDisposable'
 import { freeze } from 'src/utils/freeze'
-import { indexOf } from 'src/utils/indexOf'
 import { isFunction } from 'src/utils/isFunction'
 import { removeOnce } from 'src/utils/removeOnce'
 
@@ -10,48 +11,43 @@ export const isSubscriptionPropertyKey =
   '@@__SubscriptionClassEqualityCheckKey__@@'
 
 export function isSubscription(candidate: any): candidate is ISubscription {
-  return candidate != null && candidate[isSubscriptionPropertyKey] === true
+  return (
+    candidate != null &&
+    candidate[isSubscriptionPropertyKey] === true &&
+    isFunction(candidate.add) &&
+    isFunction(candidate.remove) &&
+    isFunction(candidate.dispose) &&
+    isFunction(candidate.isActive)
+  )
 }
 
 export interface ISubscription {
   readonly [isSubscriptionPropertyKey]: true
-  terminateDisposableWhenDisposed(disposable: IDisposable): ISubscription
-  terminateDisposableLikeWhenDisposed(
-    disposableLike: DisposableLike
-  ): ISubscription
-  onDispose(dispose: () => void): ISubscription
-  removeSubscription(subscription: ISubscription): void
+  add(disposableLike: DisposableLike): void
+  remove(disposableLike: DisposableLike): void
   dispose(): void
   isActive(): boolean
-  isDisposed(): boolean
+}
+
+export interface IImmutableSubscriptionView {
+  add(disposableLike: DisposableLike): void
+  remove(disposableLike: DisposableLike): void
+  isActive(): boolean
 }
 
 export const emptySubscription: ISubscription = freeze({
   [isSubscriptionPropertyKey]: true as true,
-  terminateDisposableWhenDisposed(disposable: IDisposable): ISubscription {
-    disposable.dispose()
-    return isSubscription(disposable) ? disposable : emptySubscription
+  add(disposableLike: DisposableLike): void {
+    if (isFunction(disposableLike)) {
+      disposableLike()
+    } else if (isDisposable(disposableLike)) {
+      disposableLike.dispose()
+    }
   },
-  terminateDisposableLikeWhenDisposed(
-    disposableLike: DisposableLike
-  ): ISubscription {
-    return isFunction(disposableLike)
-      ? emptySubscription.onDispose(disposableLike)
-      : isDisposable(disposableLike)
-        ? emptySubscription.terminateDisposableWhenDisposed(disposableLike)
-        : emptySubscription
-  },
-  onDispose(dispose: () => void): ISubscription {
-    dispose()
-    return emptySubscription
-  },
-  removeSubscription(): void {},
+  remove(disposableLike: DisposableLike): void {},
   dispose(): void {},
   isActive(): boolean {
     return false
-  },
-  isDisposed(): boolean {
-    return true
   }
 })
 
@@ -62,86 +58,38 @@ export class Subscription implements ISubscription {
   public readonly [isSubscriptionPropertyKey] = true
 
   private __isActive: boolean = true
-  private __parents: ISubscription[] | null = null
-  private __childDisposables: IDisposable[] = []
-  private __$$internalDisposable__willTerminateWhenDisposed__$$?: IDisposable
+  private __childDisposableLikes: DisposableLike[]
 
-  public static fromDisposable(disposable: IDisposable): ISubscription {
-    if (isSubscription(disposable)) {
-      return disposable
-    }
-    const subscription = new Subscription()
-    subscription.__$$internalDisposable__willTerminateWhenDisposed__$$ = disposable
-    return subscription
+  constructor(disposables: DisposableLike[] = []) {
+    this.__childDisposableLikes = disposables
   }
 
-  public terminateDisposableWhenDisposed(
-    disposable: IDisposable
-  ): ISubscription {
+  public add(disposableLike: DisposableLike): void {
     if (!this.__isActive) {
-      disposable.dispose()
-      return isSubscription(disposable) ? disposable : emptySubscription
+      disposeDisposableLike(disposableLike)
+      return
     }
 
-    if (disposable === emptySubscription) {
-      return emptySubscription
+    if (disposableLike === emptySubscription || disposableLike === this) {
+      return
     }
 
-    if (disposable === this) {
-      return this
-    }
-
-    if (isSubscription(disposable) && !disposable.isActive()) {
-      return disposable
-    }
-
-    let subscription: Subscription
-
-    if (disposable instanceof Subscription) {
-      subscription = disposable
-
-      if (indexOf(this.__childDisposables, subscription) !== -1) {
-        return subscription
+    if (isSubscription(disposableLike)) {
+      if (!disposableLike.isActive()) {
+        return
       }
-    } else {
-      subscription = new Subscription()
-      subscription.__$$internalDisposable__willTerminateWhenDisposed__$$ = disposable
+
+      disposableLike.add(() => {
+        this.remove(disposableLike)
+      })
     }
 
-    subscription.__addParent(this)
-    this.__childDisposables.push(subscription)
-
-    return subscription
+    this.__childDisposableLikes.push(disposableLike)
   }
 
-  public terminateDisposableLikeWhenDisposed(
-    disposableLike: DisposableLike
-  ): ISubscription {
-    return isFunction(disposableLike)
-      ? this.onDispose(disposableLike)
-      : isDisposable(disposableLike)
-        ? this.terminateDisposableWhenDisposed(disposableLike)
-        : emptySubscription
-  }
-
-  public onDispose(dispose: () => void): ISubscription {
+  public remove(disposableLike: DisposableLike): void {
     if (this.__isActive) {
-      const subscription = new Subscription()
-      subscription.__$$internalDisposable__willTerminateWhenDisposed__$$ = {
-        dispose
-      }
-      subscription.__addParent(this)
-      this.__childDisposables.push(subscription)
-      return subscription
-    } else {
-      dispose()
-      return emptySubscription
-    }
-  }
-
-  public removeSubscription(subscription: ISubscription): void {
-    if (this.__isActive) {
-      removeOnce(this.__childDisposables, subscription)
+      removeOnce(this.__childDisposableLikes, disposableLike)
     }
   }
 
@@ -156,67 +104,14 @@ export class Subscription implements ISubscription {
     return this.__isActive
   }
 
-  public isDisposed(): boolean {
-    return !this.__isActive
-  }
-
   public [recycleMethodPropertyName](): void {
-    const parents = this.__parents
-    this.__parents = null
     this.dispose()
     this.__isActive = true
-    this.__parents = parents
   }
 
   private __disposeDisposables(): void {
-    const errors: Array<unknown> = []
-
-    if (this.__parents) {
-      for (let i = 0; i < this.__parents.length; i++) {
-        this.__parents[i].removeSubscription(this)
-      }
-    }
-
-    if (this.__$$internalDisposable__willTerminateWhenDisposed__$$) {
-      try {
-        this.__$$internalDisposable__willTerminateWhenDisposed__$$.dispose()
-      } catch (error) {
-        errors.push(error)
-      }
-    }
-
-    for (let i = 0; i < this.__childDisposables.length; i++) {
-      try {
-        this.__childDisposables[i].dispose()
-      } catch (error) {
-        errors.push(error)
-      }
-    }
-
-    if (this.__parents) {
-      this.__parents.length = 0
-    }
-    this.__childDisposables.length = 0
-
-    if (errors.length > 0) {
-      throw new Error(
-        `The following errors occured when disposing the subscription: ${errors.join(
-          ', '
-        )}`
-      )
-    }
-  }
-
-  private __addParent(parent: ISubscription): void {
-    if (this.__isActive) {
-      if (this.__parents) {
-        const index = indexOf(this.__parents, parent)
-
-        if (index === -1) {
-          this.__parents.push(parent)
-        }
-      }
-    }
+    this.__childDisposableLikes.forEach(disposeDisposableLike)
+    this.__childDisposableLikes.length = 0
   }
 }
 

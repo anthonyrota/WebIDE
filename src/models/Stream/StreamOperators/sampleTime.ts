@@ -41,7 +41,7 @@ class SampleTimeSubscriber<T> extends MonoTypeValueTransmitter<T> {
     super(target)
 
     source.subscribe(this)
-    this.terminateDisposableWhenDisposed(
+    this.add(
       scheduler.scheduleDelayedWithData<SampleTimeSubscriber<T>>(
         SampleTimeSubscriber.schedulerCallback,
         emitValuePeriod,

@@ -65,8 +65,8 @@ export abstract class DoubleInputValueTransmitter<TInput, TOutput, TOuterValue>
       TOuterValue
     >(this)
 
-    target.terminateDisposableWhenDisposed(stream.subscribe(target))
-    this.terminateDisposableWhenDisposed(target)
+    this.add(target)
+    stream.subscribe(target)
 
     return target
   }

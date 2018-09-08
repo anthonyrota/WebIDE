@@ -1,5 +1,5 @@
 import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IDisposable } from 'src/models/Disposable/IDisposable'
+import { ISubscription } from 'src/models/Disposable/Subscription'
 import { IScheduler } from 'src/models/Scheduler/Scheduler'
 import { sync } from 'src/models/Scheduler/sync'
 import { IOperator } from 'src/models/Stream/IOperator'
@@ -27,7 +27,7 @@ class DebounceTimeOperator<T> implements IOperator<T, T> {
 class DebounceTimeSubscriber<T> extends MonoTypeValueTransmitter<T> {
   private value: T | null = null
   private hasValue: boolean = false
-  private delayDisposable: IDisposable | null = null
+  private delaySubscription: ISubscription | null = null
 
   constructor(
     target: ISubscriber<T>,
@@ -45,13 +45,10 @@ class DebounceTimeSubscriber<T> extends MonoTypeValueTransmitter<T> {
     this.clearDebounce()
     this.value = value
     this.hasValue = true
-    this.delayDisposable = this.terminateDisposableWhenDisposed(
-      this.scheduler.scheduleDelayedWithData<DebounceTimeSubscriber<T>>(
-        DebounceTimeSubscriber.distributeValue,
-        this.duration,
-        this
-      )
-    )
+    this.delaySubscription = this.scheduler.scheduleDelayedWithData<
+      DebounceTimeSubscriber<T>
+    >(DebounceTimeSubscriber.distributeValue, this.duration, this)
+    this.add(this.delaySubscription)
   }
 
   protected onComplete(): void {
@@ -60,9 +57,9 @@ class DebounceTimeSubscriber<T> extends MonoTypeValueTransmitter<T> {
   }
 
   private clearDebounce(): void {
-    if (this.delayDisposable) {
-      this.delayDisposable.dispose()
-      this.delayDisposable = null
+    if (this.delaySubscription) {
+      this.delaySubscription.dispose()
+      this.delaySubscription = null
     }
   }
 

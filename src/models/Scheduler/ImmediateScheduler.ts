@@ -12,6 +12,6 @@ export class ImmediateScheduler extends FlushableAsyncScheduler {
     action: AsyncAction,
     delay: number
   ): IDisposable {
-    return setTimeout(action.boundExecuteAndRemoveFromScheduler, delay)
+    return setTimeout(() => action.executeAndRemoveFromScheduler(), delay)
   }
 }

@@ -138,8 +138,8 @@ export abstract class DoubleInputValueTransmitterWithData<
       TData
     >(this, data)
 
-    target.terminateDisposableWhenDisposed(stream.subscribe(target))
-    this.terminateDisposableWhenDisposed(target)
+    this.add(target)
+    stream.subscribe(target)
 
     return target
   }

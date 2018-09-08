@@ -67,7 +67,7 @@ class ExpandMapScheduledSubscriber<
     }
 
     this.scheduledStreamsToMergeCount += 1
-    this.terminateDisposableWhenDisposed(
+    this.add(
       this.scheduler.scheduleWithData<ISchedulerData<T>>(
         ExpandMapScheduledSubscriber.schedulerCallback,
         { transmitter: this, resultStream }

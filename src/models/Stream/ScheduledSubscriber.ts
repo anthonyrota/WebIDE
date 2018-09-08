@@ -12,7 +12,7 @@ export class ScheduledSubscriber<T> extends MonoTypeValueTransmitter<T>
   }
 
   public next(value: T): void {
-    this.terminateDisposableWhenDisposed(
+    this.add(
       this.__scheduler.schedule(() => {
         this.destination.next(value)
       })
@@ -20,7 +20,7 @@ export class ScheduledSubscriber<T> extends MonoTypeValueTransmitter<T>
   }
 
   public error(error: unknown): void {
-    this.terminateDisposableWhenDisposed(
+    this.add(
       this.__scheduler.schedule(() => {
         this.destination.error(error)
       })
@@ -28,7 +28,7 @@ export class ScheduledSubscriber<T> extends MonoTypeValueTransmitter<T>
   }
 
   public complete(): void {
-    this.terminateDisposableWhenDisposed(
+    this.add(
       this.__scheduler.schedule(() => {
         this.destination.complete()
       })

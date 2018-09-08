@@ -1,6 +1,5 @@
 import { IScheduler } from 'src/models/Scheduler/Scheduler'
 import { RawStream, Stream } from 'src/models/Stream/Stream'
-import { getAsyncIteratorSymbol } from 'src/utils/asyncIteratorSymbol'
 
 export function fromAsyncIterableScheduled<T>(
   iterable: AsyncIterable<T>,
@@ -8,9 +7,9 @@ export function fromAsyncIterableScheduled<T>(
 ): Stream<T> {
   return new RawStream<T>(target => {
     return scheduler.schedule(() => {
-      const iterator = iterable[getAsyncIteratorSymbol()]()
+      const iterator = iterable[Symbol.asyncIterator]()
 
-      target.terminateDisposableWhenStopsReceivingValues(
+      target.add(
         scheduler.schedule(action => {
           let resultPromise: Promise<IteratorResult<T>>
 

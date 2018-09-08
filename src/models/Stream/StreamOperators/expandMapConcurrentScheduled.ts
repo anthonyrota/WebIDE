@@ -7,21 +7,21 @@ import { Stream } from 'src/models/Stream/Stream'
 
 export function expandMapConcurrentScheduled<T>(
   convertValueToStream: (value: T, index: number) => Stream<T>,
-  scheduler: IScheduler,
-  concurrency: number
+  concurrency: number,
+  scheduler: IScheduler
 ): IOperator<T, T> {
   return new ExpandMapConcurrentScheduledOperator<T>(
     convertValueToStream,
-    scheduler,
-    concurrency
+    concurrency,
+    scheduler
   )
 }
 
 class ExpandMapConcurrentScheduledOperator<T> implements IOperator<T, T> {
   constructor(
     private convertValueToStream: (value: T, index: number) => Stream<T>,
-    private scheduler: IScheduler,
-    private concurrency: number
+    private concurrency: number,
+    private scheduler: IScheduler
   ) {}
 
   public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
@@ -29,8 +29,8 @@ class ExpandMapConcurrentScheduledOperator<T> implements IOperator<T, T> {
       new ExpandMapConcurrentScheduledSubscriber<T>(
         target,
         this.convertValueToStream,
-        this.scheduler,
-        this.concurrency
+        this.concurrency,
+        this.scheduler
       )
     )
   }
@@ -52,8 +52,8 @@ class ExpandMapConcurrentScheduledSubscriber<
   constructor(
     target: ISubscriber<T>,
     private convertValueToStream: (value: T, index: number) => Stream<T>,
-    private scheduler: IScheduler,
-    private concurrency: number
+    private concurrency: number,
+    private scheduler: IScheduler
   ) {
     super(target)
   }
@@ -112,7 +112,7 @@ class ExpandMapConcurrentScheduledSubscriber<
     }
 
     this.scheduledStreamsToMergeCount += 1
-    this.terminateDisposableWhenDisposed(
+    this.add(
       this.scheduler.scheduleWithData<ISchedulerData<T>>(
         ExpandMapConcurrentScheduledSubscriber.schedulerCallback,
         { transmitter: this, resultStream }
