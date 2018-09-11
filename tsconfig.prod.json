@@ -18,6 +18,7 @@
     "suppressImplicitAnyIndexErrors": true,
     "noUnusedLocals": true,
     "experimentalDecorators": true,
+    "downlevelIteration": true,
     "paths": {
       "src/*": ["src/*"]
     }

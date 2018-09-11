@@ -1,6 +1,6 @@
 import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { ISubscription } from 'src/models/Disposable/Subscription'
-import { DistributedStream } from 'src/models/Stream/DistributedStream'
+import { ControlledStream } from 'src/models/Stream/ControlledStream'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
@@ -29,7 +29,7 @@ class RepeatWhenOperator<T> implements IOperator<T, T> {
 }
 
 class RepeatWhenSubscriber<T> extends DoubleInputValueTransmitter<T, T, void> {
-  private completionsStream: DistributedStream<void>
+  private completionsStream: ControlledStream<void>
   private shouldRepeatStreamSubscription!: ISubscription
   private isSubscribedToSource: boolean = true
 
@@ -40,7 +40,7 @@ class RepeatWhenSubscriber<T> extends DoubleInputValueTransmitter<T, T, void> {
   ) {
     super(target)
 
-    this.completionsStream = new DistributedStream<void>()
+    this.completionsStream = new ControlledStream<void>()
     this.add(this.completionsStream)
 
     let shouldRepeatStream: Stream<void>

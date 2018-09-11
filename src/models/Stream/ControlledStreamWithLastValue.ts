@@ -1,9 +1,9 @@
 import { AlreadyDisposedError } from 'src/models/Disposable/AlreadyDisposedError'
 import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { DistributedStream } from 'src/models/Stream/DistributedStream'
-import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
+import { ControlledStream } from 'src/models/Stream/ControlledStream'
+import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export class DistributedStreamWithLastValue<T> extends DistributedStream<T> {
+export class ControlledStreamWithLastValue<T> extends ControlledStream<T> {
   private __value: T
 
   constructor(initialValue: T) {
@@ -16,7 +16,7 @@ export class DistributedStreamWithLastValue<T> extends DistributedStream<T> {
     super.next(value)
   }
 
-  public trySubscribe(target: IRequiredSubscriber<T>): DisposableLike {
+  public trySubscribe(target: ValueTransmitter<T, unknown>): DisposableLike {
     if (!this.isActive()) {
       throw new AlreadyDisposedError()
     }

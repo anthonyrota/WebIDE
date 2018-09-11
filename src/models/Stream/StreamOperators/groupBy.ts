@@ -1,5 +1,5 @@
 import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { DistributedStream } from 'src/models/Stream/DistributedStream'
+import { ControlledStream } from 'src/models/Stream/ControlledStream'
 import {
   DoubleInputValueTransmitterWithData,
   DoubleInputValueTransmitterWithDataSubscriptionTarget
@@ -172,7 +172,7 @@ class GroupBySubscriber<T, K> extends DoubleInputValueTransmitterWithData<
   }
 }
 
-class GroupedDistributiveStream<T, K> extends DistributedStream<T>
+class GroupedDistributiveStream<T, K> extends ControlledStream<T>
   implements IGroupedStream<T, K> {
   constructor(private key: K) {
     super()

@@ -1,6 +1,6 @@
 import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { ISubscription } from 'src/models/Disposable/Subscription'
-import { DistributedStream } from 'src/models/Stream/DistributedStream'
+import { ControlledStream } from 'src/models/Stream/ControlledStream'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
 import { IOperator } from 'src/models/Stream/IOperator'
 import { ISubscriber } from 'src/models/Stream/ISubscriber'
@@ -29,7 +29,7 @@ class RetryWhenSubscriber<T> extends DoubleInputValueTransmitter<
   T,
   unknown
 > {
-  private errorStream: DistributedStream<unknown>
+  private errorStream: ControlledStream<unknown>
   private shouldRetryStreamSubscription!: ISubscription
   private isSubscribedToSource: boolean = true
 
@@ -40,7 +40,7 @@ class RetryWhenSubscriber<T> extends DoubleInputValueTransmitter<
   ) {
     super(target)
 
-    this.errorStream = new DistributedStream<unknown>()
+    this.errorStream = new ControlledStream<unknown>()
     this.add(this.errorStream)
 
     let shouldRetryStream: Stream<unknown>
