@@ -9,7 +9,7 @@ export function delayedInterval(
     let index = 0
 
     return setTimeout(() => {
-      target.add(
+      target.addOnStopReceivingValues(
         setInterval(() => {
           target.next(index)
           index += 1

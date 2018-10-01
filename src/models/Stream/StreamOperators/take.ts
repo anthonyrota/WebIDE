@@ -1,32 +1,27 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { completeImmediately } from 'src/models/Stream/StreamOperators/completeImmediately'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function take<T>(total: number): IOperator<T, T> {
+export function take<T>(total: number): Operation<T, T> {
   if (total < 0) {
     throw new TypeError('total must be positive')
   }
   if (total === 0) {
     return completeImmediately()
   }
-  return new TakeOperator<T>(total)
+  return operateThroughValueTransmitter(
+    target => new TakeValueTransmitter(target, total)
+  )
 }
 
-class TakeOperator<T> implements IOperator<T, T> {
-  constructor(private total: number) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(new TakeSubscriber<T>(target, this.total))
-  }
-}
-
-class TakeSubscriber<T> extends MonoTypeValueTransmitter<T> {
+class TakeValueTransmitter<T> extends MonoTypeValueTransmitter<T> {
   private count: number = 0
 
-  constructor(target: ISubscriber<T>, private total: number) {
+  constructor(target: ISubscriptionTarget<T>, private total: number) {
     super(target)
   }
 

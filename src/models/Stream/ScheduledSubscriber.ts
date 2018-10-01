@@ -1,18 +1,18 @@
 import { IScheduler } from 'src/models/Scheduler/Scheduler'
-import { IRequiredSubscriber, ISubscriber } from 'src/models/Stream/ISubscriber'
+import { IRequiredSubscriptionTarget, ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export class ScheduledSubscriber<T> extends MonoTypeValueTransmitter<T>
-  implements IRequiredSubscriber<T> {
+  implements IRequiredSubscriptionTarget<T> {
   private __scheduler: IScheduler
 
-  constructor(target: ISubscriber<T>, scheduler: IScheduler) {
+  constructor(target: ISubscriptionTarget<T>, scheduler: IScheduler) {
     super(target)
     this.__scheduler = scheduler
   }
 
   public next(value: T): void {
-    this.add(
+    this.addOnDispose(
       this.__scheduler.schedule(() => {
         this.destination.next(value)
       })
@@ -20,7 +20,7 @@ export class ScheduledSubscriber<T> extends MonoTypeValueTransmitter<T>
   }
 
   public error(error: unknown): void {
-    this.add(
+    this.addOnDispose(
       this.__scheduler.schedule(() => {
         this.destination.error(error)
       })
@@ -28,7 +28,7 @@ export class ScheduledSubscriber<T> extends MonoTypeValueTransmitter<T>
   }
 
   public complete(): void {
-    this.add(
+    this.addOnDispose(
       this.__scheduler.schedule(() => {
         this.destination.complete()
       })

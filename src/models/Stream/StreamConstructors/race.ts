@@ -3,7 +3,7 @@ import {
   DoubleInputValueTransmitterWithData,
   DoubleInputValueTransmitterWithDataSubscriptionTarget
 } from 'src/models/Stream/DoubleInputValueTransmitterWithData'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
 import { RawStream, Stream } from 'src/models/Stream/Stream'
 import { empty } from 'src/models/Stream/StreamConstructors/empty'
 
@@ -12,7 +12,7 @@ export function race<T>(...streams: Array<Stream<T>>): Stream<T> {
     return empty()
   }
   if (streams.length === 1) {
-    return streams[1]
+    return streams[0]
   }
   return new RawStream<T>(target => {
     return new RaceValueTransmitter<T>(target, streams)
@@ -28,7 +28,7 @@ class RaceValueTransmitter<T> extends DoubleInputValueTransmitterWithData<
   private hasResolvedFirstStream: boolean = false
   private streamSubscriptions: ISubscription[] = []
 
-  constructor(target: ISubscriber<T>, streams: Array<Stream<T>>) {
+  constructor(target: ISubscriptionTarget<T>, streams: Array<Stream<T>>) {
     super(target)
 
     for (let i = 0; i < streams.length && !this.hasResolvedFirstStream; i++) {

@@ -1,29 +1,23 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
+import { MutableMaybe } from 'src/models/Maybe/MutableMaybe'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import { operate, Operation } from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
 export function sample<T>(
   shouldEmitValueStream: Stream<unknown>
-): IOperator<T, T> {
-  return new SampleOperator<T>(shouldEmitValueStream)
-}
-
-class SampleOperator<T> implements IOperator<T, T> {
-  constructor(private shouldEmitValueStream: Stream<unknown>) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return new SampleSubscriber<T>(target, this.shouldEmitValueStream, source)
-  }
+): Operation<T, T> {
+  return operate(
+    (source, target) =>
+      new SampleSubscriber(target, shouldEmitValueStream, source)
+  )
 }
 
 class SampleSubscriber<T> extends DoubleInputValueTransmitter<T, T, unknown> {
-  private lastValue: T | null = null
-  private hasValue: boolean = false
+  private mutableLatestValue: MutableMaybe<T> = MutableMaybe.none()
 
   constructor(
-    target: ISubscriber<T>,
+    target: ISubscriptionTarget<T>,
     shouldEmitValueStream: Stream<unknown>,
     source: Stream<T>
   ) {
@@ -34,8 +28,7 @@ class SampleSubscriber<T> extends DoubleInputValueTransmitter<T, T, unknown> {
   }
 
   protected onNextValue(value: T): void {
-    this.hasValue = true
-    this.lastValue = value
+    this.mutableLatestValue.setAs(value)
   }
 
   protected onOuterNextValue(): void {
@@ -47,9 +40,9 @@ class SampleSubscriber<T> extends DoubleInputValueTransmitter<T, T, unknown> {
   }
 
   private emitValue(): void {
-    if (this.hasValue) {
-      this.hasValue = false
-      this.destination.next(this.lastValue!)
-    }
+    this.mutableLatestValue.withValue(latestValue => {
+      this.mutableLatestValue.empty()
+      this.destination.next(latestValue)
+    })
   }
 }

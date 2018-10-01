@@ -1,26 +1,21 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function throwIfEmpty<T>(error: unknown): IOperator<T, T> {
-  return new ThrowIfEmptyOperator<T>(error)
+export function throwIfEmpty<T>(getError: () => unknown): Operation<T, T> {
+  return operateThroughValueTransmitter(
+    target => new ThrowIfEmptyValueTransmitter(target, getError)
+  )
 }
 
-class ThrowIfEmptyOperator<T> implements IOperator<T, T> {
-  constructor(private error: unknown) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(new ThrowIfEmptySubscriber<T>(target, this.error))
-  }
-}
-
-class ThrowIfEmptySubscriber<T> extends MonoTypeValueTransmitter<T> {
+class ThrowIfEmptyValueTransmitter<T> extends MonoTypeValueTransmitter<T> {
   private hasValue: boolean = false
 
-  constructor(subscriber: ISubscriber<T>, private errorIfEmpty: unknown) {
-    super(subscriber)
+  constructor(target: ISubscriptionTarget<T>, private getError: () => unknown) {
+    super(target)
   }
 
   public onNextValue(value: T): void {
@@ -32,7 +27,16 @@ class ThrowIfEmptySubscriber<T> extends MonoTypeValueTransmitter<T> {
     if (this.hasValue) {
       this.destination.complete()
     } else {
-      this.destination.error(this.errorIfEmpty)
+      let computedError: unknown
+
+      try {
+        computedError = this.getError()
+      } catch (error) {
+        this.destination.error(error)
+        return
+      }
+
+      this.destination.error(computedError)
     }
   }
 }

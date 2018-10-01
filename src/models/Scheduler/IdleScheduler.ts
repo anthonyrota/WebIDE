@@ -26,17 +26,15 @@ export class IdleScheduler extends AsyncScheduler {
       !deadline.didTimeout &&
       (action = this.shiftAction())
     ) {
-      const result = action.execute()
-
-      if (result) {
+      action.execute().withValue(error => {
         this.disposeScheduled()
 
         while ((action = this.shiftAction())) {
           action.disposeWithoutRemovingFromScheduler()
         }
 
-        throw result.error
-      }
+        throw error
+      })
     }
 
     this.disposeScheduled()

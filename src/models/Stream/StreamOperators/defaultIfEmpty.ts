@@ -1,27 +1,20 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function defaultIfEmpty<T>(defaultValue: T): IOperator<T, T> {
-  return new DefaultIfEmptyOperator<T>(defaultValue)
+export function defaultIfEmpty<T>(defaultValue: T): Operation<T, T> {
+  return operateThroughValueTransmitter(
+    target => new DefaultIfEmptyValueTransmitter(target, defaultValue)
+  )
 }
 
-class DefaultIfEmptyOperator<T> implements IOperator<T, T> {
-  constructor(private defaultValue: T) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new DefaultIfEmptySubscriber<T>(target, this.defaultValue)
-    )
-  }
-}
-
-class DefaultIfEmptySubscriber<T> extends MonoTypeValueTransmitter<T> {
+class DefaultIfEmptyValueTransmitter<T> extends MonoTypeValueTransmitter<T> {
   private isEmpty: boolean = true
 
-  constructor(target: ISubscriber<T>, private defaultValue: T) {
+  constructor(target: ISubscriptionTarget<T>, private defaultValue: T) {
     super(target)
   }
 

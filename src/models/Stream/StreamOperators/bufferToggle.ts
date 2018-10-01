@@ -1,48 +1,34 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import {
   DoubleInputValueTransmitterWithData,
   DoubleInputValueTransmitterWithDataSubscriptionTarget
 } from 'src/models/Stream/DoubleInputValueTransmitterWithData'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 import { removeOnce } from 'src/utils/removeOnce'
 
 export function bufferToggle<T, TOuterValue>(
   openNewBufferStream: Stream<TOuterValue>,
   getShouldCloseBufferStream: (value: TOuterValue) => Stream<unknown>
-): IOperator<T, T[]> {
-  return new BufferToggleOperator<T, TOuterValue>(
-    openNewBufferStream,
-    getShouldCloseBufferStream
-  )
-}
-
-class BufferToggleOperator<T, TOuterValue> implements IOperator<T, T[]> {
-  constructor(
-    private openNewBufferStream: Stream<TOuterValue>,
-    private getShouldCloseBufferStream: (value: TOuterValue) => Stream<unknown>
-  ) {}
-
-  public connect(
-    subscriber: ISubscriber<T[]>,
-    source: Stream<T>
-  ): DisposableLike {
-    return source.subscribe(
-      new BufferToggleSubscriber(
-        subscriber,
-        this.openNewBufferStream,
-        this.getShouldCloseBufferStream
+): Operation<T, T[]> {
+  return operateThroughValueTransmitter(
+    target =>
+      new BufferToggleValueTransmitter(
+        target,
+        openNewBufferStream,
+        getShouldCloseBufferStream
       )
-    )
-  }
+  )
 }
 
 type BufferToggleMessage<T> =
   | { type: 'OpenNewBuffer' }
   | { type: 'CloseBuffer'; buffer: T[] }
 
-class BufferToggleSubscriber<
+class BufferToggleValueTransmitter<
   T,
   TOuterValue
 > extends DoubleInputValueTransmitterWithData<
@@ -54,7 +40,7 @@ class BufferToggleSubscriber<
   private buffers: T[][] = []
 
   constructor(
-    subscriber: ISubscriber<T[]>,
+    subscriber: ISubscriptionTarget<T[]>,
     openNewBufferStream: Stream<TOuterValue>,
     private getShouldCloseBufferStream: (value: TOuterValue) => Stream<unknown>
   ) {

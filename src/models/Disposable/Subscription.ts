@@ -14,8 +14,8 @@ export function isSubscription(candidate: any): candidate is ISubscription {
   return (
     candidate != null &&
     candidate[isSubscriptionPropertyKey] === true &&
-    isFunction(candidate.add) &&
-    isFunction(candidate.remove) &&
+    isFunction(candidate.addOnDispose) &&
+    isFunction(candidate.removeOnDispose) &&
     isFunction(candidate.dispose) &&
     isFunction(candidate.isActive)
   )
@@ -23,28 +23,22 @@ export function isSubscription(candidate: any): candidate is ISubscription {
 
 export interface ISubscription {
   readonly [isSubscriptionPropertyKey]: true
-  add(disposableLike: DisposableLike): void
-  remove(disposableLike: DisposableLike): void
+  addOnDispose(disposableLike: DisposableLike): void
+  removeOnDispose(disposableLike: DisposableLike): void
   dispose(): void
   isActive(): boolean
 }
 
-export interface IImmutableSubscriptionView {
-  add(disposableLike: DisposableLike): void
-  remove(disposableLike: DisposableLike): void
-  isActive(): boolean
-}
-
-export const emptySubscription: ISubscription = freeze({
-  [isSubscriptionPropertyKey]: true as true,
-  add(disposableLike: DisposableLike): void {
+export const emptySubscription = freeze<ISubscription>({
+  [isSubscriptionPropertyKey]: true,
+  addOnDispose(disposableLike: DisposableLike): void {
     if (isFunction(disposableLike)) {
       disposableLike()
     } else if (isDisposable(disposableLike)) {
       disposableLike.dispose()
     }
   },
-  remove(disposableLike: DisposableLike): void {},
+  removeOnDispose(): void {},
   dispose(): void {},
   isActive(): boolean {
     return false
@@ -64,7 +58,7 @@ export class Subscription implements ISubscription {
     this.__childDisposableLikes = disposables
   }
 
-  public add(disposableLike: DisposableLike): void {
+  public addOnDispose(disposableLike: DisposableLike): void {
     if (!this.__isActive) {
       disposeDisposableLike(disposableLike)
       return
@@ -79,15 +73,23 @@ export class Subscription implements ISubscription {
         return
       }
 
-      disposableLike.add(() => {
-        this.remove(disposableLike)
-      })
+      const removeFromChildren = () => {
+        this.removeOnDispose(removeFromDisposableLikesChildren)
+        this.removeOnDispose(disposableLike)
+      }
+
+      const removeFromDisposableLikesChildren = () => {
+        disposableLike.removeOnDispose(removeFromChildren)
+      }
+
+      disposableLike.addOnDispose(removeFromChildren)
+      this.__childDisposableLikes.push(removeFromDisposableLikesChildren)
     }
 
     this.__childDisposableLikes.push(disposableLike)
   }
 
-  public remove(disposableLike: DisposableLike): void {
+  public removeOnDispose(disposableLike: DisposableLike): void {
     if (this.__isActive) {
       removeOnce(this.__childDisposableLikes, disposableLike)
     }

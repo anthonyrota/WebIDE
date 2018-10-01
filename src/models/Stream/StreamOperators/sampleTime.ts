@@ -1,39 +1,29 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
+import { bound } from 'src/decorators/bound'
+import { MutableMaybe } from 'src/models/Maybe/MutableMaybe'
 import {
   IScheduler,
-  ISchedulerActionWithData
+  ISchedulerActionWithoutData
 } from 'src/models/Scheduler/Scheduler'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import { operate, Operation } from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function sampleTime<T>(
   emitValuePeriod: number,
   scheduler: IScheduler
-): IOperator<T, T> {
-  return new SampleTimeOperator<T>(emitValuePeriod, scheduler)
+): Operation<T, T> {
+  return operate(
+    (source, target) =>
+      new SampleTimeValueTransmitter(target, emitValuePeriod, scheduler, source)
+  )
 }
 
-class SampleTimeOperator<T> implements IOperator<T, T> {
-  constructor(private emitValuePeriod: number, private scheduler: IScheduler) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return new SampleTimeSubscriber<T>(
-      target,
-      this.emitValuePeriod,
-      this.scheduler,
-      source
-    )
-  }
-}
-
-class SampleTimeSubscriber<T> extends MonoTypeValueTransmitter<T> {
-  private lastValue: T | null = null
-  private hasValue: boolean = false
+class SampleTimeValueTransmitter<T> extends MonoTypeValueTransmitter<T> {
+  private mutableLatestValue: MutableMaybe<T> = MutableMaybe.none()
 
   constructor(
-    target: ISubscriber<T>,
+    target: ISubscriptionTarget<T>,
     private emitValuePeriod: number,
     scheduler: IScheduler,
     source: Stream<T>
@@ -41,32 +31,24 @@ class SampleTimeSubscriber<T> extends MonoTypeValueTransmitter<T> {
     super(target)
 
     source.subscribe(this)
-    this.add(
-      scheduler.scheduleDelayedWithData<SampleTimeSubscriber<T>>(
-        SampleTimeSubscriber.schedulerCallback,
-        emitValuePeriod,
-        this
-      )
+    this.addOnDispose(
+      scheduler.scheduleDelayed(this.schedulerCallback, emitValuePeriod)
     )
   }
 
-  private static schedulerCallback<T>(
-    transmitter: SampleTimeSubscriber<T>,
-    action: ISchedulerActionWithData<SampleTimeSubscriber<T>>
-  ): void {
-    transmitter.emitValue()
-    action.scheduleDelayedWithData(transmitter.emitValuePeriod, transmitter)
-  }
-
   protected onNextValue(value: T): void {
-    this.hasValue = true
-    this.lastValue = value
+    this.mutableLatestValue.setAs(value)
   }
 
   private emitValue(): void {
-    if (this.hasValue) {
-      this.hasValue = false
-      this.destination.next(this.lastValue!)
-    }
+    this.mutableLatestValue.withValue(latestValue => {
+      this.destination.next(latestValue)
+    })
+  }
+
+  @bound
+  private schedulerCallback(action: ISchedulerActionWithoutData): void {
+    this.emitValue()
+    action.scheduleDelayed(this.emitValuePeriod)
   }
 }

@@ -1,3 +1,3 @@
 import { DelayScheduler } from 'src/models/Scheduler/DelayScheduler'
 
-export const delay = new DelayScheduler(0)
+export const delay = new DelayScheduler()

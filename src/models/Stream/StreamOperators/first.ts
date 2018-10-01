@@ -1,22 +1,6 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
-import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
+import { Operation } from 'src/models/Stream/Operation'
+import { take } from './take'
 
-export function first<T>(): IOperator<T, T> {
-  return new FirstOperator<T>()
-}
-
-class FirstOperator<T> implements IOperator<T, T> {
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(new FirstSubscriber<T>(target))
-  }
-}
-
-class FirstSubscriber<T> extends MonoTypeValueTransmitter<T> {
-  protected onNextValue(value: T): void {
-    this.destination.next(value)
-    this.destination.complete()
-  }
+export function first<T>(): Operation<T, T> {
+  return take(1)
 }

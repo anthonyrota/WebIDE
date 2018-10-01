@@ -1,6 +1,6 @@
-import { IOperator } from 'src/models/Stream/IOperator'
+import { Operation } from 'src/models/Stream/Operation'
 import { takeLast } from 'src/models/Stream/StreamOperators/takeLast'
 
-export function last<T>(): IOperator<T, T> {
+export function last<T>(): Operation<T, T> {
   return takeLast(1)
 }

@@ -1,27 +1,20 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function bufferCount<T>(bufferSize: number): IOperator<T, T[]> {
-  return new BufferCountOperator<T>(bufferSize)
+export function bufferCount<T>(bufferSize: number): Operation<T, T[]> {
+  return operateThroughValueTransmitter(
+    target => new BufferCountValueTransmitter(target, bufferSize)
+  )
 }
 
-class BufferCountOperator<T> implements IOperator<T, T[]> {
-  constructor(private bufferSize: number) {}
-
-  public connect(target: ISubscriber<T[]>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new BufferCountSubscriber<T>(target, this.bufferSize)
-    )
-  }
-}
-
-class BufferCountSubscriber<T> extends ValueTransmitter<T, T[]> {
+class BufferCountValueTransmitter<T> extends ValueTransmitter<T, T[]> {
   private buffer: T[] = []
 
-  constructor(target: ISubscriber<T[]>, private bufferSize: number) {
+  constructor(target: ISubscriptionTarget<T[]>, private bufferSize: number) {
     super(target)
   }
 

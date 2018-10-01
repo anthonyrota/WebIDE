@@ -1,34 +1,30 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { Subscription } from 'src/models/Disposable/Subscription'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
 export function switchMap<T, U>(
   convertValueToStream: (value: T, index: number) => Stream<U>
-): IOperator<T, U> {
-  return new SwitchMapOperator<T, U>(convertValueToStream)
+): Operation<T, U> {
+  return operateThroughValueTransmitter(
+    target => new SwitchMapValueTransmitter(target, convertValueToStream)
+  )
 }
 
-class SwitchMapOperator<T, U> implements IOperator<T, U> {
-  constructor(
-    private convertValueToStream: (value: T, index: number) => Stream<U>
-  ) {}
-
-  public connect(target: ISubscriber<U>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new SwitchMapSubscriber<T, U>(target, this.convertValueToStream)
-    )
-  }
-}
-
-class SwitchMapSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
+class SwitchMapValueTransmitter<T, U> extends DoubleInputValueTransmitter<
+  T,
+  U,
+  U
+> {
   private index: number = 0
   private lastStreamSubscription: Subscription | null = null
 
   constructor(
-    target: ISubscriber<U>,
+    target: ISubscriptionTarget<U>,
     private convertValueToStream: (value: T, index: number) => Stream<U>
   ) {
     super(target)

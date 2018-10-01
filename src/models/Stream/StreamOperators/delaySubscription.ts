@@ -1,29 +1,23 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import { operate, Operation } from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
 export function delaySubscription<T>(
   onShouldSubscribeToSourceStream: Stream<unknown>
-): IOperator<T, T> {
-  return new DelaySubscriptionOperator<T>(onShouldSubscribeToSourceStream)
+): Operation<T, T> {
+  return operate(
+    (source, target) =>
+      new DelaySubscriptionValueTransmitter(
+        target,
+        onShouldSubscribeToSourceStream,
+        source
+      )
+  )
 }
 
-class DelaySubscriptionOperator<T> implements IOperator<T, T> {
-  constructor(private onShouldSubscribeToSourceStream: Stream<unknown>) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return new DelaySubscriptionSubscriber(
-      target,
-      this.onShouldSubscribeToSourceStream,
-      source
-    )
-  }
-}
-
-class DelaySubscriptionSubscriber<T> extends DoubleInputValueTransmitter<
+class DelaySubscriptionValueTransmitter<T> extends DoubleInputValueTransmitter<
   T,
   T,
   unknown
@@ -31,7 +25,7 @@ class DelaySubscriptionSubscriber<T> extends DoubleInputValueTransmitter<
   private sourceSubscription: IDisposable
 
   constructor(
-    target: ISubscriber<T>,
+    target: ISubscriptionTarget<T>,
     onShouldSubscribeToSourceStream: Stream<unknown>,
     private source: Stream<T>
   ) {

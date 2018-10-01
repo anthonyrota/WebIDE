@@ -1,21 +1,16 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import { operate, Operation } from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function repeatAlways<T>(): IOperator<T, T> {
-  return new RepeatAlwaysOperator<T>()
+export function repeatAlways<T>(): Operation<T, T> {
+  return operate((source, target) =>
+    source.subscribe(new RepeatAlwaysValueTransmitter(target, source))
+  )
 }
 
-class RepeatAlwaysOperator<T> implements IOperator<T, T> {
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(new RepeatAlwaysSubscriber<T>(target, source))
-  }
-}
-
-class RepeatAlwaysSubscriber<T> extends MonoTypeValueTransmitter<T> {
-  constructor(target: ISubscriber<T>, private source: Stream<T>) {
+class RepeatAlwaysValueTransmitter<T> extends MonoTypeValueTransmitter<T> {
+  constructor(target: ISubscriptionTarget<T>, private source: Stream<T>) {
     super(target)
   }
 

@@ -1,4 +1,4 @@
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
 
 export const enum NotificationType {
   Next,
@@ -25,7 +25,7 @@ export function createCompleteNotification<T>(): Notification<T> {
 
 export function distributeNotification<T>(
   notification: Notification<T>,
-  target: ISubscriber<T>
+  target: ISubscriptionTarget<T>
 ): void {
   if (notification.type === NotificationType.Next) {
     if (target.next) {

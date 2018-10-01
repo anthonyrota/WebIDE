@@ -2,36 +2,23 @@ import { AlreadyDisposedError } from 'src/models/Disposable/AlreadyDisposedError
 import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { ControlledStream } from 'src/models/Stream/ControlledStream'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
+import { MutableMaybe } from '../Maybe/MutableMaybe'
 
 export class DelayedUntilCompletionControlledStream<T> extends ControlledStream<
   T
 > {
-  private __value?: T
-  private __hasValue: boolean = false
+  private __mutableValue: MutableMaybe<T> = MutableMaybe.none()
 
-  public next(value: T): void {
-    if (!this.isActive()) {
-      throw new AlreadyDisposedError()
-    }
-
-    if (this.isReceivingValues()) {
-      this.__value = value
-      this.__hasValue = true
-    }
+  public onNextValue(value: T): void {
+    this.__mutableValue.setAs(value)
   }
 
-  public complete(): void {
-    if (!this.isActive()) {
-      throw new AlreadyDisposedError()
-    }
+  public onComplete(): void {
+    this.__mutableValue.withValue(value => {
+      super.next(value)
+    })
 
-    if (this.isReceivingValues()) {
-      if (this.__hasValue) {
-        super.next(this.__value!)
-      }
-
-      super.complete()
-    }
+    super.complete()
   }
 
   public trySubscribe(target: ValueTransmitter<T, unknown>): DisposableLike {
@@ -45,9 +32,9 @@ export class DelayedUntilCompletionControlledStream<T> extends ControlledStream<
       return super.pushTarget(target)
     }
 
-    if (this.__hasValue) {
-      target.next(this.__value!)
-    }
+    this.__mutableValue.withValue(value => {
+      target.next(value)
+    })
 
     target.complete()
   }

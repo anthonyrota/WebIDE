@@ -9,10 +9,10 @@ export function fromPromiseScheduled<T>(
     return scheduler.schedule(() => {
       promise.then(
         value => {
-          target.add(
+          target.addOnStopReceivingValues(
             scheduler.schedule(() => {
               target.next(value)
-              target.add(
+              target.addOnStopReceivingValues(
                 scheduler.schedule(() => {
                   target.complete()
                 })
@@ -21,7 +21,7 @@ export function fromPromiseScheduled<T>(
           )
         },
         error => {
-          target.add(
+          target.addOnStopReceivingValues(
             scheduler.schedule(() => {
               target.error(error)
             })

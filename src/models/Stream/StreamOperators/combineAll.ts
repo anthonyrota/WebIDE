@@ -3,21 +3,16 @@ import {
   DoubleInputValueTransmitterWithData,
   DoubleInputValueTransmitterWithDataSubscriptionTarget
 } from 'src/models/Stream/DoubleInputValueTransmitterWithData'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
-export function combineAll<T>(): IOperator<Stream<T>, T[]> {
-  return new CombineAllOperator<T>()
-}
-
-class CombineAllOperator<T> implements IOperator<Stream<T>, T[]> {
-  public connect(
-    target: ISubscriber<T[]>,
-    source: Stream<Stream<T>>
-  ): DisposableLike {
-    return source.subscribe(new CombineAllSubscriber<T>(target))
-  }
+export function combineAll<T>(): Operation<Stream<T>, T[]> {
+  return operateThroughValueTransmitter(
+    target => new CombineAllSubscriber(target)
+  )
 }
 
 interface IStreamData {

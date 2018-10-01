@@ -11,7 +11,7 @@
     "moduleResolution": "node",
     "rootDir": "src",
     "forceConsistentCasingInFileNames": true,
-    "noImplicitReturns": true,
+    "noImplicitReturns": false,
     "noImplicitThis": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -20,6 +20,7 @@
     "experimentalDecorators": true,
     "strictFunctionTypes": true,
     "strictPropertyInitialization": true,
+    "strict": true,
     "downlevelIteration": true,
     "paths": {
       "src/*": ["src/*"]

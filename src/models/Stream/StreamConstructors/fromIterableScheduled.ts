@@ -9,7 +9,7 @@ export function fromIterableScheduled<T>(
     return scheduler.schedule(() => {
       const iterator = iterable[Symbol.iterator]()
 
-      target.add(
+      target.addOnStopReceivingValues(
         scheduler.schedule(action => {
           let result: IteratorResult<T>
 

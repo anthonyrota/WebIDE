@@ -1,23 +1,19 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
-export function skipUntil<T>(notifier: Stream<unknown>): IOperator<T, T> {
-  return new SkipUntilOperator<T>(notifier)
+export function skipUntil<T>(notifier: Stream<unknown>): Operation<T, T> {
+  return operateThroughValueTransmitter(
+    target => new SkipUntilValueTransmitter(target, notifier)
+  )
 }
 
-class SkipUntilOperator<T> implements IOperator<T, T> {
-  constructor(private notifier: Stream<unknown>) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(new SkipUntilSubscriber<T>(target, this.notifier))
-  }
-}
-
-class SkipUntilSubscriber<T> extends DoubleInputValueTransmitter<
+class SkipUntilValueTransmitter<T> extends DoubleInputValueTransmitter<
   T,
   T,
   unknown
@@ -25,7 +21,7 @@ class SkipUntilSubscriber<T> extends DoubleInputValueTransmitter<
   private hasStoppedSkippingValues: boolean = false
   private notifierSubscription: IDisposable
 
-  constructor(target: ISubscriber<T>, notifier: Stream<unknown>) {
+  constructor(target: ISubscriptionTarget<T>, notifier: Stream<unknown>) {
     super(target)
     this.notifierSubscription = this.subscribeStreamToSelf(notifier)
   }
@@ -43,6 +39,5 @@ class SkipUntilSubscriber<T> extends DoubleInputValueTransmitter<
 
   protected onOuterComplete(): void {
     this.hasStoppedSkippingValues = false
-    this.notifierSubscription.dispose()
   }
 }

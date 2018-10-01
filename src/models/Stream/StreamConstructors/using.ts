@@ -1,5 +1,4 @@
 import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { Subscription } from 'src/models/Disposable/Subscription'
 import { RawStream, Stream } from 'src/models/Stream/Stream'
 
 export function using<T>(
@@ -10,6 +9,7 @@ export function using<T>(
     const resource = createResource()
     const stream = createStream(resource)
 
-    return new Subscription([resource, stream.subscribe(target)])
+    target.addOnStopReceivingValues(resource)
+    stream.subscribe(target)
   })
 }

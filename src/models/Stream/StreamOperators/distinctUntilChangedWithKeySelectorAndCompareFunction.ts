@@ -1,7 +1,8 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function distinctUntilChangedWithKeySelectorAndCompareFunction<
@@ -10,36 +11,18 @@ export function distinctUntilChangedWithKeySelectorAndCompareFunction<
 >(
   selectKey: (value: TValue) => TKey,
   isEqual: (lastKey: TKey, newKey: TKey) => boolean
-): IOperator<TValue, TValue> {
-  return new DistinctUntilChangedWithKeySelectorAndCompareFunctionOperator<
-    TValue,
-    TKey
-  >(selectKey, isEqual)
+): Operation<TValue, TValue> {
+  return operateThroughValueTransmitter(
+    target =>
+      new DistinctUntilChangedWithKeySelectorAndCompareFunctionValueTransmitter(
+        target,
+        selectKey,
+        isEqual
+      )
+  )
 }
 
-class DistinctUntilChangedWithKeySelectorAndCompareFunctionOperator<
-  TValue,
-  TKey
-> implements IOperator<TValue, TValue> {
-  constructor(
-    private selectKey: (value: TValue) => TKey,
-    private isEqual: (lastKey: TKey, newKey: TKey) => boolean
-  ) {}
-
-  public connect(
-    target: ISubscriber<TValue>,
-    source: Stream<TValue>
-  ): DisposableLike {
-    return source.subscribe(
-      new DistinctUntilChangedWithKeySelectorAndCompareFunctionSubscriber<
-        TValue,
-        TKey
-      >(target, this.selectKey, this.isEqual)
-    )
-  }
-}
-
-class DistinctUntilChangedWithKeySelectorAndCompareFunctionSubscriber<
+class DistinctUntilChangedWithKeySelectorAndCompareFunctionValueTransmitter<
   TValue,
   TKey
 > extends MonoTypeValueTransmitter<TValue> {
@@ -47,7 +30,7 @@ class DistinctUntilChangedWithKeySelectorAndCompareFunctionSubscriber<
   private hasLastKey: boolean = false
 
   constructor(
-    target: ISubscriber<TValue>,
+    target: ISubscriptionTarget<TValue>,
     private selectKey: (value: TValue) => TKey,
     private isEqual: (lastKey: TKey, newKey: TKey) => boolean
   ) {

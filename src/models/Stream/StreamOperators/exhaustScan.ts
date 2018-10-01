@@ -1,49 +1,41 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
-export function exhaustScan<T, U>(
-  accumulate: (accumulatedValue: U, value: T, index: number) => Stream<U>,
-  startingValue: U
-): IOperator<T, U> {
-  return new ExhaustScanOperator<T, U>(accumulate, startingValue)
-}
-
-class ExhaustScanOperator<T, U> implements IOperator<T, U> {
-  constructor(
-    private accumulate: (
-      accumulatedValue: U,
-      value: T,
-      index: number
-    ) => Stream<U>,
-    private startingValue: U
-  ) {}
-
-  public connect(target: ISubscriber<U>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new ExhaustScanSubscriber<T, U>(
+export function exhaustScan<T, U, A>(
+  accumulate: (accumulatedValue: U | A, value: T, index: number) => Stream<U>,
+  startingValue: U | A
+): Operation<T, U> {
+  return operateThroughValueTransmitter(
+    target =>
+      new ExhaustScanValueTransmitter<T, U, A>(
         target,
-        this.accumulate,
-        this.startingValue
+        accumulate,
+        startingValue
       )
-    )
-  }
+  )
 }
 
-class ExhaustScanSubscriber<T, U> extends DoubleInputValueTransmitter<T, U, U> {
+class ExhaustScanValueTransmitter<T, U, A> extends DoubleInputValueTransmitter<
+  T,
+  U,
+  U
+> {
   private hasActiveStream: boolean = false
   private index: number = 0
 
   constructor(
-    target: ISubscriber<U>,
+    target: ISubscriptionTarget<U>,
     private accumulate: (
-      accumulatedValue: U,
+      accumulatedValue: U | A,
       value: T,
       index: number
     ) => Stream<U>,
-    private accumulatedValue: U
+    private accumulatedValue: U | A
   ) {
     super(target)
   }

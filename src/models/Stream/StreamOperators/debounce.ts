@@ -1,33 +1,31 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
+import { MutableMaybe } from 'src/models/Maybe/MutableMaybe'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
 export function debounce<T>(
   getDurationStream: (value: T) => Stream<unknown>
-): IOperator<T, T> {
-  return new DebounceOperator<T>(getDurationStream)
+): Operation<T, T> {
+  return operateThroughValueTransmitter(
+    target => new DebounceValueTransmitter(target, getDurationStream)
+  )
 }
 
-class DebounceOperator<T> implements IOperator<T, T> {
-  constructor(private getDurationStream: (value: T) => Stream<unknown>) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new DebounceSubscriber<T>(target, this.getDurationStream)
-    )
-  }
-}
-
-class DebounceSubscriber<T> extends DoubleInputValueTransmitter<T, T, unknown> {
-  private value: T | null = null
-  private hasValue: boolean = false
+class DebounceValueTransmitter<T> extends DoubleInputValueTransmitter<
+  T,
+  T,
+  unknown
+> {
+  private mutableValue: MutableMaybe<T> = MutableMaybe.none()
   private durationStreamSubscription: IDisposable | null = null
 
   constructor(
-    target: ISubscriber<T>,
+    target: ISubscriptionTarget<T>,
     private getDurationStream: (value: T) => Stream<unknown>
   ) {
     super(target)
@@ -44,8 +42,7 @@ class DebounceSubscriber<T> extends DoubleInputValueTransmitter<T, T, unknown> {
       return
     }
 
-    this.value = value
-    this.hasValue = true
+    this.mutableValue.setAs(value)
 
     if (this.durationStreamSubscription) {
       this.durationStreamSubscription.dispose()
@@ -69,20 +66,14 @@ class DebounceSubscriber<T> extends DoubleInputValueTransmitter<T, T, unknown> {
   }
 
   private distributeValue(): void {
-    if (!this.hasValue) {
-      return
-    }
+    this.mutableValue.withValue(value => {
+      if (this.durationStreamSubscription) {
+        this.durationStreamSubscription.dispose()
+        this.durationStreamSubscription = null
+      }
 
-    const value = this.value!
-
-    if (this.durationStreamSubscription) {
-      this.durationStreamSubscription.dispose()
-      this.durationStreamSubscription = null
-    }
-
-    this.value = null
-    this.hasValue = false
-
-    this.destination.next(value)
+      this.mutableValue.empty()
+      this.destination.next(value)
+    })
   }
 }

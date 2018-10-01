@@ -1,11 +1,13 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { ControlledStream } from 'src/models/Stream/ControlledStream'
 import {
   DoubleInputValueTransmitterWithData,
   DoubleInputValueTransmitterWithDataSubscriptionTarget
 } from 'src/models/Stream/DoubleInputValueTransmitterWithData'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
 export interface IGroupedStream<T, K> extends Stream<T> {
@@ -19,35 +21,14 @@ export function groupBy<T, K>(
     groupInitializerValue: T,
     valuesIndex: number
   ) => Stream<unknown>
-): IOperator<T, IGroupedStream<T, K>> {
-  return new GroupByOperator<T, K>(selectKey, selectGroupDurationStream)
+): Operation<T, IGroupedStream<T, K>> {
+  return operateThroughValueTransmitter(
+    target =>
+      new GroupByValueTransmitter(target, selectKey, selectGroupDurationStream)
+  )
 }
 
-class GroupByOperator<T, K> implements IOperator<T, IGroupedStream<T, K>> {
-  constructor(
-    private selectKey: (value: T, index: number) => K,
-    private selectGroupDurationStream?: (
-      group: IGroupedStream<T, K>,
-      groupInitializerValue: T,
-      valuesIndex: number
-    ) => Stream<unknown>
-  ) {}
-
-  public connect(
-    target: ISubscriber<IGroupedStream<T, K>>,
-    source: Stream<T>
-  ): DisposableLike {
-    return source.subscribe(
-      new GroupBySubscriber<T, K>(
-        target,
-        this.selectKey,
-        this.selectGroupDurationStream
-      )
-    )
-  }
-}
-
-class GroupBySubscriber<T, K> extends DoubleInputValueTransmitterWithData<
+class GroupByValueTransmitter<T, K> extends DoubleInputValueTransmitterWithData<
   T,
   IGroupedStream<T, K>,
   unknown,
@@ -57,7 +38,7 @@ class GroupBySubscriber<T, K> extends DoubleInputValueTransmitterWithData<
   private index: number = 0
 
   constructor(
-    target: ISubscriber<IGroupedStream<T, K>>,
+    target: ISubscriptionTarget<IGroupedStream<T, K>>,
     private selectKey: (value: T, index: number) => K,
     private selectGroupDurationStream?: (
       group: IGroupedStream<T, K>,
@@ -140,34 +121,12 @@ class GroupBySubscriber<T, K> extends DoubleInputValueTransmitterWithData<
   }
 
   private distributeError(error: unknown): void {
-    const groupsIterator = this.groupsByKey.values()
-
-    while (true) {
-      const { done, value: group } = groupsIterator.next()
-
-      if (done) {
-        break
-      }
-
-      group.error(error)
-    }
-
+    this.groupsByKey.forEach(group => group.error(error))
     this.destination.error(error)
   }
 
   private distributeCompletion(): void {
-    const groupsIterator = this.groupsByKey.values()
-
-    while (true) {
-      const { done, value: group } = groupsIterator.next()
-
-      if (done) {
-        break
-      }
-
-      group.complete()
-    }
-
+    this.groupsByKey.forEach(group => group.complete())
     this.destination.complete()
   }
 }

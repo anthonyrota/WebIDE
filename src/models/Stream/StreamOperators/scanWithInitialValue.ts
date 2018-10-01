@@ -1,38 +1,28 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function scanWithInitialValue<T, U>(
   accumulate: (accumulatedValue: U, value: T, index: number) => U,
   initialValue: U
-): IOperator<T, U> {
-  return new ScanWithInitialValueOperator<T, U>(accumulate, initialValue)
+): Operation<T, U> {
+  return operateThroughValueTransmitter(
+    target =>
+      new ScanWithInitialValueValueTransmitter(target, accumulate, initialValue)
+  )
 }
 
-class ScanWithInitialValueOperator<T, U> implements IOperator<T, U> {
-  constructor(
-    private accumulate: (accumulatedValue: U, value: T, index: number) => U,
-    private initialValue: U
-  ) {}
-
-  public connect(target: ISubscriber<U>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new ScanWithInitialValueSubscriber<T, U>(
-        target,
-        this.accumulate,
-        this.initialValue
-      )
-    )
-  }
-}
-
-class ScanWithInitialValueSubscriber<T, U> extends ValueTransmitter<T, U> {
+class ScanWithInitialValueValueTransmitter<T, U> extends ValueTransmitter<
+  T,
+  U
+> {
   private index: number = 0
 
   constructor(
-    target: ISubscriber<U>,
+    target: ISubscriptionTarget<U>,
     private accumulate: (accumulatedValue: U, value: T, index: number) => U,
     private accumulatedValue: U
   ) {

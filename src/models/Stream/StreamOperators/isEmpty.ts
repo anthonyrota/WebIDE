@@ -1,18 +1,12 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { operateThroughValueTransmitter } from 'src/models/Stream/Operation'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { always } from 'src/utils/always'
 
-export const isEmpty = always<IOperator<unknown, boolean>>({
-  connect(
-    target: ISubscriber<boolean>,
-    source: Stream<unknown>
-  ): DisposableLike {
-    return source.subscribe(new IsEmptySubscriber(target))
-  }
-})
+export const isEmpty = always(
+  operateThroughValueTransmitter<unknown, boolean>(
+    target => new IsEmptySubscriber(target)
+  )
+)
 
 class IsEmptySubscriber extends ValueTransmitter<unknown, boolean> {
   protected onNextValue(): void {

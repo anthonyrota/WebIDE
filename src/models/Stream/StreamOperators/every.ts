@@ -1,31 +1,23 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function every<T>(
   predicate: (value: T, index: number) => boolean
-): IOperator<T, boolean> {
-  return new EveryOperator<T>(predicate)
+): Operation<T, boolean> {
+  return operateThroughValueTransmitter(
+    target => new EveryValueTransmitter(target, predicate)
+  )
 }
 
-class EveryOperator<T> implements IOperator<T, boolean> {
-  constructor(private predicate: (value: T, index: number) => boolean) {}
-
-  public connect(
-    target: ISubscriber<boolean>,
-    source: Stream<T>
-  ): DisposableLike {
-    return source.subscribe(new EverySubscriber(target, this.predicate))
-  }
-}
-
-class EverySubscriber<T> extends ValueTransmitter<T, boolean> {
+class EveryValueTransmitter<T> extends ValueTransmitter<T, boolean> {
   private index: number = 0
 
   constructor(
-    target: ISubscriber<boolean>,
+    target: ISubscriptionTarget<boolean>,
     private predicate: (value: T, index: number) => boolean
   ) {
     super(target)

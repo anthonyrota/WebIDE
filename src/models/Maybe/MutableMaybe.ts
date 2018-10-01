@@ -1,8 +1,5 @@
-import { bound } from 'src/decorators/bound'
-
 export class MutableMaybe<T> {
   private __state: { hasValue: true; value: T } | { hasValue: false }
-  private __immutableView: ImmutableMutableMaybeView<T> | null = null
 
   private constructor(hasValue: false)
   private constructor(hasValue: true, value: T)
@@ -74,27 +71,29 @@ export class MutableMaybe<T> {
 
   public copy(other: MutableMaybe<T>): this {
     other.match({
-      none: this.__boundEmpty,
-      some: this.__boundSetValue
+      none: () => this.empty(),
+      some: value => this.setAs(value)
     })
     return this
   }
 
   public copyIfEmpty(other: MutableMaybe<T>): this {
-    if (this.__state.hasValue) {
-      other.withValue(this.__boundSetValue)
+    if (!this.__state.hasValue) {
+      other.withValue(value => this.setAs(value))
     }
     return this
   }
 
   public copyComputedIfEmpty(getOther: () => MutableMaybe<T>): this {
     if (this.__state.hasValue) {
-      getOther().withValue(this.__boundSetValue)
+      getOther().withValue(value => {
+        this.setAs(value)
+      })
     }
     return this
   }
 
-  public setValue(value: T): this {
+  public setAs(value: T): this {
     this.__state = {
       hasValue: true,
       value
@@ -109,7 +108,7 @@ export class MutableMaybe<T> {
 
   public transform(transformValue: (value: T) => T): this {
     if (this.__state.hasValue) {
-      this.setValue(transformValue(this.__state.value))
+      this.setAs(transformValue(this.__state.value))
     }
     return this
   }
@@ -160,89 +159,5 @@ export class MutableMaybe<T> {
     return this.__state.hasValue
       ? `MutableMaybe.Some(${this.__state.value})`
       : `MutableMaybe.None()`
-  }
-
-  public throwValue(): void {
-    if (this.__state.hasValue) {
-      throw this.__state.value
-    }
-  }
-
-  public getImmutableView(): ImmutableMutableMaybeView<T> {
-    if (!this.__immutableView) {
-      this.__immutableView = new ImmutableMutableMaybeView<T>(this)
-    }
-    return this.__immutableView
-  }
-
-  @bound
-  private __boundEmpty(): void {
-    this.__state = { hasValue: false }
-  }
-
-  @bound
-  private __boundSetValue(value: T): void {
-    this.__state = { hasValue: true, value }
-  }
-}
-
-export class ImmutableMutableMaybeView<T> {
-  private __maybe: MutableMaybe<T>
-
-  constructor(mutableView: MutableMaybe<T>) {
-    this.__maybe = mutableView
-  }
-
-  public isEmpty(): boolean {
-    return this.__maybe.isEmpty()
-  }
-
-  public hasValue(): boolean {
-    return this.__maybe.hasValue()
-  }
-
-  public withValue(action: (value: T) => void): this {
-    this.__maybe.withValue(action)
-    return this
-  }
-
-  public getOrElse(value: T): T {
-    return this.__maybe.getOrElse(value)
-  }
-
-  public getOrElseComputed(getValue: () => T): T {
-    return this.__maybe.getOrElseComputed(getValue)
-  }
-
-  public match<U>(outcomes: { some: (value: T) => U; none: () => U }): U {
-    return this.__maybe.match(outcomes)
-  }
-
-  public clone(): MutableMaybe<T> {
-    return this.__maybe.clone()
-  }
-
-  public getOrThrow(): T {
-    return this.__maybe.getOrThrow()
-  }
-
-  public getOrThrowError(error: unknown): T {
-    return this.__maybe.getOrThrowError(error)
-  }
-
-  public getOrThrowComputedError(getError: () => unknown): T {
-    return this.__maybe.getOrThrowComputedError(getError)
-  }
-
-  public toString(): string {
-    return `ImmutableMutableMaybeView(${this.__maybe})`
-  }
-
-  public throwValue(): void {
-    return this.__maybe.throwValue()
-  }
-
-  public getImmutableView(): ImmutableMutableMaybeView<T> {
-    return this
   }
 }

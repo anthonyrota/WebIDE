@@ -1,27 +1,20 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import { operate, Operation } from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function retry<T>(count: number): IOperator<T, T> {
+export function retry<T>(count: number): Operation<T, T> {
   if (count < 0) {
     throw new TypeError('count must be positive')
   }
-  return new RetryOperator<T>(count)
-}
-
-class RetryOperator<T> implements IOperator<T, T> {
-  constructor(private count: number) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(new RetrySubscriber<T>(target, this.count, source))
-  }
+  return operate((source, target) =>
+    source.subscribe(new RetrySubscriber(target, count, source))
+  )
 }
 
 class RetrySubscriber<T> extends MonoTypeValueTransmitter<T> {
   constructor(
-    target: ISubscriber<T>,
+    target: ISubscriptionTarget<T>,
     private count: number,
     private source: Stream<T>
   ) {

@@ -1,47 +1,37 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { ISubscription } from 'src/models/Disposable/Subscription'
 import { ControlledStream } from 'src/models/Stream/ControlledStream'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import { operate, Operation } from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
 export function repeatWhen<T>(
   getShouldRepeatStream: (completionsStream: Stream<void>) => Stream<void>
-): IOperator<T, T> {
-  return new RepeatWhenOperator<T>(getShouldRepeatStream)
+): Operation<T, T> {
+  return operate(
+    (source, target) =>
+      new RepeatWhenValueTransmitter(target, getShouldRepeatStream, source)
+  )
 }
 
-class RepeatWhenOperator<T> implements IOperator<T, T> {
-  constructor(
-    private getShouldRepeatStream: (
-      completionsStream: Stream<void>
-    ) => Stream<void>
-  ) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return new RepeatWhenSubscriber<T>(
-      target,
-      this.getShouldRepeatStream,
-      source
-    )
-  }
-}
-
-class RepeatWhenSubscriber<T> extends DoubleInputValueTransmitter<T, T, void> {
+class RepeatWhenValueTransmitter<T> extends DoubleInputValueTransmitter<
+  T,
+  T,
+  void
+> {
   private completionsStream: ControlledStream<void>
   private shouldRepeatStreamSubscription!: ISubscription
   private isSubscribedToSource: boolean = true
 
   constructor(
-    target: ISubscriber<T>,
+    target: ISubscriptionTarget<T>,
     getShouldRepeatStream: (completionsStream: Stream<void>) => Stream<void>,
     private source: Stream<T>
   ) {
     super(target)
 
     this.completionsStream = new ControlledStream<void>()
-    this.add(this.completionsStream)
+    this.addOnDispose(this.completionsStream)
 
     let shouldRepeatStream: Stream<void>
 
@@ -60,17 +50,17 @@ class RepeatWhenSubscriber<T> extends DoubleInputValueTransmitter<T, T, void> {
 
   public disposeAndRecycle(): void {
     if (this.completionsStream) {
-      this.remove(this.completionsStream)
+      this.removeOnDispose(this.completionsStream)
     }
     if (this.shouldRepeatStreamSubscription) {
-      this.remove(this.shouldRepeatStreamSubscription)
+      this.removeOnDispose(this.shouldRepeatStreamSubscription)
     }
     super.disposeAndRecycle()
     if (this.completionsStream) {
-      this.add(this.completionsStream)
+      this.addOnDispose(this.completionsStream)
     }
     if (this.shouldRepeatStreamSubscription) {
-      this.add(this.shouldRepeatStreamSubscription)
+      this.addOnDispose(this.shouldRepeatStreamSubscription)
     }
   }
 

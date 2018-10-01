@@ -1,61 +1,44 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
-export function mergeScanConcurrent<T, U>(
-  accumulate: (accumulatedValue: U, value: T, index: number) => Stream<U>,
-  startingValue: U,
+export function mergeScanConcurrent<T, U, A>(
+  accumulate: (accumulatedValue: U | A, value: T, index: number) => Stream<U>,
+  startingValue: U | A,
   concurrency: number
-): IOperator<T, U> {
-  return new MergeScanConcurrentOperator<T, U>(
-    accumulate,
-    startingValue,
-    concurrency
+): Operation<T, U> {
+  return operateThroughValueTransmitter(
+    target =>
+      new MergeScanConcurrentValueTransmitter<T, U, A>(
+        target,
+        accumulate,
+        startingValue,
+        concurrency
+      )
   )
 }
 
-class MergeScanConcurrentOperator<T, U> implements IOperator<T, U> {
-  constructor(
-    private accumulate: (
-      accumulatedValue: U,
-      value: T,
-      index: number
-    ) => Stream<U>,
-    private startingValue: U,
-    private concurrency: number
-  ) {}
-
-  public connect(target: ISubscriber<U>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new MergeScanConcurrentSubscriber<T, U>(
-        target,
-        this.accumulate,
-        this.startingValue,
-        this.concurrency
-      )
-    )
-  }
-}
-
-class MergeScanConcurrentSubscriber<T, U> extends DoubleInputValueTransmitter<
+class MergeScanConcurrentValueTransmitter<
   T,
   U,
-  U
-> {
+  A
+> extends DoubleInputValueTransmitter<T, U, U> {
   private valuesToProcess: T[] = []
   private activeMergedStreamsCount: number = 0
   private index: number = 0
 
   constructor(
-    target: ISubscriber<U>,
+    target: ISubscriptionTarget<U>,
     private accumulate: (
-      accumulatedValue: U,
+      accumulatedValue: U | A,
       value: T,
       index: number
     ) => Stream<U>,
-    private accumulatedValue: U,
+    private accumulatedValue: U | A,
     private concurrency: number
   ) {
     super(target)

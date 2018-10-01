@@ -15,7 +15,10 @@ export function ofEntriesScheduled<T>(
       } else {
         const key = objectKeys[index] as keyof T
 
-        target.next([key, object[key]])
+        if (Object.prototype.hasOwnProperty.call(object, key)) {
+          target.next([key, object[key]])
+        }
+
         action.scheduleWithData(index + 1)
       }
     }, 0)

@@ -1,30 +1,20 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { ISubscription } from 'src/models/Disposable/Subscription'
 import { ControlledStream } from 'src/models/Stream/ControlledStream'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import { operate, Operation } from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
 export function retryWhen<T>(
   getShouldRetryStream: (errorStream: Stream<unknown>) => Stream<unknown>
-): IOperator<T, T> {
-  return new RetryWhenOperator<T>(getShouldRetryStream)
+): Operation<T, T> {
+  return operate(
+    (source, target) =>
+      new RetryWhenValueTransmitter(target, getShouldRetryStream, source)
+  )
 }
 
-class RetryWhenOperator<T> implements IOperator<T, T> {
-  constructor(
-    private getShouldRetryStream: (
-      errorStream: Stream<unknown>
-    ) => Stream<unknown>
-  ) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return new RetryWhenSubscriber(target, this.getShouldRetryStream, source)
-  }
-}
-
-class RetryWhenSubscriber<T> extends DoubleInputValueTransmitter<
+class RetryWhenValueTransmitter<T> extends DoubleInputValueTransmitter<
   T,
   T,
   unknown
@@ -34,14 +24,14 @@ class RetryWhenSubscriber<T> extends DoubleInputValueTransmitter<
   private isSubscribedToSource: boolean = true
 
   constructor(
-    target: ISubscriber<T>,
+    target: ISubscriptionTarget<T>,
     getShouldRetryStream: (errorStream: Stream<unknown>) => Stream<unknown>,
     private source: Stream<T>
   ) {
     super(target)
 
     this.errorStream = new ControlledStream<unknown>()
-    this.add(this.errorStream)
+    this.addOnDispose(this.errorStream)
 
     let shouldRetryStream: Stream<unknown>
 
@@ -60,17 +50,17 @@ class RetryWhenSubscriber<T> extends DoubleInputValueTransmitter<
 
   public disposeAndRecycle(): void {
     if (this.errorStream) {
-      this.remove(this.errorStream)
+      this.removeOnDispose(this.errorStream)
     }
     if (this.shouldRetryStreamSubscription) {
-      this.remove(this.shouldRetryStreamSubscription)
+      this.removeOnDispose(this.shouldRetryStreamSubscription)
     }
     super.disposeAndRecycle()
     if (this.errorStream) {
-      this.add(this.errorStream)
+      this.addOnDispose(this.errorStream)
     }
     if (this.shouldRetryStreamSubscription) {
-      this.add(this.shouldRetryStreamSubscription)
+      this.addOnDispose(this.shouldRetryStreamSubscription)
     }
   }
 

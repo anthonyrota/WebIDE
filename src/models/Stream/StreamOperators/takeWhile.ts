@@ -1,34 +1,29 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function takeWhile<T>(
   predicate: (value: T, index: number) => boolean
-): IOperator<T, T>
+): Operation<T, T>
 export function takeWhile<T, U extends T>(
   predicate: (value: T, index: number) => value is U
-): IOperator<T, U>
+): Operation<T, U>
 export function takeWhile<T>(
   predicate: (value: T, index: number) => boolean
-): IOperator<T, T> {
-  return new TakeWhileOperator<T>(predicate)
+): Operation<T, T> {
+  return operateThroughValueTransmitter(
+    target => new TakeWhileValueTransmitter(target, predicate)
+  )
 }
 
-class TakeWhileOperator<T> implements IOperator<T, T> {
-  constructor(private predicate: (value: T, index: number) => boolean) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(new TakeWhileSubscriber<T>(target, this.predicate))
-  }
-}
-
-class TakeWhileSubscriber<T> extends MonoTypeValueTransmitter<T> {
+class TakeWhileValueTransmitter<T> extends MonoTypeValueTransmitter<T> {
   private index: number = 0
 
   constructor(
-    target: ISubscriber<T>,
+    target: ISubscriptionTarget<T>,
     private predicate: (value: T, index: number) => boolean
   ) {
     super(target)

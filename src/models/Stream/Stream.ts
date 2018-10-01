@@ -3,9 +3,9 @@ import {
   emptySubscription,
   ISubscription
 } from 'src/models/Disposable/Subscription'
-import { IOperator } from 'src/models/Stream/IOperator'
 import { isReceivingValuesSubscription } from 'src/models/Stream/IReceivingValuesSubscription'
-import { ISubscribable, ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscribable, ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import { Operation } from 'src/models/Stream/Operation'
 import {
   MonoTypeValueTransmitter,
   ValueTransmitter
@@ -16,93 +16,93 @@ export function isStream(value: unknown): value is Stream<unknown> {
 }
 
 export abstract class Stream<T> implements ISubscribable<T> {
-  public lift<U>(operator: IOperator<T, U>): Stream<U> {
-    return new LiftedStream<T, U>(this, operator)
+  public lift<U>(operation: Operation<T, U>): Stream<U> {
+    return new LiftedStream<T, U>(this, operation)
   }
 
   public liftAll(): Stream<T>
-  public liftAll<A>(op1: IOperator<T, A>): Stream<A>
-  public liftAll<A, B>(op1: IOperator<T, A>, op2: IOperator<A, B>): Stream<B>
+  public liftAll<A>(op1: Operation<T, A>): Stream<A>
+  public liftAll<A, B>(op1: Operation<T, A>, op2: Operation<A, B>): Stream<B>
   public liftAll<A, B, C>(
-    op1: IOperator<T, A>,
-    op2: IOperator<A, B>,
-    op3: IOperator<B, C>
+    op1: Operation<T, A>,
+    op2: Operation<A, B>,
+    op3: Operation<B, C>
   ): Stream<C>
   public liftAll<A, B, C, D>(
-    op1: IOperator<T, A>,
-    op2: IOperator<A, B>,
-    op3: IOperator<B, C>,
-    op4: IOperator<C, D>
+    op1: Operation<T, A>,
+    op2: Operation<A, B>,
+    op3: Operation<B, C>,
+    op4: Operation<C, D>
   ): Stream<D>
   public liftAll<A, B, C, D, E>(
-    op1: IOperator<T, A>,
-    op2: IOperator<A, B>,
-    op3: IOperator<B, C>,
-    op4: IOperator<C, D>,
-    op5: IOperator<D, E>
+    op1: Operation<T, A>,
+    op2: Operation<A, B>,
+    op3: Operation<B, C>,
+    op4: Operation<C, D>,
+    op5: Operation<D, E>
   ): Stream<E>
   public liftAll<A, B, C, D, E, F>(
-    op1: IOperator<T, A>,
-    op2: IOperator<A, B>,
-    op3: IOperator<B, C>,
-    op4: IOperator<C, D>,
-    op5: IOperator<D, E>,
-    op6: IOperator<E, F>
+    op1: Operation<T, A>,
+    op2: Operation<A, B>,
+    op3: Operation<B, C>,
+    op4: Operation<C, D>,
+    op5: Operation<D, E>,
+    op6: Operation<E, F>
   ): Stream<F>
   public liftAll<A, B, C, D, E, F, G>(
-    op1: IOperator<T, A>,
-    op2: IOperator<A, B>,
-    op3: IOperator<B, C>,
-    op4: IOperator<C, D>,
-    op5: IOperator<D, E>,
-    op6: IOperator<E, F>,
-    op7: IOperator<F, G>
+    op1: Operation<T, A>,
+    op2: Operation<A, B>,
+    op3: Operation<B, C>,
+    op4: Operation<C, D>,
+    op5: Operation<D, E>,
+    op6: Operation<E, F>,
+    op7: Operation<F, G>
   ): Stream<G>
   public liftAll<A, B, C, D, E, F, G, H>(
-    op1: IOperator<T, A>,
-    op2: IOperator<A, B>,
-    op3: IOperator<B, C>,
-    op4: IOperator<C, D>,
-    op5: IOperator<D, E>,
-    op6: IOperator<E, F>,
-    op7: IOperator<F, G>,
-    op8: IOperator<G, H>
+    op1: Operation<T, A>,
+    op2: Operation<A, B>,
+    op3: Operation<B, C>,
+    op4: Operation<C, D>,
+    op5: Operation<D, E>,
+    op6: Operation<E, F>,
+    op7: Operation<F, G>,
+    op8: Operation<G, H>
   ): Stream<H>
   public liftAll<A, B, C, D, E, F, G, H, I>(
-    op1: IOperator<T, A>,
-    op2: IOperator<A, B>,
-    op3: IOperator<B, C>,
-    op4: IOperator<C, D>,
-    op5: IOperator<D, E>,
-    op6: IOperator<E, F>,
-    op7: IOperator<F, G>,
-    op8: IOperator<G, H>,
-    op9: IOperator<H, I>
+    op1: Operation<T, A>,
+    op2: Operation<A, B>,
+    op3: Operation<B, C>,
+    op4: Operation<C, D>,
+    op5: Operation<D, E>,
+    op6: Operation<E, F>,
+    op7: Operation<F, G>,
+    op8: Operation<G, H>,
+    op9: Operation<H, I>
   ): Stream<I>
   public liftAll<A, B, C, D, E, F, G, H, I>(
-    op1: IOperator<T, A>,
-    op2: IOperator<A, B>,
-    op3: IOperator<B, C>,
-    op4: IOperator<C, D>,
-    op5: IOperator<D, E>,
-    op6: IOperator<E, F>,
-    op7: IOperator<F, G>,
-    op8: IOperator<G, H>,
-    op9: IOperator<H, I>,
-    ...operators: Array<IOperator<any, any>>
+    op1: Operation<T, A>,
+    op2: Operation<A, B>,
+    op3: Operation<B, C>,
+    op4: Operation<C, D>,
+    op5: Operation<D, E>,
+    op6: Operation<E, F>,
+    op7: Operation<F, G>,
+    op8: Operation<G, H>,
+    op9: Operation<H, I>,
+    ...operations: Array<Operation<any, any>>
   ): Stream<any>
-  public liftAll(...operators: Array<IOperator<any, any>>): Stream<any> {
+  public liftAll(...operations: Array<Operation<any, any>>): Stream<any> {
     let resultStream: Stream<any> = this
 
-    for (let i = 0; i < operators.length; i++) {
-      resultStream = resultStream.lift(operators[i])
+    for (let i = 0; i < operations.length; i++) {
+      resultStream = resultStream.lift(operations[i])
     }
 
     return resultStream
   }
 
   public subscribe(
-    targetSubscriber: ISubscriber<T> | ValueTransmitter<T, unknown>
+    targetSubscriber: ISubscriptionTarget<T> | ValueTransmitter<T, unknown>
   ): ISubscription {
     if (
       isReceivingValuesSubscription(targetSubscriber) &&
@@ -115,7 +115,7 @@ export abstract class Stream<T> implements ISubscribable<T> {
      * This one is not used as if the target is a value transmitter, and
      * the target `disposeAndRecycle`s, then the producer will still be able
      * to send the destination values through the `next` method, etc., which
-     * messes with operators such as `retryWhen` and `repeatWhen`. Because
+     * messes with operations such as `retryWhen` and `repeatWhen`. Because
      * of this, we always have to create a new intermediate value transmitter
      * which is then send to the `trySubscribe` function
      *
@@ -138,7 +138,7 @@ export abstract class Stream<T> implements ISubscribable<T> {
       target.error(error)
     }
 
-    target.getOnStopReceivingValuesSubscription().add(disposableLike)
+    target.addOnStopReceivingValues(disposableLike)
 
     return target
   }
@@ -176,18 +176,22 @@ export class DuplicateStream<T> extends Stream<T> {
 
 class LiftedStream<T, U> extends Stream<U> {
   private __source: Stream<T>
-  private __operator: IOperator<T, U>
+  private __operation: Operation<T, U>
+  private __connectToTarget:
+    | ((target: ValueTransmitter<U, unknown>) => DisposableLike)
+    | null = null
 
-  constructor(source: Stream<T>, operator: IOperator<T, U>) {
+  constructor(source: Stream<T>, operation: Operation<T, U>) {
     super()
     this.__source = source
-    this.__operator = operator
+    this.__operation = operation
   }
 
   protected trySubscribe(target: ValueTransmitter<U, unknown>): DisposableLike {
-    return this.__operator.connect(
-      target,
-      this.__source
-    )
+    if (!this.__connectToTarget) {
+      this.__connectToTarget = this.__operation(this.__source)
+    }
+
+    return this.__connectToTarget(target)
   }
 }

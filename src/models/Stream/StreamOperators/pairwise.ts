@@ -1,33 +1,23 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { MutableMaybe } from 'src/models/Maybe/MutableMaybe'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function pairwise<T>(source: Stream<T>): IOperator<T, [T, T]> {
-  return new PairwiseOperator<T>()
+export function pairwise<T>(): Operation<T, [T, T]> {
+  return operateThroughValueTransmitter(
+    target => new PairwiseValueTransmitter(target)
+  )
 }
 
-class PairwiseOperator<T> implements IOperator<T, [T, T]> {
-  public connect(
-    target: ISubscriber<[T, T]>,
-    source: Stream<T>
-  ): DisposableLike {
-    return source.subscribe(new PairwiseSubscriber<T>(target))
-  }
-}
+class PairwiseValueTransmitter<T> extends ValueTransmitter<T, [T, T]> {
+  private lastValue: MutableMaybe<T> = MutableMaybe.none()
 
-class PairwiseSubscriber<T> extends ValueTransmitter<T, [T, T]> {
-  private lastValue?: T
-  private hasLastValue: boolean = false
-
-  protected onNextValue(value: T): void {
-    if (this.hasLastValue) {
-      this.destination.next([this.lastValue!, value])
-    } else {
-      this.hasLastValue = true
-    }
-
-    this.lastValue = value
+  protected onNextValue(newValue: T): void {
+    this.lastValue.withValue(lastValue => {
+      this.destination.next([lastValue, newValue])
+    })
+    this.lastValue.setAs(newValue)
   }
 }

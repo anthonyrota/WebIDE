@@ -1,6 +1,6 @@
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
 import {
-  IImmutableSubscriptionView,
   isSubscription,
   ISubscription,
   RecyclableSubscription,
@@ -11,28 +11,28 @@ import {
   isReceivingValuesSubscription,
   isReceivingValuesSubscriptionPropertyKey
 } from 'src/models/Stream/IReceivingValuesSubscription'
-import { IRequiredSubscriber, ISubscriber } from 'src/models/Stream/ISubscriber'
+import { IRequiredSubscriptionTarget, ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
 import { asyncReportError } from 'src/utils/asyncReportError'
 
 export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
-  implements IRequiredSubscriber<TInput>, IReceivingValueSubscription {
+  implements IRequiredSubscriptionTarget<TInput>, IReceivingValueSubscription {
   public readonly [isReceivingValuesSubscriptionPropertyKey] = true
-  protected destination: IRequiredSubscriber<TOutput>
+  protected destination: IRequiredSubscriptionTarget<TOutput>
   private __isReceivingValues: boolean = true
   private __onStopReceivingValuesSubscription = new RecyclableSubscription()
 
   constructor(
     target:
-      | ISubscriber<TOutput>
-      | (IReceivingValueSubscription & ISubscriber<TOutput>)
-      | (ISubscription & ISubscriber<TOutput>)
+      | ISubscriptionTarget<TOutput>
+      | (IReceivingValueSubscription & ISubscriptionTarget<TOutput>)
+      | (ISubscription & ISubscriptionTarget<TOutput>)
   ) {
     super()
 
     if (isReceivingValuesSubscription(target)) {
-      target.getOnStopReceivingValuesSubscription().add(this)
+      target.addOnStopReceivingValues(this)
     } else if (isSubscription(target)) {
-      target.add(this)
+      target.addOnDispose(this)
     }
 
     this.destination = isValueTransmitter(target)
@@ -62,8 +62,12 @@ export class ValueTransmitter<TInput, TOutput> extends RecyclableSubscription
     }
   }
 
-  public getOnStopReceivingValuesSubscription(): IImmutableSubscriptionView {
-    return this.__onStopReceivingValuesSubscription
+  public addOnStopReceivingValues(disposableLike: DisposableLike): void {
+    this.__onStopReceivingValuesSubscription.addOnDispose(disposableLike)
+  }
+
+  public removeOnStopReceivingValues(disposableLike: DisposableLike): void {
+    this.__onStopReceivingValuesSubscription.removeOnDispose(disposableLike)
   }
 
   public isReceivingValues(): boolean {
@@ -109,12 +113,12 @@ export function isValueTransmitter(
 }
 
 class Destination<T> extends Subscription
-  implements IRequiredSubscriber<T>, IReceivingValueSubscription {
+  implements IRequiredSubscriptionTarget<T>, IReceivingValueSubscription {
   public readonly [isReceivingValuesSubscriptionPropertyKey] = true
   private __parentDistributor: IDisposable
-  private __target: ISubscriber<T>
+  private __target: ISubscriptionTarget<T>
 
-  constructor(parentDistributor: IDisposable, target: ISubscriber<T>) {
+  constructor(parentDistributor: IDisposable, target: ISubscriptionTarget<T>) {
     super()
     this.__parentDistributor = parentDistributor
     this.__target = target
@@ -168,8 +172,12 @@ class Destination<T> extends Subscription
     this.__parentDistributor.dispose()
   }
 
-  public getOnStopReceivingValuesSubscription(): IImmutableSubscriptionView {
-    return this
+  public addOnStopReceivingValues(disposableLike: DisposableLike): void {
+    this.addOnDispose(disposableLike)
+  }
+
+  public removeOnStopReceivingValues(disposableLike: DisposableLike): void {
+    this.removeOnDispose(disposableLike)
   }
 
   public isReceivingValues(): boolean {

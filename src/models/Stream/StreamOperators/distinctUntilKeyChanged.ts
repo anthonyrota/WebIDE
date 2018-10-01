@@ -1,8 +1,8 @@
-import { IOperator } from 'src/models/Stream/IOperator'
+import { Operation } from 'src/models/Stream/Operation'
 import { distinctUntilChangedWithKeySelector } from 'src/models/Stream/StreamOperators/distinctUntilChangedWithKeySelector'
 
 export function distinctUntilKeyChanged<T, K extends keyof T>(
   key: K
-): IOperator<T, T> {
+): Operation<T, T> {
   return distinctUntilChangedWithKeySelector<T, T[K]>(value => value[key])
 }

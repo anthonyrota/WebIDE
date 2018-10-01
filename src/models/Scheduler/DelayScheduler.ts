@@ -4,15 +4,8 @@ import { FlushableAsyncScheduler } from 'src/models/Scheduler/FlushableAsyncSche
 import { setTimeout } from 'src/utils/setTimeout'
 
 export class DelayScheduler extends FlushableAsyncScheduler {
-  private __delay: number
-
-  constructor(delay: number) {
-    super()
-    this.__delay = delay
-  }
-
   protected requestExecutionOfAllActions(): IDisposable {
-    return setTimeout(this.executeAllActions, this.__delay)
+    return setTimeout(this.executeAllActions, 0)
   }
 
   protected requestExecutionOfActionDelayed(

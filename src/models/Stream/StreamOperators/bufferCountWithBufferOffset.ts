@@ -1,31 +1,25 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function bufferCountWithBufferOffset<T>(
   bufferSize: number,
   bufferOffset: number
-): IOperator<T, T[]> {
-  return new BufferCountWithBufferOffsetOperator<T>(bufferSize, bufferOffset)
-}
-
-class BufferCountWithBufferOffsetOperator<T> implements IOperator<T, T[]> {
-  constructor(private bufferSize: number, private bufferOffset: number) {}
-
-  public connect(target: ISubscriber<T[]>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new BufferCountWithBufferOffsetSubscriber<T>(
+): Operation<T, T[]> {
+  return operateThroughValueTransmitter(
+    target =>
+      new BufferCountWithBufferOffsetValueTransmitter(
         target,
-        this.bufferSize,
-        this.bufferOffset
+        bufferSize,
+        bufferOffset
       )
-    )
-  }
+  )
 }
 
-class BufferCountWithBufferOffsetSubscriber<T> extends ValueTransmitter<
+class BufferCountWithBufferOffsetValueTransmitter<T> extends ValueTransmitter<
   T,
   T[]
 > {
@@ -33,7 +27,7 @@ class BufferCountWithBufferOffsetSubscriber<T> extends ValueTransmitter<
   private valueIndex: number = 0
 
   constructor(
-    target: ISubscriber<T[]>,
+    target: ISubscriptionTarget<T[]>,
     private bufferSize: number,
     private bufferOffset: number
   ) {

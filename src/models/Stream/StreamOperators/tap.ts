@@ -1,33 +1,30 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
+import { operateThroughValueTransmitter, Operation } from '../Operation'
 
-export function tap<T>(subscriber: ISubscriber<T>): IOperator<T, T> {
-  return new TapOperator<T>(subscriber)
+export function tap<T>(
+  secondaryTarget: ISubscriptionTarget<T>
+): Operation<T, T> {
+  return operateThroughValueTransmitter(
+    target => new TapValueTransmitter(target, secondaryTarget)
+  )
 }
 
-class TapOperator<T> implements IOperator<T, T> {
-  constructor(private subscriber: ISubscriber<T>) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(new TapSubscriber<T>(target, this.subscriber))
-  }
-}
-
-class TapSubscriber<T> extends MonoTypeValueTransmitter<T> {
-  constructor(target: ISubscriber<T>, private subscriber: ISubscriber<T>) {
+class TapValueTransmitter<T> extends MonoTypeValueTransmitter<T> {
+  constructor(
+    target: ISubscriptionTarget<T>,
+    private secondaryTarget: ISubscriptionTarget<T>
+  ) {
     super(target)
   }
 
   protected onNextValue(value: T): void {
     try {
-      if (this.subscriber.next) {
-        this.subscriber.next(value)
+      if (this.secondaryTarget.next) {
+        this.secondaryTarget.next(value)
       }
-    } catch (error) {
-      this.destination.error(error)
+    } catch (tapError) {
+      this.destination.error(tapError)
       return
     }
     this.destination.next(value)
@@ -35,8 +32,8 @@ class TapSubscriber<T> extends MonoTypeValueTransmitter<T> {
 
   protected onError(error: T): void {
     try {
-      if (this.subscriber.error) {
-        this.subscriber.error(error)
+      if (this.secondaryTarget.error) {
+        this.secondaryTarget.error(error)
       }
     } catch (tapError) {
       this.destination.error(tapError)
@@ -47,8 +44,8 @@ class TapSubscriber<T> extends MonoTypeValueTransmitter<T> {
 
   protected onComplete(): void {
     try {
-      if (this.subscriber.complete) {
-        this.subscriber.complete()
+      if (this.secondaryTarget.complete) {
+        this.secondaryTarget.complete()
       }
     } catch (tapError) {
       this.destination.error(tapError)

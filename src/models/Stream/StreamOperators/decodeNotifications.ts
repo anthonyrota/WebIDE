@@ -1,24 +1,17 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
 import {
   distributeNotification,
   Notification
 } from 'src/models/Stream/Notification'
-import { Stream } from 'src/models/Stream/Stream'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function decodeNotifications<T>(): IOperator<Notification<T>, T> {
-  return new DecodeNotificationsOperator<T>()
-}
-
-class DecodeNotificationsOperator<T> implements IOperator<Notification<T>, T> {
-  public connect(
-    target: ISubscriber<T>,
-    source: Stream<Notification<T>>
-  ): DisposableLike {
-    return source.subscribe(new DecodeNotificationsSubscriber<T>(target))
-  }
+export function decodeNotifications<T>(): Operation<Notification<T>, T> {
+  return operateThroughValueTransmitter(
+    target => new DecodeNotificationsSubscriber<T>(target)
+  )
 }
 
 class DecodeNotificationsSubscriber<T> extends ValueTransmitter<

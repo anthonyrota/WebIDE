@@ -1,26 +1,7 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
-import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
+import { Operation } from 'src/models/Stream/Operation'
+import { identity } from 'src/utils/identity'
+import { distinctWithKeySelector } from './distinctWithKeySelector'
 
-export function distinct<T>(): IOperator<T, T> {
-  return new DistinctOperator<T>()
-}
-
-class DistinctOperator<T> implements IOperator<T, T> {
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(new DistinctSubscriber<T>(target))
-  }
-}
-
-class DistinctSubscriber<T> extends MonoTypeValueTransmitter<T> {
-  private values = new Set<T>()
-
-  protected onNextValue(value: T): void {
-    if (!this.values.has(value)) {
-      this.values.add(value)
-      this.destination.next(value)
-    }
-  }
+export function distinct<T>(): Operation<T, T> {
+  return distinctWithKeySelector(identity)
 }

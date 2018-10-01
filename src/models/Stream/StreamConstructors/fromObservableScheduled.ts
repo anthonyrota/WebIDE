@@ -11,7 +11,7 @@ export function fromObservableScheduled<T>(
 ): Stream<T> {
   return new RawStream(target => {
     return scheduler.schedule(() => {
-      target.add(
+      target.addOnStopReceivingValues(
         new ESObservableSubscriptionDisposable(
           toESObservable(input).subscribe(
             new ScheduledSubscriber(target, scheduler)

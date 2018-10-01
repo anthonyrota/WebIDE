@@ -1,40 +1,6 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
-import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
+import { Operation } from '../Operation'
+import { tap } from './tap'
 
-export function tapError<T>(tapOnError: () => void): IOperator<T, T> {
-  return new TapErrorOperator<T>(tapOnError)
-}
-
-class TapErrorOperator<T> implements IOperator<T, T> {
-  constructor(private tapNextError: (error: unknown) => void) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new TapErrorSubscriber<T>(target, this.tapNextError)
-    )
-  }
-}
-
-class TapErrorSubscriber<T> extends MonoTypeValueTransmitter<T> {
-  constructor(
-    target: ISubscriber<T>,
-    private tapNextError: (error: unknown) => void
-  ) {
-    super(target)
-  }
-
-  protected onError(error: unknown): void {
-    const { tapNextError } = this
-
-    try {
-      tapNextError(error)
-    } catch (tapError) {
-      this.destination.error(tapError)
-      return
-    }
-    this.destination.error(error)
-  }
+export function tapError<T>(error: (error: unknown) => void): Operation<T, T> {
+  return tap({ error })
 }

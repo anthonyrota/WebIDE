@@ -1,5 +1,5 @@
 import { Subscription } from 'src/models/Disposable/Subscription'
-import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
+import { IRequiredSubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
 import { Stream } from 'src/models/Stream/Stream'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
@@ -29,7 +29,7 @@ interface IOuterSubscriberWithData<TOuterValue, TData> {
 export class DoubleInputValueTransmitterWithDataSubscriptionTarget<
   TOuterValue,
   TData
-> extends Subscription implements IRequiredSubscriber<TOuterValue> {
+> extends Subscription implements IRequiredSubscriptionTarget<TOuterValue> {
   constructor(
     private __transmitter: IOuterSubscriberWithData<TOuterValue, TData>,
     private __data: TData
@@ -138,7 +138,7 @@ export abstract class DoubleInputValueTransmitterWithData<
       TData
     >(this, data)
 
-    this.add(target)
+    this.addOnDispose(target)
     stream.subscribe(target)
 
     return target

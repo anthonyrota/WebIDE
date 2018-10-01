@@ -21,9 +21,7 @@ export abstract class FlushableAsyncScheduler extends AsyncScheduler {
     let action: AsyncAction | void
 
     while ((action = this.shiftAction())) {
-      const result = action.execute()
-
-      if (result) {
+      action.execute().withValue(error => {
         this.disposeScheduled()
 
         while ((action = this.shiftAction())) {
@@ -35,8 +33,8 @@ export abstract class FlushableAsyncScheduler extends AsyncScheduler {
         }
 
         this.__isExecutingActions = false
-        throw result.error
-      }
+        throw error
+      })
     }
 
     this.__isExecutingActions = false

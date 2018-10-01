@@ -1,34 +1,26 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { MonoTypeDoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
 export function expandMapConcurrent<T>(
   convertValueToStream: (value: T, index: number) => Stream<T>,
   concurrency: number
-): IOperator<T, T> {
-  return new ExpandMapConcurrentOperator<T>(convertValueToStream, concurrency)
-}
-
-class ExpandMapConcurrentOperator<T> implements IOperator<T, T> {
-  constructor(
-    private convertValueToStream: (value: T, index: number) => Stream<T>,
-    private concurrency: number
-  ) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new ExpandMapConcurrentSubscriber<T>(
+): Operation<T, T> {
+  return operateThroughValueTransmitter(
+    target =>
+      new ExpandMapConcurrentValueTransmitter(
         target,
-        this.convertValueToStream,
-        this.concurrency
+        convertValueToStream,
+        concurrency
       )
-    )
-  }
+  )
 }
 
-class ExpandMapConcurrentSubscriber<
+class ExpandMapConcurrentValueTransmitter<
   T
 > extends MonoTypeDoubleInputValueTransmitter<T> {
   private valuesToProcess: T[] = []
@@ -36,7 +28,7 @@ class ExpandMapConcurrentSubscriber<
   private index: number = 0
 
   constructor(
-    target: ISubscriber<T>,
+    target: ISubscriptionTarget<T>,
     private convertValueToStream: (value: T, index: number) => Stream<T>,
     private concurrency: number
   ) {
@@ -78,6 +70,8 @@ class ExpandMapConcurrentSubscriber<
   }
 
   private processValue(value: T): void {
+    this.destination.next(value)
+
     const { convertValueToStream } = this
     const index = this.index++
     let resultStream: Stream<T>

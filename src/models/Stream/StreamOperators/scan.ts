@@ -1,32 +1,25 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function scan<T>(
   accumulate: (accumulatedValue: T, value: T, index: number) => T
-): IOperator<T, T> {
-  return new ScanOperator<T>(accumulate)
+): Operation<T, T> {
+  return operateThroughValueTransmitter(
+    target => new ScanValueTransmitter(target, accumulate)
+  )
 }
 
-class ScanOperator<T> implements IOperator<T, T> {
-  constructor(
-    private accumulate: (accumulatedValue: T, value: T, index: number) => T
-  ) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(new ScanSubscriber<T>(target, this.accumulate))
-  }
-}
-
-class ScanSubscriber<T> extends MonoTypeValueTransmitter<T> {
+class ScanValueTransmitter<T> extends MonoTypeValueTransmitter<T> {
   private index: number = 0
   private hasAccumulatedValue: boolean = false
   private accumulatedValue: T | null = null
 
   constructor(
-    target: ISubscriber<T>,
+    target: ISubscriptionTarget<T>,
     private accumulate: (accumulatedValue: T, value: T, index: number) => T
   ) {
     super(target)

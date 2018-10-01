@@ -1,29 +1,24 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function skipWhile<T>(
   predicate: (value: T, index: number) => boolean
-): IOperator<T, T> {
-  return new SkipWhileOperator<T>(predicate)
+): Operation<T, T> {
+  return operateThroughValueTransmitter(
+    target => new SkipWhileValueTransmitter(target, predicate)
+  )
 }
 
-class SkipWhileOperator<T> implements IOperator<T, T> {
-  constructor(private predicate: (value: T, index: number) => boolean) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(new SkipWhileSubscriber<T>(target, this.predicate))
-  }
-}
-
-class SkipWhileSubscriber<T> extends MonoTypeValueTransmitter<T> {
+class SkipWhileValueTransmitter<T> extends MonoTypeValueTransmitter<T> {
   private hasStoppedSkippingValues: boolean = false
   private index: number = 0
 
   constructor(
-    target: ISubscriber<T>,
+    target: ISubscriptionTarget<T>,
     private predicate: (value: T, index: number) => boolean
   ) {
     super(target)

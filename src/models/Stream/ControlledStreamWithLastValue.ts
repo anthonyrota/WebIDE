@@ -11,9 +11,9 @@ export class ControlledStreamWithLastValue<T> extends ControlledStream<T> {
     this.__value = initialValue
   }
 
-  public next(value: T): void {
+  public onNextValue(value: T): void {
     this.__value = value
-    super.next(value)
+    super.onNextValue(value)
   }
 
   public trySubscribe(target: ValueTransmitter<T, unknown>): DisposableLike {

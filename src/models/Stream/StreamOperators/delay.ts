@@ -1,96 +1,58 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
+import { bound } from 'src/decorators/bound'
 import {
   IScheduler,
-  ISchedulerActionWithData
+  ISchedulerActionWithoutData
 } from 'src/models/Scheduler/Scheduler'
 import { sync } from 'src/models/Scheduler/sync'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
 import {
+  createCompleteNotification,
+  createNextNotification,
   distributeNotification,
-  Notification,
-  NotificationType
+  Notification
 } from 'src/models/Stream/Notification'
-import { Stream } from 'src/models/Stream/Stream'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function delay<T>(
   delayTime: number,
   scheduler: IScheduler = sync
-): IOperator<T, T> {
-  return new DelayOperator<T>(delayTime, scheduler)
+): Operation<T, T> {
+  return operateThroughValueTransmitter(
+    target => new DelayValueTransmitter(target, delayTime, scheduler)
+  )
 }
 
-class DelayOperator<T> implements IOperator<T, T> {
-  constructor(private delayTime: number, private scheduler: IScheduler) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new DelaySubscriber(target, this.delayTime, this.scheduler)
-    )
-  }
-}
-
-interface IDelayMessage<T> {
+interface IDelayedMessage<T> {
   notification: Notification<T>
   dueTime: number
 }
 
-class DelaySubscriber<T> extends MonoTypeValueTransmitter<T> {
-  private notificationQueue: Array<IDelayMessage<T>> = []
+class DelayValueTransmitter<T> extends MonoTypeValueTransmitter<T> {
+  private notificationQueue: Array<IDelayedMessage<T>> = []
   private isScheduled: boolean = false
 
   constructor(
-    target: ISubscriber<T>,
+    target: ISubscriptionTarget<T>,
     private delayTime: number,
     private scheduler: IScheduler
   ) {
     super(target)
   }
 
-  private static schedulerCallback<T>(
-    subscriber: DelaySubscriber<T>,
-    action: ISchedulerActionWithData<DelaySubscriber<T>>
-  ): void {
-    while (
-      subscriber.isActive() &&
-      subscriber.notificationQueue.length > 0 &&
-      subscriber.notificationQueue[0].dueTime - subscriber.scheduler.now() <= 0
-    ) {
-      distributeNotification(
-        subscriber.notificationQueue.shift()!.notification,
-        subscriber.destination
-      )
-    }
-
-    if (subscriber.notificationQueue.length > 0) {
-      action.scheduleDelayedWithData(
-        Math.max(
-          0,
-          subscriber.notificationQueue[0].dueTime - subscriber.scheduler.now()
-        ),
-        subscriber
-      )
-    } else {
-      subscriber.isScheduled = false
-    }
-  }
-
   protected onNextValue(value: T): void {
-    this.scheduleNotification({
-      type: NotificationType.Next,
-      value
-    })
+    this.scheduleNotification(createNextNotification(value))
   }
 
   protected onComplete(): void {
-    this.scheduleNotification({
-      type: NotificationType.Complete
-    })
+    this.scheduleNotification(createCompleteNotification())
   }
 
   private scheduleNotification(notification: Notification<T>): void {
-    const delayMessage: IDelayMessage<T> = {
+    const delayMessage: IDelayedMessage<T> = {
       notification,
       dueTime: this.scheduler.now() + this.delayTime
     }
@@ -99,13 +61,34 @@ class DelaySubscriber<T> extends MonoTypeValueTransmitter<T> {
 
     if (!this.isScheduled) {
       this.isScheduled = true
-      this.add(
-        this.scheduler.scheduleDelayedWithData<DelaySubscriber<T>>(
-          DelaySubscriber.schedulerCallback,
-          this.delayTime,
-          this
+      this.addOnDispose(
+        this.scheduler.scheduleDelayed(
+          this.distributeNotifications,
+          this.delayTime
         )
       )
+    }
+  }
+
+  @bound
+  private distributeNotifications(action: ISchedulerActionWithoutData): void {
+    while (
+      this.isActive() &&
+      this.notificationQueue.length > 0 &&
+      this.notificationQueue[0].dueTime - this.scheduler.now() <= 0
+    ) {
+      distributeNotification(
+        this.notificationQueue.shift()!.notification,
+        this.destination
+      )
+    }
+
+    if (this.notificationQueue.length > 0) {
+      action.scheduleDelayed(
+        Math.max(0, this.notificationQueue[0].dueTime - this.scheduler.now())
+      )
+    } else {
+      this.isScheduled = false
     }
   }
 }

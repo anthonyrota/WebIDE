@@ -1,43 +1,38 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
+import { MutableMaybe } from 'src/models/Maybe/MutableMaybe'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
 export function audit<T>(
   getShouldClearThrottleStream: (value: T) => Stream<unknown>
-): IOperator<T, T> {
-  return new AuditOperator(getShouldClearThrottleStream)
+): Operation<T, T> {
+  return operateThroughValueTransmitter(
+    target => new AuditValueTransmitter(target, getShouldClearThrottleStream)
+  )
 }
 
-class AuditOperator<T> implements IOperator<T, T> {
-  constructor(
-    private getShouldClearThrottleStream: (value: T) => Stream<unknown>
-  ) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new AuditSubscriber<T>(target, this.getShouldClearThrottleStream)
-    )
-  }
-}
-
-class AuditSubscriber<T> extends DoubleInputValueTransmitter<T, T, unknown> {
-  private value: T | null = null
-  private hasValue: boolean = false
+class AuditValueTransmitter<T> extends DoubleInputValueTransmitter<
+  T,
+  T,
+  unknown
+> {
+  private mutableValue: MutableMaybe<T> = MutableMaybe.none()
   private shouldClearThrottleStreamSubscription: IDisposable | null = null
 
   constructor(
-    target: ISubscriber<T>,
+    target: ISubscriptionTarget<T>,
     private getShouldClearThrottleStream: (value: T) => Stream<unknown>
   ) {
     super(target)
   }
 
   protected onNextValue(value: T): void {
-    this.value = value
-    this.hasValue = true
+    this.mutableValue.setAs(value)
 
     if (!this.shouldClearThrottleStreamSubscription) {
       const { getShouldClearThrottleStream } = this
@@ -70,12 +65,9 @@ class AuditSubscriber<T> extends DoubleInputValueTransmitter<T, T, unknown> {
       this.shouldClearThrottleStreamSubscription = null
     }
 
-    if (this.hasValue) {
-      const value = this.value!
-
-      this.value = null
-      this.hasValue = false
+    this.mutableValue.withValue(value => {
+      this.mutableValue.empty()
       this.destination.next(value)
-    }
+    })
   }
 }

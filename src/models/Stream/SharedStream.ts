@@ -5,10 +5,8 @@ import {
   Subscription
 } from 'src/models/Disposable/Subscription'
 import { IControlledStream } from 'src/models/Stream/ControlledStream'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
 import { Stream } from 'src/models/Stream/Stream'
-import { WeakMap } from 'src/utils/WeakMap'
 
 export class SharedStream<T> extends Stream<T> implements ISubscription {
   public readonly [isSubscriptionPropertyKey] = true
@@ -16,6 +14,7 @@ export class SharedStream<T> extends Stream<T> implements ISubscription {
   private __source: Stream<T>
   private __createControlledStream: () => IControlledStream<T, T>
   private __selfSubscription: ISubscription = new Subscription()
+  private __isSourceActivated: boolean = false
 
   constructor(
     source: Stream<T>,
@@ -26,12 +25,12 @@ export class SharedStream<T> extends Stream<T> implements ISubscription {
     this.__createControlledStream = createControlledStream
   }
 
-  public add(disposableLike: DisposableLike): void {
-    this.__selfSubscription.add(disposableLike)
+  public addOnDispose(disposableLike: DisposableLike): void {
+    this.__selfSubscription.addOnDispose(disposableLike)
   }
 
-  public remove(disposableLike: DisposableLike): void {
-    this.__selfSubscription.remove(disposableLike)
+  public removeOnDispose(disposableLike: DisposableLike): void {
+    this.__selfSubscription.removeOnDispose(disposableLike)
   }
 
   public isActive(): boolean {
@@ -42,70 +41,24 @@ export class SharedStream<T> extends Stream<T> implements ISubscription {
     this.__selfSubscription.dispose()
   }
 
-  public activateSource(): ISubscription {
-    return this.__source.subscribe(this.createSharedControlledStream())
+  public activateSource(): void {
+    if (this.isActive() && !this.__isSourceActivated) {
+      this.__isSourceActivated = true
+      this.__source.subscribe(this.createSharedControlledStream())
+    }
   }
 
-  protected trySubscribe(target: ISubscriber<T>): DisposableLike {
+  protected trySubscribe(target: ISubscriptionTarget<T>): DisposableLike {
     return this.createSharedControlledStream().subscribe(target)
   }
 
   private createSharedControlledStream(): IControlledStream<T, T> {
     if (!this.__sharedControlledStream) {
       this.__sharedControlledStream = this.__createControlledStream()
-      this.add(this.__sharedControlledStream)
+      this.addOnDispose(this.__sharedControlledStream)
+      this.__sharedControlledStream.addOnDispose(this)
     }
 
     return this.__sharedControlledStream
   }
 }
-
-export function activeOnlyWhenHasSubscribers<T>(): IOperator<
-  T,
-  T,
-  SharedStream<T>
-> {
-  return new ActiveOnlyWhenHasSubscribersOperator<T>()
-}
-
-class ActiveOnlyWhenHasSubscribersOperator<T>
-  implements IOperator<T, T, SharedStream<T>> {
-  private sharedStreamDataMap = new WeakMap<
-    SharedStream<T>,
-    { subscriptionsCount: number; sourceSubscription: ISubscription }
-  >()
-
-  public connect(
-    target: ISubscriber<T>,
-    source: SharedStream<T>
-  ): DisposableLike {
-    if (!this.sharedStreamDataMap.get(source)) {
-      this.sharedStreamDataMap.set(source, {
-        subscriptionsCount: 0,
-        sourceSubscription: source.activateSource()
-      })
-    }
-
-    // @todo
-  }
-}
-
-// function refCount<T>(this: ConnectableObservable<T>) {
-//   let _refCounter = 0;
-//   let _connection: Subscription;
-
-//   return sourceAsObservable((type: FOType.SUBSCRIBE, sink: Sink<T>, subs: Subscription) => {
-//     _refCounter++;
-
-//     subs.add(() => {
-//       _refCounter--;
-//       if (_refCounter === 0) {
-//         _connection.unsubscribe();
-//       }
-//     });
-
-//     if (_refCounter === 1) {
-//       _connection = this.connect();
-//     }
-//   });
-// }

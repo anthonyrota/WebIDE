@@ -1,6 +1,7 @@
 import { IDisposable } from 'src/models/Disposable/IDisposable'
 import { Subscription } from 'src/models/Disposable/Subscription'
 import { AsyncScheduler } from 'src/models/Scheduler/AsyncScheduler'
+import { Maybe } from '../Maybe/Maybe'
 
 export abstract class AsyncAction extends Subscription {
   private __scheduler: AsyncScheduler
@@ -16,10 +17,7 @@ export abstract class AsyncAction extends Subscription {
     if (!this.isActive()) {
       return
     }
-    if (this.__scheduleDelayedDisposable) {
-      this.__scheduleDelayedDisposable.dispose()
-      this.__scheduleDelayedDisposable = null
-    }
+    this.__disposeScheduleDelayedDisposable()
     this.__isScheduled = false
     try {
       this.tryExecute()
@@ -33,29 +31,25 @@ export abstract class AsyncAction extends Subscription {
     }
   }
 
-  public execute(): { error: unknown } | void {
-    if (!this.isActive()) {
-      return
+  public execute(): Maybe<unknown> {
+    if (this.isActive()) {
+      this.__disposeScheduleDelayedDisposable()
+      this.__isScheduled = false
+
+      try {
+        this.tryExecute()
+      } catch (error) {
+        return Maybe.some(error)
+      }
     }
-    if (this.__scheduleDelayedDisposable) {
-      this.__scheduleDelayedDisposable.dispose()
-      this.__scheduleDelayedDisposable = null
-    }
-    this.__isScheduled = false
-    try {
-      this.tryExecute()
-    } catch (error) {
-      return { error }
-    }
+
+    return Maybe.none()
   }
 
   public dispose(): void {
     if (this.isActive()) {
       super.dispose()
-      if (this.__scheduleDelayedDisposable) {
-        this.__scheduleDelayedDisposable.dispose()
-        this.__scheduleDelayedDisposable = null
-      }
+      this.__disposeScheduleDelayedDisposable()
       this.__isScheduled = false
       this.__scheduler.removeAction(this)
     }
@@ -68,10 +62,7 @@ export abstract class AsyncAction extends Subscription {
   public disposeWithoutRemovingFromScheduler(): void {
     if (this.isActive()) {
       super.dispose()
-      if (this.__scheduleDelayedDisposable) {
-        this.__scheduleDelayedDisposable.dispose()
-        this.__scheduleDelayedDisposable = null
-      }
+      this.__disposeScheduleDelayedDisposable()
       this.__isScheduled = false
     }
   }
@@ -84,10 +75,7 @@ export abstract class AsyncAction extends Subscription {
     if (!this.isActive()) {
       return
     }
-    if (this.__scheduleDelayedDisposable) {
-      this.__scheduleDelayedDisposable.dispose()
-      this.__scheduleDelayedDisposable = null
-    }
+    this.__disposeScheduleDelayedDisposable()
     if (!this.__isScheduled) {
       this.__isScheduled = true
       this.__scheduler.scheduleAction(this)
@@ -101,10 +89,8 @@ export abstract class AsyncAction extends Subscription {
     if (delay === 0) {
       this.requestExecution()
     }
-    if (this.__scheduleDelayedDisposable) {
-      this.__scheduleDelayedDisposable.dispose()
-    }
     this.__isScheduled = true
+    this.__disposeScheduleDelayedDisposable()
     this.__scheduleDelayedDisposable = this.__scheduler.scheduleActionDelayed(
       this,
       delay
@@ -112,4 +98,11 @@ export abstract class AsyncAction extends Subscription {
   }
 
   protected abstract tryExecute(): void
+
+  private __disposeScheduleDelayedDisposable(): void {
+    if (this.__scheduleDelayedDisposable) {
+      this.__scheduleDelayedDisposable.dispose()
+      this.__scheduleDelayedDisposable = null
+    }
+  }
 }

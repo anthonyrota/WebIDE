@@ -1,23 +1,17 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
-export function exhaust<T>(): IOperator<Stream<T>, T> {
-  return new ExhaustOperator<T>()
+export function exhaust<T>(): Operation<Stream<T>, T> {
+  return operateThroughValueTransmitter(
+    target => new ExhaustValueTransmitter(target)
+  )
 }
 
-class ExhaustOperator<T> implements IOperator<Stream<T>, T> {
-  public connect(
-    target: ISubscriber<T>,
-    source: Stream<Stream<T>>
-  ): DisposableLike {
-    return source.subscribe(new ExhaustSubscriber<T>(target))
-  }
-}
-
-class ExhaustSubscriber<T> extends DoubleInputValueTransmitter<
+class ExhaustValueTransmitter<T> extends DoubleInputValueTransmitter<
   Stream<T>,
   T,
   T

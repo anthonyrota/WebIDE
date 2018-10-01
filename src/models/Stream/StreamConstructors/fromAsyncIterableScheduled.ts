@@ -9,7 +9,7 @@ export function fromAsyncIterableScheduled<T>(
     return scheduler.schedule(() => {
       const iterator = iterable[Symbol.asyncIterator]()
 
-      target.add(
+      target.addOnStopReceivingValues(
         scheduler.schedule(action => {
           let resultPromise: Promise<IteratorResult<T>>
 

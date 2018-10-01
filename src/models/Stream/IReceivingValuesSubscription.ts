@@ -1,4 +1,4 @@
-import { IImmutableSubscriptionView } from 'src/models/Disposable/Subscription'
+import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { isFunction } from 'src/utils/isFunction'
 
 export const isReceivingValuesSubscriptionPropertyKey =
@@ -17,6 +17,7 @@ export function isReceivingValuesSubscription(
 
 export interface IReceivingValueSubscription {
   readonly [isReceivingValuesSubscriptionPropertyKey]: true
-  getOnStopReceivingValuesSubscription(): IImmutableSubscriptionView
+  addOnStopReceivingValues(disposableLike: DisposableLike): void
+  removeOnStopReceivingValues(disposableLike: DisposableLike): void
   isReceivingValues(): boolean
 }

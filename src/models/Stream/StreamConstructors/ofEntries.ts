@@ -10,7 +10,7 @@ export function ofEntries<T>(
     for (let i = 0; i < keys.length && target.isReceivingValues(); i++) {
       const key = objectKeys[i] as keyof T
 
-      if (object.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(object, key)) {
         target.next([key, object[key]])
       }
     }

@@ -1,22 +1,17 @@
 import { AlreadyDisposedError } from 'src/models/Disposable/AlreadyDisposedError'
 import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IDisposable } from 'src/models/Disposable/IDisposable'
 import {
-  IImmutableSubscriptionView,
   isSubscriptionPropertyKey,
   ISubscription,
   Subscription
 } from 'src/models/Disposable/Subscription'
-import {
-  ImmutableMutableMaybeView,
-  MutableMaybe
-} from 'src/models/Maybe/MutableMaybe'
-import { IOperator } from 'src/models/Stream/IOperator'
+import { MutableMaybe } from 'src/models/Maybe/MutableMaybe'
 import {
   IReceivingValueSubscription,
   isReceivingValuesSubscriptionPropertyKey
 } from 'src/models/Stream/IReceivingValuesSubscription'
-import { IRequiredSubscriber } from 'src/models/Stream/ISubscriber'
+import { IRequiredSubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import { Operation } from 'src/models/Stream/Operation'
 import { DuplicateStream, Stream } from 'src/models/Stream/Stream'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { removeOnce } from 'src/utils/removeOnce'
@@ -25,83 +20,85 @@ export interface IControlledStream<TInput, TOutput>
   extends Stream<TOutput>,
     ISubscription,
     IReceivingValueSubscription,
-    IRequiredSubscriber<TInput> {
-  lift<U>(operator: IOperator<TOutput, U>): IControlledStream<TInput, U>
+    IRequiredSubscriptionTarget<TInput> {
+  lift<U>(
+    operation: Operation<TOutput, U, IControlledStream<TInput, TOutput>>
+  ): IControlledStream<TInput, U>
   liftAll(): IControlledStream<TInput, TOutput>
   liftAll<A>(
-    op1: IOperator<TOutput, A, IControlledStream<TInput, TOutput>>
+    op1: Operation<TOutput, A, IControlledStream<TInput, TOutput>>
   ): IControlledStream<TInput, A>
   liftAll<A, B>(
-    op1: IOperator<TOutput, A, IControlledStream<TInput, TOutput>>,
-    op2: IOperator<A, B, IControlledStream<TInput, A>>
+    op1: Operation<TOutput, A, IControlledStream<TInput, TOutput>>,
+    op2: Operation<A, B, IControlledStream<TInput, A>>
   ): IControlledStream<TInput, B>
   liftAll<A, B, C>(
-    op1: IOperator<TOutput, A, IControlledStream<TInput, TOutput>>,
-    op2: IOperator<A, B, IControlledStream<TInput, A>>,
-    op3: IOperator<B, C, IControlledStream<TInput, B>>
+    op1: Operation<TOutput, A, IControlledStream<TInput, TOutput>>,
+    op2: Operation<A, B, IControlledStream<TInput, A>>,
+    op3: Operation<B, C, IControlledStream<TInput, B>>
   ): IControlledStream<TInput, C>
   liftAll<A, B, C, D>(
-    op1: IOperator<TOutput, A, IControlledStream<TInput, TOutput>>,
-    op2: IOperator<A, B, IControlledStream<TInput, A>>,
-    op3: IOperator<B, C, IControlledStream<TInput, B>>,
-    op4: IOperator<C, D, IControlledStream<TInput, C>>
+    op1: Operation<TOutput, A, IControlledStream<TInput, TOutput>>,
+    op2: Operation<A, B, IControlledStream<TInput, A>>,
+    op3: Operation<B, C, IControlledStream<TInput, B>>,
+    op4: Operation<C, D, IControlledStream<TInput, C>>
   ): IControlledStream<TInput, D>
   liftAll<A, B, C, D, E>(
-    op1: IOperator<TOutput, A, IControlledStream<TInput, TOutput>>,
-    op2: IOperator<A, B, IControlledStream<TInput, A>>,
-    op3: IOperator<B, C, IControlledStream<TInput, B>>,
-    op4: IOperator<C, D, IControlledStream<TInput, C>>,
-    op5: IOperator<D, E, IControlledStream<TInput, D>>
+    op1: Operation<TOutput, A, IControlledStream<TInput, TOutput>>,
+    op2: Operation<A, B, IControlledStream<TInput, A>>,
+    op3: Operation<B, C, IControlledStream<TInput, B>>,
+    op4: Operation<C, D, IControlledStream<TInput, C>>,
+    op5: Operation<D, E, IControlledStream<TInput, D>>
   ): IControlledStream<TInput, E>
   liftAll<A, B, C, D, E, F>(
-    op1: IOperator<TOutput, A, IControlledStream<TInput, TOutput>>,
-    op2: IOperator<A, B, IControlledStream<TInput, A>>,
-    op3: IOperator<B, C, IControlledStream<TInput, B>>,
-    op4: IOperator<C, D, IControlledStream<TInput, C>>,
-    op5: IOperator<D, E, IControlledStream<TInput, D>>,
-    op6: IOperator<E, F, IControlledStream<TInput, E>>
+    op1: Operation<TOutput, A, IControlledStream<TInput, TOutput>>,
+    op2: Operation<A, B, IControlledStream<TInput, A>>,
+    op3: Operation<B, C, IControlledStream<TInput, B>>,
+    op4: Operation<C, D, IControlledStream<TInput, C>>,
+    op5: Operation<D, E, IControlledStream<TInput, D>>,
+    op6: Operation<E, F, IControlledStream<TInput, E>>
   ): IControlledStream<TInput, F>
   liftAll<A, B, C, D, E, F, G>(
-    op1: IOperator<TOutput, A, IControlledStream<TInput, TOutput>>,
-    op2: IOperator<A, B, IControlledStream<TInput, A>>,
-    op3: IOperator<B, C, IControlledStream<TInput, B>>,
-    op4: IOperator<C, D, IControlledStream<TInput, C>>,
-    op5: IOperator<D, E, IControlledStream<TInput, D>>,
-    op6: IOperator<E, F, IControlledStream<TInput, E>>,
-    op7: IOperator<F, G, IControlledStream<TInput, F>>
+    op1: Operation<TOutput, A, IControlledStream<TInput, TOutput>>,
+    op2: Operation<A, B, IControlledStream<TInput, A>>,
+    op3: Operation<B, C, IControlledStream<TInput, B>>,
+    op4: Operation<C, D, IControlledStream<TInput, C>>,
+    op5: Operation<D, E, IControlledStream<TInput, D>>,
+    op6: Operation<E, F, IControlledStream<TInput, E>>,
+    op7: Operation<F, G, IControlledStream<TInput, F>>
   ): IControlledStream<TInput, G>
   liftAll<A, B, C, D, E, F, G, H>(
-    op1: IOperator<TOutput, A, IControlledStream<TInput, TOutput>>,
-    op2: IOperator<A, B, IControlledStream<TInput, A>>,
-    op3: IOperator<B, C, IControlledStream<TInput, B>>,
-    op4: IOperator<C, D, IControlledStream<TInput, C>>,
-    op5: IOperator<D, E, IControlledStream<TInput, D>>,
-    op6: IOperator<E, F, IControlledStream<TInput, E>>,
-    op7: IOperator<F, G, IControlledStream<TInput, F>>,
-    op8: IOperator<G, H, IControlledStream<TInput, G>>
+    op1: Operation<TOutput, A, IControlledStream<TInput, TOutput>>,
+    op2: Operation<A, B, IControlledStream<TInput, A>>,
+    op3: Operation<B, C, IControlledStream<TInput, B>>,
+    op4: Operation<C, D, IControlledStream<TInput, C>>,
+    op5: Operation<D, E, IControlledStream<TInput, D>>,
+    op6: Operation<E, F, IControlledStream<TInput, E>>,
+    op7: Operation<F, G, IControlledStream<TInput, F>>,
+    op8: Operation<G, H, IControlledStream<TInput, G>>
   ): IControlledStream<TInput, H>
   liftAll<A, B, C, D, E, F, G, H, I>(
-    op1: IOperator<TOutput, A, IControlledStream<TInput, TOutput>>,
-    op2: IOperator<A, B, IControlledStream<TInput, A>>,
-    op3: IOperator<B, C, IControlledStream<TInput, B>>,
-    op4: IOperator<C, D, IControlledStream<TInput, C>>,
-    op5: IOperator<D, E, IControlledStream<TInput, D>>,
-    op6: IOperator<E, F, IControlledStream<TInput, E>>,
-    op7: IOperator<F, G, IControlledStream<TInput, F>>,
-    op8: IOperator<G, H, IControlledStream<TInput, G>>,
-    op9: IOperator<H, I, IControlledStream<TInput, H>>
+    op1: Operation<TOutput, A, IControlledStream<TInput, TOutput>>,
+    op2: Operation<A, B, IControlledStream<TInput, A>>,
+    op3: Operation<B, C, IControlledStream<TInput, B>>,
+    op4: Operation<C, D, IControlledStream<TInput, C>>,
+    op5: Operation<D, E, IControlledStream<TInput, D>>,
+    op6: Operation<E, F, IControlledStream<TInput, E>>,
+    op7: Operation<F, G, IControlledStream<TInput, F>>,
+    op8: Operation<G, H, IControlledStream<TInput, G>>,
+    op9: Operation<H, I, IControlledStream<TInput, H>>
   ): IControlledStream<TInput, I>
   liftAll<A, B, C, D, E, F, G, H, I>(
-    op1: IOperator<TOutput, A, IControlledStream<TInput, TOutput>>,
-    op2: IOperator<A, B, IControlledStream<TInput, A>>,
-    op3: IOperator<B, C, IControlledStream<TInput, B>>,
-    op4: IOperator<C, D, IControlledStream<TInput, C>>,
-    op5: IOperator<D, E, IControlledStream<TInput, D>>,
-    op6: IOperator<E, F, IControlledStream<TInput, E>>,
-    op7: IOperator<F, G, IControlledStream<TInput, F>>,
-    op8: IOperator<G, H, IControlledStream<TInput, G>>,
-    op9: IOperator<H, I, IControlledStream<TInput, H>>,
-    ...operators: Array<IOperator<any, any, IControlledStream<any, any>>>
+    op1: Operation<TOutput, A, IControlledStream<TInput, TOutput>>,
+    op2: Operation<A, B, IControlledStream<TInput, A>>,
+    op3: Operation<B, C, IControlledStream<TInput, B>>,
+    op4: Operation<C, D, IControlledStream<TInput, C>>,
+    op5: Operation<D, E, IControlledStream<TInput, D>>,
+    op6: Operation<E, F, IControlledStream<TInput, E>>,
+    op7: Operation<F, G, IControlledStream<TInput, F>>,
+    op8: Operation<G, H, IControlledStream<TInput, G>>,
+    op9: Operation<H, I, IControlledStream<TInput, H>>,
+    ...operations: Array<Operation<any, any, IControlledStream<any, any>>>
   ): IControlledStream<TInput, any>
   asStream(): Stream<TOutput>
 }
@@ -114,113 +111,119 @@ export class ControlledStream<T> extends Stream<T>
   private __mutableThrownError: MutableMaybe<unknown> = MutableMaybe.none<
     unknown
   >()
-  private __targets: Array<IRequiredSubscriber<T>> = []
+  private __targets: Array<IRequiredSubscriptionTarget<T>> = []
   private __selfSubscription: ISubscription = new Subscription()
   private __onStopReceivingValuesSubscription: ISubscription = new Subscription()
 
-  public add(disposableLike: DisposableLike): void {
-    this.__selfSubscription.add(disposableLike)
+  public addOnDispose(disposableLike: DisposableLike): void {
+    this.__selfSubscription.addOnDispose(disposableLike)
   }
 
-  public remove(disposableLike: DisposableLike): void {
-    this.__selfSubscription.remove(disposableLike)
+  public removeOnDispose(disposableLike: DisposableLike): void {
+    this.__selfSubscription.removeOnDispose(disposableLike)
   }
 
-  public getOnStopReceivingValuesSubscription(): IImmutableSubscriptionView {
-    return this.__onStopReceivingValuesSubscription
+  public addOnStopReceivingValues(disposableLike: DisposableLike): void {
+    this.__onStopReceivingValuesSubscription.addOnDispose(disposableLike)
+  }
+
+  public removeOnStopReceivingValues(disposableLike: DisposableLike): void {
+    this.__onStopReceivingValuesSubscription.removeOnDispose(disposableLike)
   }
 
   public isReceivingValues(): boolean {
     return this.__onStopReceivingValuesSubscription.isActive()
   }
 
-  public lift<U>(operator: IOperator<T, U>): IControlledStream<T, U> {
-    return new LiftedControlledStream<T, T, U>(this, operator)
+  public lift<U>(
+    operation: Operation<T, U, IControlledStream<T, T>>
+  ): IControlledStream<T, U> {
+    return new LiftedControlledStream<T, T, U>(this, operation)
   }
 
   public liftAll(): IControlledStream<T, T>
   public liftAll<A>(
-    op1: IOperator<T, A, IControlledStream<T, T>>
+    op1: Operation<T, A, IControlledStream<T, T>>
   ): IControlledStream<T, A>
   public liftAll<A, B>(
-    op1: IOperator<T, A, IControlledStream<T, T>>,
-    op2: IOperator<A, B, IControlledStream<T, A>>
+    op1: Operation<T, A, IControlledStream<T, T>>,
+    op2: Operation<A, B, IControlledStream<T, A>>
   ): IControlledStream<T, B>
   public liftAll<A, B, C>(
-    op1: IOperator<T, A, IControlledStream<T, T>>,
-    op2: IOperator<A, B, IControlledStream<T, A>>,
-    op3: IOperator<B, C, IControlledStream<T, B>>
+    op1: Operation<T, A, IControlledStream<T, T>>,
+    op2: Operation<A, B, IControlledStream<T, A>>,
+    op3: Operation<B, C, IControlledStream<T, B>>
   ): IControlledStream<T, C>
   public liftAll<A, B, C, D>(
-    op1: IOperator<T, A, IControlledStream<T, T>>,
-    op2: IOperator<A, B, IControlledStream<T, A>>,
-    op3: IOperator<B, C, IControlledStream<T, B>>,
-    op4: IOperator<C, D, IControlledStream<T, C>>
+    op1: Operation<T, A, IControlledStream<T, T>>,
+    op2: Operation<A, B, IControlledStream<T, A>>,
+    op3: Operation<B, C, IControlledStream<T, B>>,
+    op4: Operation<C, D, IControlledStream<T, C>>
   ): IControlledStream<T, D>
   public liftAll<A, B, C, D, E>(
-    op1: IOperator<T, A, IControlledStream<T, T>>,
-    op2: IOperator<A, B, IControlledStream<T, A>>,
-    op3: IOperator<B, C, IControlledStream<T, B>>,
-    op4: IOperator<C, D, IControlledStream<T, C>>,
-    op5: IOperator<D, E, IControlledStream<T, D>>
+    op1: Operation<T, A, IControlledStream<T, T>>,
+    op2: Operation<A, B, IControlledStream<T, A>>,
+    op3: Operation<B, C, IControlledStream<T, B>>,
+    op4: Operation<C, D, IControlledStream<T, C>>,
+    op5: Operation<D, E, IControlledStream<T, D>>
   ): IControlledStream<T, E>
   public liftAll<A, B, C, D, E, F>(
-    op1: IOperator<T, A, IControlledStream<T, T>>,
-    op2: IOperator<A, B, IControlledStream<T, A>>,
-    op3: IOperator<B, C, IControlledStream<T, B>>,
-    op4: IOperator<C, D, IControlledStream<T, C>>,
-    op5: IOperator<D, E, IControlledStream<T, D>>,
-    op6: IOperator<E, F, IControlledStream<T, E>>
+    op1: Operation<T, A, IControlledStream<T, T>>,
+    op2: Operation<A, B, IControlledStream<T, A>>,
+    op3: Operation<B, C, IControlledStream<T, B>>,
+    op4: Operation<C, D, IControlledStream<T, C>>,
+    op5: Operation<D, E, IControlledStream<T, D>>,
+    op6: Operation<E, F, IControlledStream<T, E>>
   ): IControlledStream<T, F>
   public liftAll<A, B, C, D, E, F, G>(
-    op1: IOperator<T, A, IControlledStream<T, T>>,
-    op2: IOperator<A, B, IControlledStream<T, A>>,
-    op3: IOperator<B, C, IControlledStream<T, B>>,
-    op4: IOperator<C, D, IControlledStream<T, C>>,
-    op5: IOperator<D, E, IControlledStream<T, D>>,
-    op6: IOperator<E, F, IControlledStream<T, E>>,
-    op7: IOperator<F, G, IControlledStream<T, F>>
+    op1: Operation<T, A, IControlledStream<T, T>>,
+    op2: Operation<A, B, IControlledStream<T, A>>,
+    op3: Operation<B, C, IControlledStream<T, B>>,
+    op4: Operation<C, D, IControlledStream<T, C>>,
+    op5: Operation<D, E, IControlledStream<T, D>>,
+    op6: Operation<E, F, IControlledStream<T, E>>,
+    op7: Operation<F, G, IControlledStream<T, F>>
   ): IControlledStream<T, G>
   public liftAll<A, B, C, D, E, F, G, H>(
-    op1: IOperator<T, A, IControlledStream<T, T>>,
-    op2: IOperator<A, B, IControlledStream<T, A>>,
-    op3: IOperator<B, C, IControlledStream<T, B>>,
-    op4: IOperator<C, D, IControlledStream<T, C>>,
-    op5: IOperator<D, E, IControlledStream<T, D>>,
-    op6: IOperator<E, F, IControlledStream<T, E>>,
-    op7: IOperator<F, G, IControlledStream<T, F>>,
-    op8: IOperator<G, H, IControlledStream<T, G>>
+    op1: Operation<T, A, IControlledStream<T, T>>,
+    op2: Operation<A, B, IControlledStream<T, A>>,
+    op3: Operation<B, C, IControlledStream<T, B>>,
+    op4: Operation<C, D, IControlledStream<T, C>>,
+    op5: Operation<D, E, IControlledStream<T, D>>,
+    op6: Operation<E, F, IControlledStream<T, E>>,
+    op7: Operation<F, G, IControlledStream<T, F>>,
+    op8: Operation<G, H, IControlledStream<T, G>>
   ): IControlledStream<T, H>
   public liftAll<A, B, C, D, E, F, G, H, I>(
-    op1: IOperator<T, A, IControlledStream<T, T>>,
-    op2: IOperator<A, B, IControlledStream<T, A>>,
-    op3: IOperator<B, C, IControlledStream<T, B>>,
-    op4: IOperator<C, D, IControlledStream<T, C>>,
-    op5: IOperator<D, E, IControlledStream<T, D>>,
-    op6: IOperator<E, F, IControlledStream<T, E>>,
-    op7: IOperator<F, G, IControlledStream<T, F>>,
-    op8: IOperator<G, H, IControlledStream<T, G>>,
-    op9: IOperator<H, I, IControlledStream<T, H>>
+    op1: Operation<T, A, IControlledStream<T, T>>,
+    op2: Operation<A, B, IControlledStream<T, A>>,
+    op3: Operation<B, C, IControlledStream<T, B>>,
+    op4: Operation<C, D, IControlledStream<T, C>>,
+    op5: Operation<D, E, IControlledStream<T, D>>,
+    op6: Operation<E, F, IControlledStream<T, E>>,
+    op7: Operation<F, G, IControlledStream<T, F>>,
+    op8: Operation<G, H, IControlledStream<T, G>>,
+    op9: Operation<H, I, IControlledStream<T, H>>
   ): IControlledStream<T, I>
   public liftAll<A, B, C, D, E, F, G, H, I>(
-    op1: IOperator<T, A, IControlledStream<T, T>>,
-    op2: IOperator<A, B, IControlledStream<T, A>>,
-    op3: IOperator<B, C, IControlledStream<T, B>>,
-    op4: IOperator<C, D, IControlledStream<T, C>>,
-    op5: IOperator<D, E, IControlledStream<T, D>>,
-    op6: IOperator<E, F, IControlledStream<T, E>>,
-    op7: IOperator<F, G, IControlledStream<T, F>>,
-    op8: IOperator<G, H, IControlledStream<T, G>>,
-    op9: IOperator<H, I, IControlledStream<T, H>>,
-    ...operators: Array<IOperator<any, any, IControlledStream<any, any>>>
+    op1: Operation<T, A, IControlledStream<T, T>>,
+    op2: Operation<A, B, IControlledStream<T, A>>,
+    op3: Operation<B, C, IControlledStream<T, B>>,
+    op4: Operation<C, D, IControlledStream<T, C>>,
+    op5: Operation<D, E, IControlledStream<T, D>>,
+    op6: Operation<E, F, IControlledStream<T, E>>,
+    op7: Operation<F, G, IControlledStream<T, F>>,
+    op8: Operation<G, H, IControlledStream<T, G>>,
+    op9: Operation<H, I, IControlledStream<T, H>>,
+    ...operations: Array<Operation<any, any, IControlledStream<any, any>>>
   ): IControlledStream<T, any>
   public liftAll(
-    ...operators: Array<IOperator<any, any>>
+    ...operations: Array<Operation<any, any, IControlledStream<any, any>>>
   ): IControlledStream<T, any> {
-    let resultStream: IControlledStream<T, any> = this
+    let resultStream: IControlledStream<any, any> = this
 
-    for (let i = 0; i < operators.length; i++) {
-      resultStream = resultStream.lift(operators[i])
+    for (let i = 0; i < operations.length; i++) {
+      resultStream = resultStream.lift(operations[i])
     }
 
     return resultStream
@@ -232,11 +235,7 @@ export class ControlledStream<T> extends Stream<T>
     }
 
     if (this.isReceivingValues()) {
-      const subscribers = this.__targets.slice()
-
-      for (let i = 0; i < subscribers.length; i++) {
-        subscribers[i].next(value)
-      }
+      this.onNextValue(value)
     }
   }
 
@@ -246,16 +245,7 @@ export class ControlledStream<T> extends Stream<T>
     }
 
     if (this.isReceivingValues()) {
-      this.__mutableThrownError.setValue(error)
-      this.__onStopReceivingValuesSubscription.dispose()
-
-      const subscribers = this.__targets.slice()
-
-      for (let i = 0; i < subscribers.length; i++) {
-        subscribers[i].error(error)
-      }
-
-      this.__targets.length = 0
+      this.onError(error)
     }
   }
 
@@ -265,15 +255,7 @@ export class ControlledStream<T> extends Stream<T>
     }
 
     if (this.isReceivingValues()) {
-      this.__onStopReceivingValuesSubscription.dispose()
-
-      const subscribers = this.__targets.slice()
-
-      for (let i = 0; i < subscribers.length; i++) {
-        subscribers[i].complete()
-      }
-
-      this.__targets.length = 0
+      this.onComplete()
     }
   }
 
@@ -293,12 +275,47 @@ export class ControlledStream<T> extends Stream<T>
     return new DuplicateStream<T>(this)
   }
 
-  protected getThrownError(): ImmutableMutableMaybeView<unknown> {
-    return this.__mutableThrownError.getImmutableView()
+  protected onNextValue(value: T): void {
+    const subscribers = this.__targets.slice()
+
+    for (let i = 0; i < subscribers.length; i++) {
+      subscribers[i].next(value)
+    }
+  }
+
+  protected onError(error: unknown): void {
+    this.__mutableThrownError.setAs(error)
+    this.__onStopReceivingValuesSubscription.dispose()
+
+    const subscribers = this.__targets.slice()
+
+    for (let i = 0; i < subscribers.length; i++) {
+      subscribers[i].error(error)
+    }
+
+    this.__targets.length = 0
+  }
+
+  protected onComplete(): void {
+    this.__onStopReceivingValuesSubscription.dispose()
+
+    const subscribers = this.__targets.slice()
+
+    for (let i = 0; i < subscribers.length; i++) {
+      subscribers[i].complete()
+    }
+
+    this.__targets.length = 0
+  }
+
+  protected getThrownError(): MutableMaybe<unknown> {
+    return this.__mutableThrownError
   }
 
   protected throwError(): void {
-    this.__mutableThrownError.throwValue()
+    this.__mutableThrownError.withValue(value => {
+      throw value
+    })
   }
 
   protected trySubscribe(target: ValueTransmitter<T, unknown>): DisposableLike {
@@ -306,7 +323,7 @@ export class ControlledStream<T> extends Stream<T>
       throw new AlreadyDisposedError()
     }
 
-    this.__mutableThrownError.throwValue()
+    this.throwError()
 
     if (!this.isReceivingValues()) {
       target.complete()
@@ -315,15 +332,15 @@ export class ControlledStream<T> extends Stream<T>
     }
   }
 
-  protected pushTarget(target: ValueTransmitter<T, unknown>): IDisposable {
-    this.add(target)
+  protected pushTarget(target: ValueTransmitter<T, unknown>): DisposableLike {
+    this.addOnDispose(target)
     this.__targets.push(target)
 
-    return new RawControlledStreamSubscriptionDisposable(
-      this,
-      this.__targets,
-      target
-    )
+    return () => {
+      if (this.isReceivingValues()) {
+        removeOnce(this.__targets, target)
+      }
+    }
   }
 }
 
@@ -334,167 +351,184 @@ class LiftedControlledStream<TStreamInput, TOperatorInput, TOperatorOutput>
   public readonly [isReceivingValuesSubscriptionPropertyKey] = true
 
   private __source: IControlledStream<TStreamInput, TOperatorInput>
-  private __operator: IOperator<TOperatorInput, TOperatorOutput>
+  private __operation: Operation<
+    TOperatorInput,
+    TOperatorOutput,
+    IControlledStream<TStreamInput, TOperatorInput>
+  >
   private __selfSubscription: ISubscription = new Subscription()
   private __isReceivingValuesSubscription: ISubscription = new Subscription()
+  private __connectToTarget:
+    | ((target: ValueTransmitter<TOperatorOutput, unknown>) => DisposableLike)
+    | null = null
 
   constructor(
     source: IControlledStream<TStreamInput, TOperatorInput>,
-    operator: IOperator<TOperatorInput, TOperatorOutput>
+    operation: Operation<
+      TOperatorInput,
+      TOperatorOutput,
+      IControlledStream<TStreamInput, TOperatorInput>
+    >
   ) {
     super()
     this.__source = source
-    this.__operator = operator
-    this.__source.add(this.__selfSubscription)
-    this.__source
-      .getOnStopReceivingValuesSubscription()
-      .add(this.__isReceivingValuesSubscription)
+    this.__operation = operation
+    this.__source.addOnDispose(this.__selfSubscription)
+    this.__source.addOnStopReceivingValues(this.__isReceivingValuesSubscription)
   }
 
-  public add(disposable: DisposableLike): void {
-    this.__selfSubscription.add(disposable)
+  public addOnDispose(disposable: DisposableLike): void {
+    this.__selfSubscription.addOnDispose(disposable)
   }
 
-  public remove(disposable: DisposableLike): void {
-    this.__selfSubscription.remove(disposable)
+  public removeOnDispose(disposable: DisposableLike): void {
+    this.__selfSubscription.removeOnDispose(disposable)
   }
 
-  public getOnStopReceivingValuesSubscription(): IImmutableSubscriptionView {
-    return this.__isReceivingValuesSubscription
+  public addOnStopReceivingValues(disposableLike: DisposableLike): void {
+    this.__isReceivingValuesSubscription.addOnDispose(disposableLike)
+  }
+
+  public removeOnStopReceivingValues(disposableLike: DisposableLike): void {
+    this.__isReceivingValuesSubscription.removeOnDispose(disposableLike)
   }
 
   public lift<U>(
-    operator: IOperator<TOperatorOutput, U>
+    operation: Operation<
+      TOperatorOutput,
+      U,
+      IControlledStream<TStreamInput, TOperatorOutput>
+    >
   ): IControlledStream<TStreamInput, U> {
     return new LiftedControlledStream<TStreamInput, TOperatorOutput, U>(
       this,
-      operator
+      operation
     )
   }
 
   public liftAll(): IControlledStream<TStreamInput, TOperatorOutput>
   public liftAll<A>(
-    op1: IOperator<
+    op1: Operation<
       TOperatorOutput,
       A,
       IControlledStream<TStreamInput, TOperatorOutput>
     >
   ): IControlledStream<TStreamInput, A>
   public liftAll<A, B>(
-    op1: IOperator<
+    op1: Operation<
       TOperatorOutput,
       A,
       IControlledStream<TStreamInput, TOperatorOutput>
     >,
-    op2: IOperator<A, B, IControlledStream<TStreamInput, A>>
+    op2: Operation<A, B, IControlledStream<TStreamInput, A>>
   ): IControlledStream<TStreamInput, B>
   public liftAll<A, B, C>(
-    op1: IOperator<
+    op1: Operation<
       TOperatorOutput,
       A,
       IControlledStream<TStreamInput, TOperatorOutput>
     >,
-    op2: IOperator<A, B, IControlledStream<TStreamInput, A>>,
-    op3: IOperator<B, C, IControlledStream<TStreamInput, B>>
+    op2: Operation<A, B, IControlledStream<TStreamInput, A>>,
+    op3: Operation<B, C, IControlledStream<TStreamInput, B>>
   ): IControlledStream<TStreamInput, C>
   public liftAll<A, B, C, D>(
-    op1: IOperator<
+    op1: Operation<
       TOperatorOutput,
       A,
       IControlledStream<TStreamInput, TOperatorOutput>
     >,
-    op2: IOperator<A, B, IControlledStream<TStreamInput, A>>,
-    op3: IOperator<B, C, IControlledStream<TStreamInput, B>>,
-    op4: IOperator<C, D, IControlledStream<TStreamInput, C>>
+    op2: Operation<A, B, IControlledStream<TStreamInput, A>>,
+    op3: Operation<B, C, IControlledStream<TStreamInput, B>>,
+    op4: Operation<C, D, IControlledStream<TStreamInput, C>>
   ): IControlledStream<TStreamInput, D>
   public liftAll<A, B, C, D, E>(
-    op1: IOperator<
+    op1: Operation<
       TOperatorOutput,
       A,
       IControlledStream<TStreamInput, TOperatorOutput>
     >,
-    op2: IOperator<A, B, IControlledStream<TStreamInput, A>>,
-    op3: IOperator<B, C, IControlledStream<TStreamInput, B>>,
-    op4: IOperator<C, D, IControlledStream<TStreamInput, C>>,
-    op5: IOperator<D, E, IControlledStream<TStreamInput, D>>
+    op2: Operation<A, B, IControlledStream<TStreamInput, A>>,
+    op3: Operation<B, C, IControlledStream<TStreamInput, B>>,
+    op4: Operation<C, D, IControlledStream<TStreamInput, C>>,
+    op5: Operation<D, E, IControlledStream<TStreamInput, D>>
   ): IControlledStream<TStreamInput, E>
   public liftAll<A, B, C, D, E, F>(
-    op1: IOperator<
+    op1: Operation<
       TOperatorOutput,
       A,
       IControlledStream<TStreamInput, TOperatorOutput>
     >,
-    op2: IOperator<A, B, IControlledStream<TStreamInput, A>>,
-    op3: IOperator<B, C, IControlledStream<TStreamInput, B>>,
-    op4: IOperator<C, D, IControlledStream<TStreamInput, C>>,
-    op5: IOperator<D, E, IControlledStream<TStreamInput, D>>,
-    op6: IOperator<E, F, IControlledStream<TStreamInput, E>>
+    op2: Operation<A, B, IControlledStream<TStreamInput, A>>,
+    op3: Operation<B, C, IControlledStream<TStreamInput, B>>,
+    op4: Operation<C, D, IControlledStream<TStreamInput, C>>,
+    op5: Operation<D, E, IControlledStream<TStreamInput, D>>,
+    op6: Operation<E, F, IControlledStream<TStreamInput, E>>
   ): IControlledStream<TStreamInput, F>
   public liftAll<A, B, C, D, E, F, G>(
-    op1: IOperator<
+    op1: Operation<
       TOperatorOutput,
       A,
       IControlledStream<TStreamInput, TOperatorOutput>
     >,
-    op2: IOperator<A, B, IControlledStream<TStreamInput, A>>,
-    op3: IOperator<B, C, IControlledStream<TStreamInput, B>>,
-    op4: IOperator<C, D, IControlledStream<TStreamInput, C>>,
-    op5: IOperator<D, E, IControlledStream<TStreamInput, D>>,
-    op6: IOperator<E, F, IControlledStream<TStreamInput, E>>,
-    op7: IOperator<F, G, IControlledStream<TStreamInput, F>>
+    op2: Operation<A, B, IControlledStream<TStreamInput, A>>,
+    op3: Operation<B, C, IControlledStream<TStreamInput, B>>,
+    op4: Operation<C, D, IControlledStream<TStreamInput, C>>,
+    op5: Operation<D, E, IControlledStream<TStreamInput, D>>,
+    op6: Operation<E, F, IControlledStream<TStreamInput, E>>,
+    op7: Operation<F, G, IControlledStream<TStreamInput, F>>
   ): IControlledStream<TStreamInput, G>
   public liftAll<A, B, C, D, E, F, G, H>(
-    op1: IOperator<
+    op1: Operation<
       TOperatorOutput,
       A,
       IControlledStream<TStreamInput, TOperatorOutput>
     >,
-    op2: IOperator<A, B, IControlledStream<TStreamInput, A>>,
-    op3: IOperator<B, C, IControlledStream<TStreamInput, B>>,
-    op4: IOperator<C, D, IControlledStream<TStreamInput, C>>,
-    op5: IOperator<D, E, IControlledStream<TStreamInput, D>>,
-    op6: IOperator<E, F, IControlledStream<TStreamInput, E>>,
-    op7: IOperator<F, G, IControlledStream<TStreamInput, F>>,
-    op8: IOperator<G, H, IControlledStream<TStreamInput, G>>
+    op2: Operation<A, B, IControlledStream<TStreamInput, A>>,
+    op3: Operation<B, C, IControlledStream<TStreamInput, B>>,
+    op4: Operation<C, D, IControlledStream<TStreamInput, C>>,
+    op5: Operation<D, E, IControlledStream<TStreamInput, D>>,
+    op6: Operation<E, F, IControlledStream<TStreamInput, E>>,
+    op7: Operation<F, G, IControlledStream<TStreamInput, F>>,
+    op8: Operation<G, H, IControlledStream<TStreamInput, G>>
   ): IControlledStream<TStreamInput, H>
   public liftAll<A, B, C, D, E, F, G, H, I>(
-    op1: IOperator<
+    op1: Operation<
       TOperatorOutput,
       A,
       IControlledStream<TStreamInput, TOperatorOutput>
     >,
-    op2: IOperator<A, B, IControlledStream<TStreamInput, A>>,
-    op3: IOperator<B, C, IControlledStream<TStreamInput, B>>,
-    op4: IOperator<C, D, IControlledStream<TStreamInput, C>>,
-    op5: IOperator<D, E, IControlledStream<TStreamInput, D>>,
-    op6: IOperator<E, F, IControlledStream<TStreamInput, E>>,
-    op7: IOperator<F, G, IControlledStream<TStreamInput, F>>,
-    op8: IOperator<G, H, IControlledStream<TStreamInput, G>>,
-    op9: IOperator<H, I, IControlledStream<TStreamInput, H>>
+    op2: Operation<A, B, IControlledStream<TStreamInput, A>>,
+    op3: Operation<B, C, IControlledStream<TStreamInput, B>>,
+    op4: Operation<C, D, IControlledStream<TStreamInput, C>>,
+    op5: Operation<D, E, IControlledStream<TStreamInput, D>>,
+    op6: Operation<E, F, IControlledStream<TStreamInput, E>>,
+    op7: Operation<F, G, IControlledStream<TStreamInput, F>>,
+    op8: Operation<G, H, IControlledStream<TStreamInput, G>>,
+    op9: Operation<H, I, IControlledStream<TStreamInput, H>>
   ): IControlledStream<TStreamInput, I>
   public liftAll<A, B, C, D, E, F, G, H, I>(
-    op1: IOperator<
+    op1: Operation<
       TOperatorOutput,
       A,
       IControlledStream<TStreamInput, TOperatorOutput>
     >,
-    op2: IOperator<A, B, IControlledStream<TStreamInput, A>>,
-    op3: IOperator<B, C, IControlledStream<TStreamInput, B>>,
-    op4: IOperator<C, D, IControlledStream<TStreamInput, C>>,
-    op5: IOperator<D, E, IControlledStream<TStreamInput, D>>,
-    op6: IOperator<E, F, IControlledStream<TStreamInput, E>>,
-    op7: IOperator<F, G, IControlledStream<TStreamInput, F>>,
-    op8: IOperator<G, H, IControlledStream<TStreamInput, G>>,
-    op9: IOperator<H, I, IControlledStream<TStreamInput, H>>,
-    ...operators: Array<IOperator<any, any, IControlledStream<any, any>>>
+    op2: Operation<A, B, IControlledStream<TStreamInput, A>>,
+    op3: Operation<B, C, IControlledStream<TStreamInput, B>>,
+    op4: Operation<C, D, IControlledStream<TStreamInput, C>>,
+    op5: Operation<D, E, IControlledStream<TStreamInput, D>>,
+    op6: Operation<E, F, IControlledStream<TStreamInput, E>>,
+    op7: Operation<F, G, IControlledStream<TStreamInput, F>>,
+    op8: Operation<G, H, IControlledStream<TStreamInput, G>>,
+    op9: Operation<H, I, IControlledStream<TStreamInput, H>>,
+    ...operations: Array<Operation<any, any, IControlledStream<any, any>>>
   ): IControlledStream<TStreamInput, any>
   public liftAll(
-    ...operators: Array<IOperator<any, any>>
+    ...operations: Array<Operation<any, any, IControlledStream<any, any>>>
   ): IControlledStream<TStreamInput, any> {
-    let resultStream: IControlledStream<TStreamInput, any> = this
+    let resultStream: IControlledStream<any, any> = this
 
-    for (let i = 0; i < operators.length; i++) {
-      resultStream = resultStream.lift(operators[i])
+    for (let i = 0; i < operations.length; i++) {
+      resultStream = resultStream.lift(operations[i])
     }
 
     return resultStream
@@ -548,25 +582,12 @@ class LiftedControlledStream<TStreamInput, TOperatorInput, TOperatorOutput>
       throw new AlreadyDisposedError()
     }
 
-    this.add(target)
+    this.addOnDispose(target)
 
-    return this.__operator.connect(
-      target,
-      this.__source
-    )
-  }
-}
-
-class RawControlledStreamSubscriptionDisposable<T> implements IDisposable {
-  constructor(
-    private distributiveStream: ControlledStream<T>,
-    private distributiveStreamTargets: Array<IRequiredSubscriber<T>>,
-    private target: IRequiredSubscriber<T>
-  ) {}
-
-  public dispose() {
-    if (this.distributiveStream.isReceivingValues()) {
-      removeOnce(this.distributiveStreamTargets, this.target)
+    if (!this.__connectToTarget) {
+      this.__connectToTarget = this.__operation(this.__source)
     }
+
+    return this.__connectToTarget(target)
   }
 }

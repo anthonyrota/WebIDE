@@ -1,31 +1,23 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import {
   DoubleInputValueTransmitterWithData,
   DoubleInputValueTransmitterWithDataSubscriptionTarget
 } from 'src/models/Stream/DoubleInputValueTransmitterWithData'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
 export function delayWhen<T>(
   getDelayDurationStream: (value: T, index: number) => Stream<unknown>
-): IOperator<T, T> {
-  return new DelayWhenOperator<T>(getDelayDurationStream)
+): Operation<T, T> {
+  return operateThroughValueTransmitter(
+    target => new DelayWhenValueTransmitter(target, getDelayDurationStream)
+  )
 }
 
-class DelayWhenOperator<T> implements IOperator<T, T> {
-  constructor(
-    private getDelayDurationStream: (value: T, index: number) => Stream<unknown>
-  ) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new DelayWhenSubscriber<T>(target, this.getDelayDurationStream)
-    )
-  }
-}
-
-class DelayWhenSubscriber<T> extends DoubleInputValueTransmitterWithData<
+class DelayWhenValueTransmitter<T> extends DoubleInputValueTransmitterWithData<
   T,
   T,
   unknown,
@@ -35,7 +27,7 @@ class DelayWhenSubscriber<T> extends DoubleInputValueTransmitterWithData<
   private index: number = 0
 
   constructor(
-    target: ISubscriber<T>,
+    target: ISubscriptionTarget<T>,
     private getDelayDurationStream: (value: T, index: number) => Stream<unknown>
   ) {
     super(target)

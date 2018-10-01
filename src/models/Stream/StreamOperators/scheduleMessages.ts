@@ -1,40 +1,35 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IScheduler } from 'src/models/Scheduler/Scheduler'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
 import {
+  createCompleteNotification,
+  createErrorNotification,
+  createNextNotification,
   distributeNotification,
-  Notification,
-  NotificationType
+  Notification
 } from 'src/models/Stream/Notification'
-import { Stream } from 'src/models/Stream/Stream'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function scheduleMessages<T>(
   scheduler: IScheduler,
   delay: number = 0
-): IOperator<T, T> {
-  return new ScheduleMessagesOperator<T>(scheduler, delay)
-}
-
-class ScheduleMessagesOperator<T> implements IOperator<T, T> {
-  constructor(private scheduler: IScheduler, private delay: number) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new ScheduleMessagesSubscriber<T>(target, this.scheduler, this.delay)
-    )
-  }
+): Operation<T, T> {
+  return operateThroughValueTransmitter(
+    target => new ScheduleMessagesValueTransmitter(target, scheduler, delay)
+  )
 }
 
 interface ISchedulerData<T> {
-  transmitter: ScheduleMessagesSubscriber<T>
+  transmitter: ScheduleMessagesValueTransmitter<T>
   notification: Notification<T>
 }
 
-class ScheduleMessagesSubscriber<T> extends MonoTypeValueTransmitter<T> {
+class ScheduleMessagesValueTransmitter<T> extends MonoTypeValueTransmitter<T> {
   constructor(
-    target: ISubscriber<T>,
+    target: ISubscriptionTarget<T>,
     private scheduler: IScheduler,
     private delay: number
   ) {
@@ -46,29 +41,21 @@ class ScheduleMessagesSubscriber<T> extends MonoTypeValueTransmitter<T> {
   }
 
   protected onNextValue(value: T): void {
-    this.scheduleNotification({
-      type: NotificationType.Next,
-      value
-    })
+    this.scheduleNotification(createNextNotification(value))
   }
 
   protected onError(error: unknown): void {
-    this.scheduleNotification({
-      type: NotificationType.Error,
-      error
-    })
+    this.scheduleNotification(createErrorNotification(error))
   }
 
   protected onComplete(): void {
-    this.scheduleNotification({
-      type: NotificationType.Complete
-    })
+    this.scheduleNotification(createCompleteNotification())
   }
 
   private scheduleNotification(notification: Notification<T>): void {
-    this.add(
+    this.addOnDispose(
       this.scheduler.scheduleDelayedWithData<ISchedulerData<T>>(
-        ScheduleMessagesSubscriber.schedulerCallback,
+        ScheduleMessagesValueTransmitter.schedulerCallback,
         this.delay,
         { transmitter: this, notification }
       )

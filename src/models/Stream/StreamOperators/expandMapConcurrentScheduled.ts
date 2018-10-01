@@ -1,47 +1,30 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
+import { bound } from 'src/decorators/bound'
 import { IScheduler } from 'src/models/Scheduler/Scheduler'
 import { MonoTypeDoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
 export function expandMapConcurrentScheduled<T>(
   convertValueToStream: (value: T, index: number) => Stream<T>,
   concurrency: number,
   scheduler: IScheduler
-): IOperator<T, T> {
-  return new ExpandMapConcurrentScheduledOperator<T>(
-    convertValueToStream,
-    concurrency,
-    scheduler
+): Operation<T, T> {
+  return operateThroughValueTransmitter(
+    target =>
+      new ExpandMapConcurrentScheduledValueTransmitter(
+        target,
+        convertValueToStream,
+        concurrency,
+        scheduler
+      )
   )
 }
 
-class ExpandMapConcurrentScheduledOperator<T> implements IOperator<T, T> {
-  constructor(
-    private convertValueToStream: (value: T, index: number) => Stream<T>,
-    private concurrency: number,
-    private scheduler: IScheduler
-  ) {}
-
-  public connect(target: ISubscriber<T>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new ExpandMapConcurrentScheduledSubscriber<T>(
-        target,
-        this.convertValueToStream,
-        this.concurrency,
-        this.scheduler
-      )
-    )
-  }
-}
-
-interface ISchedulerData<T> {
-  transmitter: ExpandMapConcurrentScheduledSubscriber<T>
-  resultStream: Stream<T>
-}
-
-class ExpandMapConcurrentScheduledSubscriber<
+class ExpandMapConcurrentScheduledValueTransmitter<
   T
 > extends MonoTypeDoubleInputValueTransmitter<T> {
   private valuesToProcess: T[] = []
@@ -50,17 +33,12 @@ class ExpandMapConcurrentScheduledSubscriber<
   private index: number = 0
 
   constructor(
-    target: ISubscriber<T>,
+    target: ISubscriptionTarget<T>,
     private convertValueToStream: (value: T, index: number) => Stream<T>,
     private concurrency: number,
     private scheduler: IScheduler
   ) {
     super(target)
-  }
-
-  private static schedulerCallback<T>(data: ISchedulerData<T>): void {
-    data.transmitter.scheduledStreamsToMergeCount -= 1
-    data.transmitter.subscribeResultStreamToSelf(data.resultStream)
   }
 
   protected onNextValue(value: T): void {
@@ -100,6 +78,8 @@ class ExpandMapConcurrentScheduledSubscriber<
   }
 
   private processValue(value: T): void {
+    this.destination.next(value)
+
     const { convertValueToStream } = this
     const index = this.index++
     let resultStream: Stream<T>
@@ -112,15 +92,14 @@ class ExpandMapConcurrentScheduledSubscriber<
     }
 
     this.scheduledStreamsToMergeCount += 1
-    this.add(
-      this.scheduler.scheduleWithData<ISchedulerData<T>>(
-        ExpandMapConcurrentScheduledSubscriber.schedulerCallback,
-        { transmitter: this, resultStream }
-      )
+    this.addOnDispose(
+      this.scheduler.scheduleWithData(this.schedulerCallback, resultStream)
     )
   }
 
-  private subscribeResultStreamToSelf(resultStream: Stream<T>): void {
+  @bound
+  private schedulerCallback(resultStream: Stream<T>): void {
+    this.scheduledStreamsToMergeCount -= 1
     this.activeMergedStreamsCount += 1
     this.subscribeStreamToSelf(resultStream)
   }

@@ -1,40 +1,26 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
-import { Stream } from 'src/models/Stream/Stream'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
 export function distinctWithKeySelector<TValue, TKey>(
   selectKey: (value: TValue) => TKey
-): IOperator<TValue, TValue> {
-  return new DistinctWithKeySelectorOperator<TValue, TKey>(selectKey)
+): Operation<TValue, TValue> {
+  return operateThroughValueTransmitter(
+    target => new DistinctWithKeySelectorValueTransmitter(target, selectKey)
+  )
 }
 
-class DistinctWithKeySelectorOperator<TValue, TKey>
-  implements IOperator<TValue, TValue> {
-  constructor(private selectKey: (value: TValue) => TKey) {}
-
-  public connect(
-    target: ISubscriber<TValue>,
-    source: Stream<TValue>
-  ): DisposableLike {
-    return source.subscribe(
-      new DistinctWithKeySelectorSubscriber<TValue, TKey>(
-        target,
-        this.selectKey
-      )
-    )
-  }
-}
-
-class DistinctWithKeySelectorSubscriber<
+class DistinctWithKeySelectorValueTransmitter<
   TValue,
   TKey
 > extends MonoTypeValueTransmitter<TValue> {
   private keys = new Set<TKey>()
 
   constructor(
-    target: ISubscriber<TValue>,
+    target: ISubscriptionTarget<TValue>,
     private selectKey: (value: TValue) => TKey
   ) {
     super(target)

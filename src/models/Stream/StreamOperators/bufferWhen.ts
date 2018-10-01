@@ -1,27 +1,21 @@
-import { DisposableLike } from 'src/models/Disposable/DisposableLike'
 import { IDisposable } from 'src/models/Disposable/IDisposable'
 import { DoubleInputValueTransmitter } from 'src/models/Stream/DoubleInputValueTransmitter'
-import { IOperator } from 'src/models/Stream/IOperator'
-import { ISubscriber } from 'src/models/Stream/ISubscriber'
+import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  operateThroughValueTransmitter,
+  Operation
+} from 'src/models/Stream/Operation'
 import { Stream } from 'src/models/Stream/Stream'
 
 export function bufferWhen<T>(
   getShouldCloseBufferStream: () => Stream<unknown>
-): IOperator<T, T[]> {
-  return new BufferWhenOperator<T>(getShouldCloseBufferStream)
+): Operation<T, T[]> {
+  return operateThroughValueTransmitter(
+    target => new BufferWhenValueTransmitter(target, getShouldCloseBufferStream)
+  )
 }
 
-class BufferWhenOperator<T> implements IOperator<T, T[]> {
-  constructor(private getShouldCloseBufferStream: () => Stream<unknown>) {}
-
-  public connect(target: ISubscriber<T[]>, source: Stream<T>): DisposableLike {
-    return source.subscribe(
-      new BufferWhenSubscriber(target, this.getShouldCloseBufferStream)
-    )
-  }
-}
-
-class BufferWhenSubscriber<T> extends DoubleInputValueTransmitter<
+class BufferWhenValueTransmitter<T> extends DoubleInputValueTransmitter<
   T,
   T[],
   unknown
@@ -31,7 +25,7 @@ class BufferWhenSubscriber<T> extends DoubleInputValueTransmitter<
   private shouldCloseBufferStreamSubscription: IDisposable | null = null
 
   constructor(
-    target: ISubscriber<T[]>,
+    target: ISubscriptionTarget<T[]>,
     private getShouldCloseBufferStream: () => Stream<unknown>
   ) {
     super(target)
