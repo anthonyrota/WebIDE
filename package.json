@@ -13,7 +13,8 @@
     "react-scripts-ts": "^2.16.0",
     "sinon": "^6.1.4",
     "svg2ttf": "^4.1.0",
-    "tslint-config-prettier": "^1.13.0"
+    "tslint-config-prettier": "^1.13.0",
+    "url-parse": "^1.4.3"
   },
   "scripts": {
     "start": "react-scripts-ts start",
