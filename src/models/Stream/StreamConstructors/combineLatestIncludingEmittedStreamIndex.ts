@@ -5,19 +5,36 @@ import {
 import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
 import { RawStream, Stream } from 'src/models/Stream/Stream'
 import { empty } from 'src/models/Stream/StreamConstructors/empty'
-import { UnwrapFromStreams } from 'src/models/Stream/types'
 import { ToTuple } from 'src/types/utils'
+import { map } from '../StreamOperators/map'
+import { UnwrapFromStreams } from '../types'
 
-export function forkJoin(): Stream<never>
-export function forkJoin<T extends Array<Stream<any>>>(
+export interface IValuesWithEmittedStreamIndex<T extends any[]> {
+  values: T
+  emittedStreamIndex: number
+}
+
+export function combineLatestIncludingEmittedStreamIndex(): Stream<never>
+export function combineLatestIncludingEmittedStreamIndex<
+  T extends Array<Stream<any>>
+>(
   ...streams: T
-): Stream<ToTuple<UnwrapFromStreams<T>>>
-export function forkJoin<T>(...streams: Array<Stream<T>>): Stream<T[]> {
+): Stream<IValuesWithEmittedStreamIndex<ToTuple<UnwrapFromStreams<T>>>>
+export function combineLatestIncludingEmittedStreamIndex<T>(
+  ...streams: Array<Stream<T>>
+): Stream<IValuesWithEmittedStreamIndex<T[]>> {
   return streams.length === 0
     ? empty()
-    : new RawStream<T[]>(target => {
-        return new ForkJoinValueTransmitter(target, streams)
-      })
+    : streams.length === 1
+      ? streams[0].lift(
+          map(value => ({ values: [value], emittedStreamIndex: 0 }))
+        )
+      : new RawStream<IValuesWithEmittedStreamIndex<T[]>>(target => {
+          return new CombineLatestIncludingEmittedStreamIndexValueTransmitter(
+            target,
+            streams
+          )
+        })
 }
 
 interface IStreamData {
@@ -25,9 +42,11 @@ interface IStreamData {
   index: number
 }
 
-class ForkJoinValueTransmitter<T> extends DoubleInputValueTransmitterWithData<
-  T,
-  T[],
+class CombineLatestIncludingEmittedStreamIndexValueTransmitter<
+  T
+> extends DoubleInputValueTransmitterWithData<
+  never,
+  IValuesWithEmittedStreamIndex<T[]>,
   T,
   IStreamData
 > {
@@ -35,7 +54,10 @@ class ForkJoinValueTransmitter<T> extends DoubleInputValueTransmitterWithData<
   private streamsCompletedCount: number = 0
   private streamsWithValuesCount: number = 0
 
-  constructor(target: ISubscriptionTarget<T[]>, private streams: Array<Stream<T>>) {
+  constructor(
+    target: ISubscriptionTarget<IValuesWithEmittedStreamIndex<T[]>>,
+    private streams: Array<Stream<T>>
+  ) {
     super(target)
 
     for (let i = 0; i < this.streams.length; i++) {
@@ -55,11 +77,18 @@ class ForkJoinValueTransmitter<T> extends DoubleInputValueTransmitterWithData<
   ) {
     const data = target.getData()
 
-    this.values[data.index] = value
-
     if (!data.hasReceivedValue) {
       data.hasReceivedValue = true
       this.streamsWithValuesCount++
+    }
+
+    this.values[data.index] = value
+
+    if (this.streamsWithValuesCount === this.streams.length) {
+      this.destination.next({
+        values: this.values.slice(),
+        emittedStreamIndex: data.index
+      })
     }
   }
 
@@ -77,10 +106,6 @@ class ForkJoinValueTransmitter<T> extends DoubleInputValueTransmitterWithData<
     this.streamsCompletedCount += 1
 
     if (this.streamsCompletedCount === this.streams.length) {
-      if (this.streamsWithValuesCount === this.streams.length) {
-        this.destination.next(this.values)
-      }
-
       this.destination.complete()
     }
   }

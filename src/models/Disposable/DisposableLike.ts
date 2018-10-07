@@ -1,13 +1,13 @@
 import { IDisposable } from 'src/models/Disposable/IDisposable'
 import { isDisposable } from 'src/models/Disposable/isDisposable'
-import { isFunction } from 'src/utils/isFunction'
+import { isCallable } from 'src/utils/isCallable'
 
 export type DisposableLike = IDisposable | (() => void) | void
 
 export function disposeDisposableLike(disposableLike: DisposableLike): void {
   if (isDisposable(disposableLike)) {
     disposableLike.dispose()
-  } else if (isFunction(disposableLike)) {
+  } else if (isCallable(disposableLike)) {
     disposableLike()
   }
 }

@@ -46,7 +46,9 @@ export class ReplayedControlledStreamWithTimeLimit<T> extends ControlledStream<
       target.next(this.__buffer[i].value)
     }
 
-    this.throwError()
+    this.getError().withValue(error => {
+      throw error
+    })
 
     if (this.isReceivingValues()) {
       return this.pushTarget(target)

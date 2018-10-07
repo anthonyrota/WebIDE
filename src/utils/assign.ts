@@ -1,27 +1,39 @@
-function assignPolyfill<T>(target: T): T
-function assignPolyfill<T, U>(target: T, source1: U): T & U
-function assignPolyfill<T, U, V>(target: T, source1: U, source2: V): T & U & V
-function assignPolyfill<T, U, V, W>(
+import { toObject } from './toObject'
+
+export function assign<T>(target: T): T
+export function assign<T, U>(target: T, source1: U): T & U
+export function assign<T, U, V>(target: T, source1: U, source2: V): T & U & V
+export function assign<T, U, V, W>(
   target: T,
   source1: U,
   source2: V,
   source3: W
 ): T & U & V & W
-function assignPolyfill<T>(...values: T[]): T
-function assignPolyfill<T>(...values: T[]): T {
-  if (values[0] == null) {
-    throw new TypeError('Cannot convert undefined or null to object')
-  }
+export function assign<T>(target: {}, ...sources: any): T
+export function assign<T>(target: {}, ...sources: any): T {
+  const combined = toObject(target) as T
 
-  const combined = Object(values[0])
+  for (let i = 0; i < sources.length; i++) {
+    const value = sources[i]
 
-  for (let index = 1; index < values.length; index++) {
-    const nextSource = values[index]
+    if (value != null) {
+      const source = Object(value)
 
-    if (nextSource != null) {
-      for (const nextKey in nextSource) {
-        if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
-          combined[nextKey] = nextSource[nextKey]
+      for (const key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          combined[key] = source[key]
+        }
+      }
+
+      if (Object.getOwnPropertySymbols) {
+        const symbols = Object.getOwnPropertySymbols(source)
+
+        for (let i = 0; i < symbols.length; i++) {
+          const symbol = symbols[i]
+
+          if (Object.prototype.propertyIsEnumerable.call(source, symbol)) {
+            combined[symbol] = source[symbol]
+          }
         }
       }
     }
@@ -29,5 +41,3 @@ function assignPolyfill<T>(...values: T[]): T {
 
   return combined
 }
-
-export const assign = Object.assign || assignPolyfill

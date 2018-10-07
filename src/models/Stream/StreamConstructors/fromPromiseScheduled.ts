@@ -3,31 +3,32 @@ import { RawStream, Stream } from 'src/models/Stream/Stream'
 
 export function fromPromiseScheduled<T>(
   promise: PromiseLike<T>,
-  scheduler: IScheduler
+  scheduler: IScheduler,
+  delay: number = 0
 ): Stream<T> {
   return new RawStream<T>(target => {
-    return scheduler.schedule(() => {
+    return scheduler.scheduleDelayed(() => {
       promise.then(
         value => {
           target.addOnStopReceivingValues(
-            scheduler.schedule(() => {
+            scheduler.scheduleDelayed(() => {
               target.next(value)
               target.addOnStopReceivingValues(
-                scheduler.schedule(() => {
+                scheduler.scheduleDelayed(() => {
                   target.complete()
-                })
+                }, delay)
               )
-            })
+            }, delay)
           )
         },
         error => {
           target.addOnStopReceivingValues(
-            scheduler.schedule(() => {
+            scheduler.scheduleDelayed(() => {
               target.error(error)
-            })
+            }, delay)
           )
         }
       )
-    })
+    }, delay)
   })
 }

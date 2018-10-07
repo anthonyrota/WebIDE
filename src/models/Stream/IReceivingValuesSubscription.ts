@@ -1,5 +1,5 @@
 import { DisposableLike } from 'src/models/Disposable/DisposableLike'
-import { isFunction } from 'src/utils/isFunction'
+import { isCallable } from 'src/utils/isCallable'
 
 export const isReceivingValuesSubscriptionPropertyKey =
   '@@__ReceivingValuesSubscriptionClassEqualityCheckKey__@@'
@@ -10,8 +10,8 @@ export function isReceivingValuesSubscription(
   return (
     candidate != null &&
     candidate[isReceivingValuesSubscriptionPropertyKey] === true &&
-    isFunction(candidate.isReceivingValues) &&
-    isFunction(candidate.getOnStopReceivingValuesSubscription)
+    isCallable(candidate.isReceivingValues) &&
+    isCallable(candidate.getOnStopReceivingValuesSubscription)
   )
 }
 

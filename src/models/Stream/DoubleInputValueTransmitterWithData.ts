@@ -3,7 +3,7 @@ import { IRequiredSubscriptionTarget } from 'src/models/Stream/ISubscriptionTarg
 import { Stream } from 'src/models/Stream/Stream'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-interface IOuterSubscriberWithData<TOuterValue, TData> {
+interface IOuterSubscriptionTargetWithData<TOuterValue, TData> {
   outerNext(
     value: TOuterValue,
     target: DoubleInputValueTransmitterWithDataSubscriptionTarget<
@@ -31,7 +31,7 @@ export class DoubleInputValueTransmitterWithDataSubscriptionTarget<
   TData
 > extends Subscription implements IRequiredSubscriptionTarget<TOuterValue> {
   constructor(
-    private __transmitter: IOuterSubscriberWithData<TOuterValue, TData>,
+    private __transmitter: IOuterSubscriptionTargetWithData<TOuterValue, TData>,
     private __data: TData
   ) {
     super()
@@ -66,7 +66,7 @@ export abstract class DoubleInputValueTransmitterWithData<
   TOuterValue,
   TData
 > extends ValueTransmitter<TInput, TOutput>
-  implements IOuterSubscriberWithData<TOuterValue, TData> {
+  implements IOuterSubscriptionTargetWithData<TOuterValue, TData> {
   public outerNext(
     value: TOuterValue,
     target: DoubleInputValueTransmitterWithDataSubscriptionTarget<

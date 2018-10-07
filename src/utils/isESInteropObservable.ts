@@ -1,9 +1,10 @@
 import { IESInteropObservable } from 'src/models/Stream/ESObservable'
+import { isFunction } from 'util'
 
 export function isESInteropObservable(
   value: any
 ): value is IESInteropObservable<unknown> {
-  return value != null && typeof value[Symbol.observable] === 'function'
+  return value != null && isFunction(value[Symbol.observable])
 }
 
 declare global {

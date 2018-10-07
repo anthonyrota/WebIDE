@@ -1,4 +1,4 @@
-import { IDisposable } from 'src/models/Disposable/IDisposable'
+import { Disposable, IDisposable } from 'src/models/Disposable/IDisposable'
 import { root } from 'src/utils/root'
 import {
   clearImmediatePolyfill,
@@ -19,15 +19,7 @@ if (
   nativeClearImmediate = clearImmediatePolyfill
 }
 
-class SetImmediateDisposable implements IDisposable {
-  constructor(private id: any) {}
-
-  public dispose(): void {
-    nativeClearImmediate(this.id)
-  }
-}
-
 export function setImmediate(callback: () => void): IDisposable {
   const id = nativeSetImmediate(callback)
-  return new SetImmediateDisposable(id)
+  return new Disposable(() => nativeClearImmediate(id))
 }

@@ -5,13 +5,13 @@ import {
 } from 'src/models/Stream/Operation'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function bufferCountWithBufferOffset<T>(
+export function bufferCountWithOverlapOffset<T>(
   bufferSize: number,
   bufferOffset: number
 ): Operation<T, T[]> {
   return operateThroughValueTransmitter(
     target =>
-      new BufferCountWithBufferOffsetValueTransmitter(
+      new BufferCountWithOverlapOffsetValueTransmitter(
         target,
         bufferSize,
         bufferOffset
@@ -19,7 +19,7 @@ export function bufferCountWithBufferOffset<T>(
   )
 }
 
-class BufferCountWithBufferOffsetValueTransmitter<T> extends ValueTransmitter<
+class BufferCountWithOverlapOffsetValueTransmitter<T> extends ValueTransmitter<
   T,
   T[]
 > {
@@ -35,11 +35,11 @@ class BufferCountWithBufferOffsetValueTransmitter<T> extends ValueTransmitter<
   }
 
   protected onNextValue(value: T): void {
-    this.valueIndex += 1
-
     if (this.valueIndex % this.bufferOffset === 0) {
       this.buffers.push([])
     }
+
+    this.valueIndex += 1
 
     for (let i = 0; i < this.buffers.length; i++) {
       const buffer = this.buffers[i]

@@ -1,21 +1,26 @@
 import { IScheduler } from 'src/models/Scheduler/Scheduler'
 import { RawStream, Stream } from 'src/models/Stream/Stream'
-import { emptyScheduled } from 'src/models/Stream/StreamConstructors/emptyScheduled'
+import { delayedComplete } from './delayedComplete'
 
 export function fromArrayScheduled<T>(
   array: ArrayLike<T>,
-  scheduler: IScheduler
+  scheduler: IScheduler,
+  delay: number = 0
 ): Stream<T> {
   return array.length === 0
-    ? emptyScheduled(scheduler)
+    ? delayedComplete(delay, scheduler)
     : new RawStream<T>(target => {
-        return scheduler.scheduleWithData<number>((index, action) => {
-          if (index >= array.length) {
-            target.complete()
-          } else {
-            target.next(array[index])
-            action.scheduleWithData(index + 1)
-          }
-        }, 0)
+        return scheduler.scheduleDelayedWithData<number>(
+          (index, action) => {
+            if (index >= array.length) {
+              target.complete()
+            } else {
+              target.next(array[index])
+              action.scheduleDelayedWithData(delay, index + 1)
+            }
+          },
+          delay,
+          0
+        )
       })
 }

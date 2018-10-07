@@ -1,8 +1,6 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "commonjs",
-    "experimentalDecorators": true,
-    "downlevelIteration": true
+    "module": "commonjs"
   }
 }

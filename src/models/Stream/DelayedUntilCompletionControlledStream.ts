@@ -26,7 +26,9 @@ export class DelayedUntilCompletionControlledStream<T> extends ControlledStream<
       throw new AlreadyDisposedError()
     }
 
-    this.throwError()
+    this.getError().withValue(error => {
+      throw error
+    })
 
     if (this.isReceivingValues()) {
       return super.pushTarget(target)

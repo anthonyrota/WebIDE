@@ -276,10 +276,10 @@ export class ControlledStream<T> extends Stream<T>
   }
 
   protected onNextValue(value: T): void {
-    const subscribers = this.__targets.slice()
+    const targets = this.__targets.slice()
 
-    for (let i = 0; i < subscribers.length; i++) {
-      subscribers[i].next(value)
+    for (let i = 0; i < targets.length; i++) {
+      targets[i].next(value)
     }
   }
 
@@ -287,10 +287,10 @@ export class ControlledStream<T> extends Stream<T>
     this.__mutableThrownError.setAs(error)
     this.__onStopReceivingValuesSubscription.dispose()
 
-    const subscribers = this.__targets.slice()
+    const targets = this.__targets.slice()
 
-    for (let i = 0; i < subscribers.length; i++) {
-      subscribers[i].error(error)
+    for (let i = 0; i < targets.length; i++) {
+      targets[i].error(error)
     }
 
     this.__targets.length = 0
@@ -299,10 +299,10 @@ export class ControlledStream<T> extends Stream<T>
   protected onComplete(): void {
     this.__onStopReceivingValuesSubscription.dispose()
 
-    const subscribers = this.__targets.slice()
+    const targets = this.__targets.slice()
 
-    for (let i = 0; i < subscribers.length; i++) {
-      subscribers[i].complete()
+    for (let i = 0; i < targets.length; i++) {
+      targets[i].complete()
     }
 
     this.__targets.length = 0
@@ -312,18 +312,14 @@ export class ControlledStream<T> extends Stream<T>
     return this.__mutableThrownError
   }
 
-  protected throwError(): void {
-    this.__mutableThrownError.withValue(value => {
-      throw value
-    })
-  }
-
   protected trySubscribe(target: ValueTransmitter<T, unknown>): DisposableLike {
     if (!this.__selfSubscription.isActive()) {
       throw new AlreadyDisposedError()
     }
 
-    this.throwError()
+    this.getError().withValue(error => {
+      throw error
+    })
 
     if (!this.isReceivingValues()) {
       target.complete()
@@ -341,6 +337,10 @@ export class ControlledStream<T> extends Stream<T>
         removeOnce(this.__targets, target)
       }
     }
+  }
+
+  protected getError(): MutableMaybe<unknown> {
+    return this.__mutableThrownError
   }
 }
 

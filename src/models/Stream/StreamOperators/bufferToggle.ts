@@ -40,11 +40,11 @@ class BufferToggleValueTransmitter<
   private buffers: T[][] = []
 
   constructor(
-    subscriber: ISubscriptionTarget<T[]>,
+    target: ISubscriptionTarget<T[]>,
     openNewBufferStream: Stream<TOuterValue>,
     private getShouldCloseBufferStream: (value: TOuterValue) => Stream<unknown>
   ) {
-    super(subscriber)
+    super(target)
     this.subscribeStreamToSelf(openNewBufferStream, {
       type: 'OpenNewBuffer'
     })

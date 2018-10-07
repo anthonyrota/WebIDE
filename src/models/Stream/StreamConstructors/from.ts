@@ -1,5 +1,5 @@
 import { IESInteropObservable } from 'src/models/Stream/ESObservable'
-import { isStream, Stream } from 'src/models/Stream/Stream'
+import { IInteropStream, isInteropStream } from 'src/models/Stream/Stream'
 import { fromArray } from 'src/models/Stream/StreamConstructors/fromArray'
 import { fromAsyncIterable } from 'src/models/Stream/StreamConstructors/fromAsyncIterable'
 import { fromIterable } from 'src/models/Stream/StreamConstructors/fromIterable'
@@ -14,13 +14,13 @@ import { isPromiseLike } from 'src/utils/isPromiseLike'
 export function from<T>(
   input:
     | ArrayLike<T>
-    | Stream<T>
+    | IInteropStream<T>
     | Iterable<T>
     | AsyncIterable<T>
     | IESInteropObservable<T>
     | PromiseLike<T>
 ) {
-  if (isStream(input)) {
+  if (isInteropStream(input)) {
     return input
   } else if (isArrayLike(input)) {
     return fromArray(input)

@@ -5,17 +5,21 @@ import {
 } from 'src/models/Stream/Operation'
 import { ValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 
-export function scanWithInitialValue<T, U>(
-  accumulate: (accumulatedValue: U, value: T, index: number) => U,
-  initialValue: U
+export function scanWithInitialValue<T, U, I = U>(
+  accumulate: (accumulatedValue: U | I, value: T, index: number) => U,
+  initialValue: U | I
 ): Operation<T, U> {
   return operateThroughValueTransmitter(
     target =>
-      new ScanWithInitialValueValueTransmitter(target, accumulate, initialValue)
+      new ScanWithInitialValueValueTransmitter<T, U, I>(
+        target,
+        accumulate,
+        initialValue
+      )
   )
 }
 
-class ScanWithInitialValueValueTransmitter<T, U> extends ValueTransmitter<
+class ScanWithInitialValueValueTransmitter<T, U, I> extends ValueTransmitter<
   T,
   U
 > {
@@ -23,8 +27,8 @@ class ScanWithInitialValueValueTransmitter<T, U> extends ValueTransmitter<
 
   constructor(
     target: ISubscriptionTarget<U>,
-    private accumulate: (accumulatedValue: U, value: T, index: number) => U,
-    private accumulatedValue: U
+    private accumulate: (accumulatedValue: U | I, value: T, index: number) => U,
+    private accumulatedValue: U | I
   ) {
     super(target)
   }

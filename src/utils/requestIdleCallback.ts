@@ -1,4 +1,4 @@
-import { IDisposable } from 'src/models/Disposable/IDisposable'
+import { Disposable, IDisposable } from 'src/models/Disposable/IDisposable'
 import { canUseDOM } from 'src/utils/canUseDOM'
 import { createUniqueKey } from 'src/utils/createUniqueKey'
 import { getTime } from 'src/utils/getTime'
@@ -366,18 +366,10 @@ if (!canUseDOM) {
   }
 }
 
-class RICDisposable implements IDisposable {
-  constructor(private config: ICallbackConfig) {}
-
-  public dispose(): void {
-    cancelScheduledWork(this.config)
-  }
-}
-
 export function requestIdleCallback(
   callback: FrameCallback,
   options?: { timeout: number }
 ): IDisposable {
   const config = scheduleWork(callback, options)
-  return new RICDisposable(config)
+  return new Disposable(() => cancelScheduledWork(config))
 }

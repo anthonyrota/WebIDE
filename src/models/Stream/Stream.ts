@@ -4,18 +4,36 @@ import {
   ISubscription
 } from 'src/models/Disposable/Subscription'
 import { isReceivingValuesSubscription } from 'src/models/Stream/IReceivingValuesSubscription'
-import { ISubscribable, ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
+import {
+  ISubscribable,
+  ISubscriptionTarget
+} from 'src/models/Stream/ISubscriptionTarget'
 import { Operation } from 'src/models/Stream/Operation'
 import {
   MonoTypeValueTransmitter,
   ValueTransmitter
 } from 'src/models/Stream/ValueTransmitter'
+import { isCallable } from 'src/utils/isCallable'
+
+export const streamLabel = '@@__StreamTag__@@'
+
+export interface IInteropStream<T> {
+  [streamLabel](): Stream<T>
+}
+
+export function isInteropStream(value: any): value is IInteropStream<unknown> {
+  return isCallable(value[streamLabel])
+}
 
 export function isStream(value: unknown): value is Stream<unknown> {
   return value instanceof Stream
 }
 
-export abstract class Stream<T> implements ISubscribable<T> {
+export abstract class Stream<T> implements ISubscribable<T>, IInteropStream<T> {
+  public [streamLabel](): Stream<T> {
+    return new DuplicateStream(this)
+  }
+
   public lift<U>(operation: Operation<T, U>): Stream<U> {
     return new LiftedStream<T, U>(this, operation)
   }
@@ -102,12 +120,9 @@ export abstract class Stream<T> implements ISubscribable<T> {
   }
 
   public subscribe(
-    targetSubscriber: ISubscriptionTarget<T> | ValueTransmitter<T, unknown>
+    target: ISubscriptionTarget<T> | ValueTransmitter<T, unknown>
   ): ISubscription {
-    if (
-      isReceivingValuesSubscription(targetSubscriber) &&
-      !targetSubscriber.isReceivingValues()
-    ) {
+    if (isReceivingValuesSubscription(target) && !target.isReceivingValues()) {
       return emptySubscription
     }
 
@@ -119,28 +134,28 @@ export abstract class Stream<T> implements ISubscribable<T> {
      * of this, we always have to create a new intermediate value transmitter
      * which is then send to the `trySubscribe` function
      *
-     * const target = isValueTransmitter(targetSubscriber)
-     *   ? targetSubscriber
-     *   : new MonoTypeValueTransmitter<T>(targetSubscriber)
+     * const transmitter = isValueTransmitter(target)
+     *   ? target
+     *   : new MonoTypeValueTransmitter<T>(target)
      */
 
-    const target = new MonoTypeValueTransmitter<T>(targetSubscriber)
+    const transmitter = new MonoTypeValueTransmitter<T>(target)
 
-    if (!target.isReceivingValues()) {
+    if (!transmitter.isReceivingValues()) {
       return emptySubscription
     }
 
     let disposableLike: DisposableLike
 
     try {
-      disposableLike = this.trySubscribe(target)
+      disposableLike = this.trySubscribe(transmitter)
     } catch (error) {
-      target.error(error)
+      transmitter.error(error)
     }
 
-    target.addOnStopReceivingValues(disposableLike)
+    transmitter.addOnStopReceivingValues(disposableLike)
 
-    return target
+    return transmitter
   }
 
   protected abstract trySubscribe(

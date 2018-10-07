@@ -9,7 +9,7 @@ import {
 import { Stream } from 'src/models/Stream/Stream'
 
 export function debounce<T>(
-  getDurationStream: (value: T) => Stream<unknown>
+  getDurationStream: (value: T, index: number) => Stream<unknown>
 ): Operation<T, T> {
   return operateThroughValueTransmitter(
     target => new DebounceValueTransmitter(target, getDurationStream)
@@ -23,20 +23,22 @@ class DebounceValueTransmitter<T> extends DoubleInputValueTransmitter<
 > {
   private mutableValue: MutableMaybe<T> = MutableMaybe.none()
   private durationStreamSubscription: IDisposable | null = null
+  private index: number = 0
 
   constructor(
     target: ISubscriptionTarget<T>,
-    private getDurationStream: (value: T) => Stream<unknown>
+    private getDurationStream: (value: T, index: number) => Stream<unknown>
   ) {
     super(target)
   }
 
   protected onNextValue(value: T): void {
     const { getDurationStream } = this
+    const index = this.index++
     let durationStream: Stream<unknown>
 
     try {
-      durationStream = getDurationStream(value)
+      durationStream = getDurationStream(value, index)
     } catch (error) {
       this.destination.error(error)
       return
@@ -49,7 +51,7 @@ class DebounceValueTransmitter<T> extends DoubleInputValueTransmitter<
       this.durationStreamSubscription = null
     }
 
-    this.subscribeStreamToSelf(durationStream)
+    this.durationStreamSubscription = this.subscribeStreamToSelf(durationStream)
   }
 
   protected onComplete(): void {

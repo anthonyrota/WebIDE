@@ -3,14 +3,15 @@ import { RawStream, Stream } from 'src/models/Stream/Stream'
 
 export function fromIterableScheduled<T>(
   iterable: Iterable<T>,
-  scheduler: IScheduler
+  scheduler: IScheduler,
+  delay: number = 0
 ): Stream<T> {
   return new RawStream<T>(target => {
-    return scheduler.schedule(() => {
+    return scheduler.scheduleDelayed(() => {
       const iterator = iterable[Symbol.iterator]()
 
       target.addOnStopReceivingValues(
-        scheduler.schedule(action => {
+        scheduler.scheduleDelayed(action => {
           let result: IteratorResult<T>
 
           try {
@@ -24,10 +25,10 @@ export function fromIterableScheduled<T>(
             target.complete()
           } else {
             target.next(result.value)
-            action.schedule()
+            action.scheduleDelayed(delay)
           }
-        })
+        }, delay)
       )
-    })
+    }, delay)
   })
 }

@@ -1,4 +1,4 @@
-import { IDisposable } from 'src/models/Disposable/IDisposable'
+import { Disposable, IDisposable } from 'src/models/Disposable/IDisposable'
 import {
   cancelAnimationFramePolyfill,
   requestAnimationFramePolyfill
@@ -30,13 +30,5 @@ export function requestAnimationFrame(
 ): IDisposable {
   const animationId = nativeRequestAnimationFrame(callback)
 
-  return new RequestAnimationFrameDisposable(animationId)
-}
-
-class RequestAnimationFrameDisposable implements IDisposable {
-  constructor(private animationId: unknown) {}
-
-  public dispose(): void {
-    nativeCancelAnimationFrame(this.animationId)
-  }
+  return new Disposable(() => nativeCancelAnimationFrame(animationId))
 }

@@ -1,12 +1,5 @@
 import { ISubscription } from 'src/models/Disposable/Subscription'
-import { freeze } from 'src/utils/freeze'
-import { noop } from 'src/utils/noop'
-
-export const emptySubscriber: IRequiredSubscriptionTarget<any> = freeze({
-  next: noop,
-  error: noop,
-  complete: noop
-})
+import { isCallable } from 'src/utils/isCallable'
 
 export type OnNextValueListener<T> = (value: T) => void
 export type OnErrorListener = (error: unknown) => void
@@ -26,7 +19,7 @@ export interface ISubscriptionTarget<T> {
 }
 
 export interface ISubscribable<T> {
-  subscribe(subscriber: ISubscriptionTarget<T>): ISubscription
+  subscribe(target: ISubscriptionTarget<T>): ISubscription
 }
 
 export function isSubscriptionTarget(
@@ -34,8 +27,8 @@ export function isSubscriptionTarget(
 ): value is ISubscriptionTarget<unknown> {
   return (
     value != null &&
-    (typeof value.next === 'function' || value.next == null) &&
-    (typeof value.error === 'function' || value.next == null) &&
-    (typeof value.complete === 'function' || value.next == null)
+    (isCallable(value.next) || value.next == null) &&
+    (isCallable(value.error) || value.next == null) &&
+    (isCallable(value.complete) || value.next == null)
   )
 }

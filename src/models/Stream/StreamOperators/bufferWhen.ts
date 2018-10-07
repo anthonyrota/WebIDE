@@ -21,7 +21,6 @@ class BufferWhenValueTransmitter<T> extends DoubleInputValueTransmitter<
   unknown
 > {
   private buffer: T[] = []
-  private isSubscribing: boolean = false
   private shouldCloseBufferStreamSubscription: IDisposable | null = null
 
   constructor(
@@ -49,15 +48,8 @@ class BufferWhenValueTransmitter<T> extends DoubleInputValueTransmitter<
   }
 
   protected onOuterComplete(): void {
-    if (this.isSubscribing) {
-      if (this.buffer.length > 0) {
-        this.destination.next(this.buffer)
-      }
-      this.destination.complete()
-    } else {
-      this.closeBuffer()
-      this.openBuffer()
-    }
+    this.closeBuffer()
+    this.openBuffer()
   }
 
   protected closeBuffer(): void {
@@ -81,10 +73,8 @@ class BufferWhenValueTransmitter<T> extends DoubleInputValueTransmitter<
       return
     }
 
-    this.isSubscribing = true
     this.shouldCloseBufferStreamSubscription = this.subscribeStreamToSelf(
       shouldCloseBufferStream
     )
-    this.isSubscribing = false
   }
 }

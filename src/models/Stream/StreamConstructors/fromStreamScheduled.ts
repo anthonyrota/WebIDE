@@ -1,12 +1,20 @@
 import { IScheduler } from 'src/models/Scheduler/Scheduler'
-import { ScheduledSubscriber } from 'src/models/Stream/ScheduledSubscriber'
-import { RawStream, Stream } from 'src/models/Stream/Stream'
+import { IInteropStream, RawStream, Stream } from 'src/models/Stream/Stream'
+import { scheduleMessagesDelayed } from '../StreamOperators/scheduleMessagesDelayed'
+import { fromStream } from './fromStream'
 
 export function fromStreamScheduled<T>(
-  source: Stream<T>,
-  scheduler: IScheduler
+  input: IInteropStream<T>,
+  scheduler: IScheduler,
+  delay: number = 0
 ): Stream<T> {
-  return new RawStream<T>(target => {
-    return source.subscribe(new ScheduledSubscriber<T>(target, scheduler))
+  return new RawStream(target => {
+    return scheduler.scheduleDelayed(() => {
+      target.addOnStopReceivingValues(
+        fromStream(input)
+          .lift(scheduleMessagesDelayed(scheduler, delay))
+          .subscribe(target)
+      )
+    }, delay)
   })
 }

@@ -2,10 +2,12 @@ import {
   DisposableLike,
   disposeDisposableLike
 } from 'src/models/Disposable/DisposableLike'
-import { isDisposable } from 'src/models/Disposable/isDisposable'
+import { always } from 'src/utils/always'
 import { freeze } from 'src/utils/freeze'
-import { isFunction } from 'src/utils/isFunction'
+import { isCallable } from 'src/utils/isCallable'
+import { noop } from 'src/utils/noop'
 import { removeOnce } from 'src/utils/removeOnce'
+import { toArray } from 'src/utils/toArray'
 
 export const isSubscriptionPropertyKey =
   '@@__SubscriptionClassEqualityCheckKey__@@'
@@ -14,10 +16,10 @@ export function isSubscription(candidate: any): candidate is ISubscription {
   return (
     candidate != null &&
     candidate[isSubscriptionPropertyKey] === true &&
-    isFunction(candidate.addOnDispose) &&
-    isFunction(candidate.removeOnDispose) &&
-    isFunction(candidate.dispose) &&
-    isFunction(candidate.isActive)
+    isCallable(candidate.addOnDispose) &&
+    isCallable(candidate.removeOnDispose) &&
+    isCallable(candidate.dispose) &&
+    isCallable(candidate.isActive)
   )
 }
 
@@ -31,18 +33,10 @@ export interface ISubscription {
 
 export const emptySubscription = freeze<ISubscription>({
   [isSubscriptionPropertyKey]: true,
-  addOnDispose(disposableLike: DisposableLike): void {
-    if (isFunction(disposableLike)) {
-      disposableLike()
-    } else if (isDisposable(disposableLike)) {
-      disposableLike.dispose()
-    }
-  },
-  removeOnDispose(): void {},
-  dispose(): void {},
-  isActive(): boolean {
-    return false
-  }
+  addOnDispose: disposeDisposableLike,
+  removeOnDispose: noop,
+  dispose: noop,
+  isActive: always(false)
 })
 
 const recycleMethodPropertyName: string =
@@ -54,8 +48,12 @@ export class Subscription implements ISubscription {
   private __isActive: boolean = true
   private __childDisposableLikes: DisposableLike[]
 
-  constructor(disposables: DisposableLike[] = []) {
-    this.__childDisposableLikes = disposables
+  constructor(disposables?: Iterable<DisposableLike>) {
+    this.__childDisposableLikes = disposables ? toArray(disposables) : []
+  }
+
+  public static from(disposable: DisposableLike): ISubscription {
+    return new Subscription([disposable])
   }
 
   public addOnDispose(disposableLike: DisposableLike): void {

@@ -1,6 +1,6 @@
 import { IScheduler } from 'src/models/Scheduler/Scheduler'
 import { IESInteropObservable } from 'src/models/Stream/ESObservable'
-import { isStream, Stream } from 'src/models/Stream/Stream'
+import { IInteropStream, isInteropStream } from 'src/models/Stream/Stream'
 import { fromArrayScheduled } from 'src/models/Stream/StreamConstructors/fromArrayScheduled'
 import { fromAsyncIterableScheduled } from 'src/models/Stream/StreamConstructors/fromAsyncIterableScheduled'
 import { fromIterableScheduled } from 'src/models/Stream/StreamConstructors/fromIterableScheduled'
@@ -16,25 +16,26 @@ import { isPromiseLike } from 'src/utils/isPromiseLike'
 export function fromScheduled<T>(
   input:
     | ArrayLike<T>
-    | Stream<T>
+    | IInteropStream<T>
     | Iterable<T>
     | AsyncIterable<T>
     | IESInteropObservable<T>
     | PromiseLike<T>,
-  scheduler: IScheduler
+  scheduler: IScheduler,
+  delay?: number
 ) {
-  if (isStream(input)) {
-    return fromStreamScheduled(input, scheduler)
+  if (isInteropStream(input)) {
+    return fromStreamScheduled(input, scheduler, delay)
   } else if (isArrayLike(input)) {
-    return fromArrayScheduled(input, scheduler)
+    return fromArrayScheduled(input, scheduler, delay)
   } else if (isIterable(input)) {
-    return fromIterableScheduled(input, scheduler)
+    return fromIterableScheduled(input, scheduler, delay)
   } else if (isAsyncIterable(input)) {
-    return fromAsyncIterableScheduled(input, scheduler)
+    return fromAsyncIterableScheduled(input, scheduler, delay)
   } else if (isESInteropObservable(input)) {
-    return fromObservableScheduled(input, scheduler)
+    return fromObservableScheduled(input, scheduler, delay)
   } else if (isPromiseLike(input)) {
-    return fromPromiseScheduled(input, scheduler)
+    return fromPromiseScheduled(input, scheduler, delay)
   } else {
     throw new TypeError(
       'Invalid input. The input is neither ArrayLike, a Stream, an Iterable, an AsyncIterable, an ES Compatible Observable or a Promise'

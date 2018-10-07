@@ -1,6 +1,6 @@
 import { IDisposable } from 'src/models/Disposable/IDisposable'
-import { isFunction } from 'src/utils/isFunction'
+import { isCallable } from 'src/utils/isCallable'
 
 export function isDisposable(value: any): value is IDisposable {
-  return value != null && isFunction(value.dispose)
+  return value != null && isCallable(value.dispose)
 }

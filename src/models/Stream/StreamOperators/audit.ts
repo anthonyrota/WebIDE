@@ -9,7 +9,7 @@ import {
 import { Stream } from 'src/models/Stream/Stream'
 
 export function audit<T>(
-  getShouldClearThrottleStream: (value: T) => Stream<unknown>
+  getShouldClearThrottleStream: (value: T, index: number) => Stream<unknown>
 ): Operation<T, T> {
   return operateThroughValueTransmitter(
     target => new AuditValueTransmitter(target, getShouldClearThrottleStream)
@@ -23,10 +23,14 @@ class AuditValueTransmitter<T> extends DoubleInputValueTransmitter<
 > {
   private mutableValue: MutableMaybe<T> = MutableMaybe.none()
   private shouldClearThrottleStreamSubscription: IDisposable | null = null
+  private index: number = 0
 
   constructor(
     target: ISubscriptionTarget<T>,
-    private getShouldClearThrottleStream: (value: T) => Stream<unknown>
+    private getShouldClearThrottleStream: (
+      value: T,
+      index: number
+    ) => Stream<unknown>
   ) {
     super(target)
   }
@@ -36,10 +40,11 @@ class AuditValueTransmitter<T> extends DoubleInputValueTransmitter<
 
     if (!this.shouldClearThrottleStreamSubscription) {
       const { getShouldClearThrottleStream } = this
+      const index = this.index++
       let shouldClearThrottleStream: Stream<unknown>
 
       try {
-        shouldClearThrottleStream = getShouldClearThrottleStream(value)
+        shouldClearThrottleStream = getShouldClearThrottleStream(value, index)
       } catch (error) {
         this.destination.error(error)
         return

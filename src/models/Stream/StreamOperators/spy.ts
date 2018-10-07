@@ -2,15 +2,15 @@ import { ISubscriptionTarget } from 'src/models/Stream/ISubscriptionTarget'
 import { MonoTypeValueTransmitter } from 'src/models/Stream/ValueTransmitter'
 import { operateThroughValueTransmitter, Operation } from '../Operation'
 
-export function tap<T>(
+export function spy<T>(
   secondaryTarget: ISubscriptionTarget<T>
 ): Operation<T, T> {
   return operateThroughValueTransmitter(
-    target => new TapValueTransmitter(target, secondaryTarget)
+    target => new SpyValueTransmitter(target, secondaryTarget)
   )
 }
 
-class TapValueTransmitter<T> extends MonoTypeValueTransmitter<T> {
+class SpyValueTransmitter<T> extends MonoTypeValueTransmitter<T> {
   constructor(
     target: ISubscriptionTarget<T>,
     private secondaryTarget: ISubscriptionTarget<T>

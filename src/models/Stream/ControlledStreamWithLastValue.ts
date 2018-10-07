@@ -21,7 +21,9 @@ export class ControlledStreamWithLastValue<T> extends ControlledStream<T> {
       throw new AlreadyDisposedError()
     }
 
-    this.throwError()
+    this.getError().withValue(error => {
+      throw error
+    })
 
     if (!this.isReceivingValues()) {
       target.complete()
@@ -37,7 +39,9 @@ export class ControlledStreamWithLastValue<T> extends ControlledStream<T> {
       throw new AlreadyDisposedError()
     }
 
-    this.throwError()
+    this.getError().withValue(error => {
+      throw error
+    })
 
     return this.__value
   }
